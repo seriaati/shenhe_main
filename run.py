@@ -97,7 +97,6 @@ class ShenheBot(commands.Bot):
 
     async def close(self) -> None:
         await self.db.close()
-        await self.browser.close()
         await self.session.close()
         return await super().close()
 
