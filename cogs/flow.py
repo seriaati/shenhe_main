@@ -434,6 +434,7 @@ class FlowCog(commands.Cog, name='flow'):
 
         @discord.ui.button(label='接受委託', style=discord.ButtonStyle.green, custom_id='accept_commision_button')
         async def confirm(self, i: Interaction, button: discord.ui.Button):
+            self.stop()
             button.disabled = True
             await i.response.edit_message(view=self)
             msg = i.message
@@ -490,6 +491,9 @@ class FlowCog(commands.Cog, name='flow'):
 
         @discord.ui.button(label='OK', style=discord.ButtonStyle.blurple, custom_id='ok_confirm_button')
         async def ok_confirm(self, i: Interaction, button: Button):
+            self.stop()
+            button.disabled = True
+            await i.response.edit_message(view=self)
             c: aiosqlite.Cursor = await self.db.cursor()
             await c.execute('SELECT * FROM find WHERE msg_id = ?', (i.message.id,))
             result = await c.fetchone()
@@ -539,8 +543,7 @@ class FlowCog(commands.Cog, name='flow'):
                     f"委託名稱: {title}\n"
                     f"委託人: {author.mention} **-{new_flow}** flow幣\n"
                     f"接收人: {confirmer.mention} **+{flow}** flow幣\n{str}")
-            button.disabled = True
-            await i.response.send_message(embed=embed, view=self)
+            await i.followup.send(embed=embed)
             t = i.guild.get_thread(i.channel.id)
             await t.edit(archived=True)
             await c.execute('DELETE FROM find WHERE msg_id = ?', (i.message.id,))
