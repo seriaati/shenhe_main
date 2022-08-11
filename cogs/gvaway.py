@@ -45,7 +45,7 @@ class GiveAwayCog(commands.Cog):
             f"參加抽獎要付的flow幣: {ticket}\n"
             f"{role_exclusive}\n"
             f'{refund_str}'), view=giveaway_view)
-        msg = await i.original_message()
+        msg = await i.original_response()
         c: aiosqlite.Cursor = await self.bot.db.cursor()
         role_id = role.id if role is not None else None
         await c.execute('INSERT INTO giveaway (msg_id, prize_name, goal, ticket, role_id, refund_mode_toggle) VALUES (?, ?, ?, ?, ?, ?)', (msg.id, prize, goal, ticket, role_id, refund_mode))

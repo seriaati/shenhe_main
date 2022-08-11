@@ -144,7 +144,7 @@ class RollCog(commands.Cog):
             self.view.add_item(RollCog.RollHistory(False))
             self.view.add_item(RollCog.RollOnce(False))
             self.view.add_item(RollCog.RollTen(False))
-            await i.edit_original_message(embed=embed, view=self.view)
+            await i.edit_original_response(embed=embed, view=self.view)
 
     class CancelRoll(Button):
         def __init__(self):

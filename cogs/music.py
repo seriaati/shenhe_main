@@ -199,7 +199,7 @@ class MusicCog(commands.GroupCog, name='music'):
             if one_person:
                 await i.response.send_message(embed=defaultEmbed('播放器已停止'))
             else:
-                await i.edit_original_message(embed=defaultEmbed('播放器已停止'), view=None)
+                await i.edit_original_response(embed=defaultEmbed('播放器已停止'), view=None)
         if len(vc.channel.members)-1 <= 2:
             await action(True, i)
         else:
@@ -212,7 +212,7 @@ class MusicCog(commands.GroupCog, name='music'):
             view = MusicCog.VoteView(self.bot.db, round(
                 (len(vc.channel.members)-1)/2), vc, '要停止播放器嗎?')
             await i.response.send_message(embed=defaultEmbed('要停止播放器嗎?', f'贊成人數: 1/{round((len(vc.channel.members)-1)/2)}'), view=view)
-            msg = await i.original_message()
+            msg = await i.original_response()
             await c.execute('INSERT INTO music (user_id, channel_id, msg_id) VALUES (?, ?, ?)', (i.user.id, vc.channel.id, msg.id))
             await view.wait()
             await action(False, i)
@@ -233,7 +233,7 @@ class MusicCog(commands.GroupCog, name='music'):
             if one_person:
                 await i.response.send_message(embed=defaultEmbed('播放器已暫停'))
             else:
-                await i.edit_original_message(embed=defaultEmbed('播放器已暫停'), view=None)
+                await i.edit_original_response(embed=defaultEmbed('播放器已暫停'), view=None)
         if len(vc.channel.members)-1 <= 2:
             await action(True)
         else:
@@ -246,7 +246,7 @@ class MusicCog(commands.GroupCog, name='music'):
             view = MusicCog.VoteView(self.bot.db, round(
                 (len(vc.channel.members)-1)/2), vc, '要暫停播放器嗎?')
             await i.response.send_message(embed=defaultEmbed('要暫停播放器嗎?', f'贊成人數: 1/{round((len(vc.channel.members)-1)/2)}'), view=view)
-            msg = await i.original_message()
+            msg = await i.original_response()
             await c.execute('INSERT INTO music (user_id, channel_id, msg_id) VALUES (?, ?, ?)', (i.user.id, vc.channel.id, msg.id))
             await view.wait()
             await action(False)
@@ -267,7 +267,7 @@ class MusicCog(commands.GroupCog, name='music'):
             if one_person:
                 await i.response.send_message(embed=defaultEmbed('播放器已繼續'))
             else:
-                await i.edit_original_message(embed=defaultEmbed('播放器已繼續'), view=None)
+                await i.edit_original_response(embed=defaultEmbed('播放器已繼續'), view=None)
         if len(vc.channel.members)-1 <= 2:
             await action(True)
         else:
@@ -280,7 +280,7 @@ class MusicCog(commands.GroupCog, name='music'):
             view = MusicCog.VoteView(self.bot.db, round(
                 (len(vc.channel.members)-1)/2), vc, '要取消播放器暫停嗎?')
             await i.response.send_message(embed=defaultEmbed('要取消播放器暫停嗎?', f'贊成人數: 1/{round((len(vc.channel.members)-1)/2)}'), view=view)
-            msg = await i.original_message()
+            msg = await i.original_response()
             await c.execute('INSERT INTO music (user_id, channel_id, msg_id) VALUES (?, ?, ?)', (i.user.id, vc.channel.id, msg.id))
             await view.wait()
             await action(False)
@@ -353,7 +353,7 @@ class MusicCog(commands.GroupCog, name='music'):
             if one_person:
                 await i.response.send_message(embed=defaultEmbed('跳過成功', f'正在播放: {vc.queue[0].title}'))
             else:
-                await i.edit_original_message(embed=defaultEmbed('跳過成功', f'正在播放: {vc.queue[0].title}'), view=None)
+                await i.edit_original_response(embed=defaultEmbed('跳過成功', f'正在播放: {vc.queue[0].title}'), view=None)
         if len(vc.channel.members)-1 <= 2:
             await action(True)
         else:
@@ -366,7 +366,7 @@ class MusicCog(commands.GroupCog, name='music'):
             view = MusicCog.VoteView(self.bot.db, round(
                 (len(vc.channel.members)-1)/2), vc, '要跳過這一首歌嗎?')
             await i.response.send_message(embed=defaultEmbed('要跳過這一首歌嗎?', f'贊成人數: 1/{round((len(vc.channel.members)-1)/2)}'), view=view)
-            msg = await i.original_message()
+            msg = await i.original_response()
             await c.execute('INSERT INTO music (user_id, channel_id, msg_id) VALUES (?, ?, ?)', (i.user.id, vc.channel.id, msg.id))
             await view.wait()
             await action(False)
@@ -387,7 +387,7 @@ class MusicCog(commands.GroupCog, name='music'):
             if one_person:
                 await i.response.send_message(embed=defaultEmbed('待播清單清除成功'))
             else:
-                await i.edit_original_message(embed=defaultEmbed('待播清單清除成功'), view=None)
+                await i.edit_original_response(embed=defaultEmbed('待播清單清除成功'), view=None)
         if len(vc.channel.members)-1 <= 2:
             await action(True)
         else:
@@ -400,7 +400,7 @@ class MusicCog(commands.GroupCog, name='music'):
             view = MusicCog.VoteView(self.bot.db, round(
                 (len(vc.channel.members)-1)/2), vc, '要清除待播清單嗎?')
             await i.response.send_message(embed=defaultEmbed('要清除待播清單嗎?', f'贊成人數: 1/{round((len(vc.channel.members)-1)/2)}'), view=view)
-            msg = await i.original_message()
+            msg = await i.original_response()
             await c.execute('INSERT INTO music (user_id, channel_id, msg_id) VALUES (?, ?, ?)', (i.user.id, vc.channel.id, msg.id))
             await view.wait()
             await action(False)

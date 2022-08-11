@@ -114,7 +114,7 @@ class OtherCMDCog(commands.Cog, name='other'):
             deleted = []
             limit = 0
             msg_count += 1
-        await interaction.edit_original_message(embed=defaultEmbed(f'🗑️ 已移除來自 {member} 的 {number} 個訊息'))
+        await interaction.edit_original_response(embed=defaultEmbed(f'🗑️ 已移除來自 {member} 的 {number} 個訊息'))
 
     @app_commands.command(name='members總人數', description='查看目前群組總人數')
     async def members(self, i: Interaction):

@@ -73,7 +73,7 @@ class GeneralPaginator:
         self.pages = pages
         self.material_embed = material_embed
 
-    async def start(self, embeded: Optional[bool] = False, quick_navigation: bool = True, edit_original_message: bool = False, follow_up: bool = False, materials: bool = False) -> None:
+    async def start(self, embeded: Optional[bool] = False, quick_navigation: bool = True, edit_original_response: bool = False, follow_up: bool = False, materials: bool = False) -> None:
         if not (self.pages):
             raise ValueError("Missing pages")
 
@@ -100,8 +100,8 @@ class GeneralPaginator:
             embeded) else {'embed': self.pages[view.current_page]}
         kwargs['view'] = view
 
-        if edit_original_message:
-            await self.interaction.edit_original_message(**kwargs)
+        if edit_original_response:
+            await self.interaction.edit_original_response(**kwargs)
         elif follow_up:
             await self.interaction.followup.send(**kwargs)
         else:
@@ -109,4 +109,4 @@ class GeneralPaginator:
 
         await view.wait()
 
-        # await self.interaction.delete_original_message()
+        # await self.interaction.delete_original_response()
