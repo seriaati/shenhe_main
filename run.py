@@ -26,12 +26,12 @@ if user_name == "seria":
     token = os.getenv('YAE_TOKEN')
     prefix = ['!', '！']
     application_id = os.getenv('YAE_APP_ID')
-    debug_toggle = False
+    debug_toggle = True
 else:
     token = os.getenv('SHENHE_MAIN_TOKEN')
     prefix = ['!']
     application_id = os.getenv('SHENHE_MAIN_APP_ID')
-    debug_toggle = True
+    debug_toggle = False
 
 # 前綴, token, intents
 intents = Intents.default()

@@ -17,7 +17,7 @@ from utility.utils import defaultEmbed, errEmbed, log
 
 class FlowCog(commands.Cog, name='flow'):
     def __init__(self, bot) -> None:
-        self.bot = bot
+        self.bot: commands.Bot = bot
         self.flow_app = FlowApp(self.bot.db)
         self.debug_toggle = self.bot.debug_toggle
         self.acc_context_menu = app_commands.ContextMenu(
@@ -558,9 +558,8 @@ class FlowCog(commands.Cog, name='flow'):
              Choice(name='tag', value=1)])
     async def find(self, i: Interaction, type: int, title: str, flow: int, tag: int = 1):
         check, msg = self.check_in_find_channel(i.channel.id)
-        if check == False:
-            await i.response.send_message(msg, ephemeral=True)
-            return
+        if not check:
+            return await i.response.send_message(msg, ephemeral=True)
         check, msg = await self.flow_app.checkFlowAccount(i.user.id)
         if check == False:
             await i.response.send_message(embed=msg, ephemeral=True)
