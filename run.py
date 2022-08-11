@@ -12,8 +12,6 @@ from discord import (Game, HTTPException, Intents, Interaction, Message,
                      Status, app_commands)
 from discord.ext import commands
 from dotenv import load_dotenv
-from enkanetwork import EnkaNetworkAPI
-from pyppeteer import launch
 
 from cogs.flow import FlowCog
 from cogs.gvaway import GiveAwayCog
@@ -58,9 +56,7 @@ class ShenheBot(commands.Bot):
     async def setup_hook(self) -> None:
         self.session = aiohttp.ClientSession()
         self.db = await aiosqlite.connect('main.db')
-        self.browser = await launch({'headless': True, 'autoClose': False, "args": ['--proxy-server="direct://"', '--proxy-bypass-list=*', '--no-sandbox', '--start-maximized']})
         self.debug_toggle = debug_toggle
-        self.enka_client = EnkaNetworkAPI(lang='cht')
         await self.load_extension('jishaku')
         for filepath in Path('./cogs').glob('**/*.py'):
             cog_name = Path(filepath).stem
