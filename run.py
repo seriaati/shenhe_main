@@ -22,17 +22,15 @@ from utility.utils import errEmbed, log
 
 load_dotenv()
 user_name = getpass.getuser()
-if user_name == "alice":
-    token = os.getenv('main')
+if user_name == "seria":
+    token = os.getenv('YAE_TOKEN')
     prefix = ['!', '！']
-    guild = 778804551972159489
-    application_id = 956049912699715634
+    application_id = os.getenv('YAE_APP_ID')
     debug_toggle = False
 else:
-    token = os.getenv('dev')
+    token = os.getenv('SHENHE_MAIN_TOKEN')
     prefix = ['!']
-    guild = 778804551972159489
-    application_id = 957621570128449626
+    application_id = os.getenv('SHENHE_MAIN_APP_ID')
     debug_toggle = True
 
 # 前綴, token, intents
@@ -91,13 +89,6 @@ class ShenheBot(commands.Bot):
         error = getattr(error, 'original', error)
         if isinstance(error, ignored):
             return
-        if isinstance(error, commands.DisabledCommand):
-            await ctx.send(f'{ctx.command} has been disabled.')
-        elif isinstance(error, commands.NoPrivateMessage):
-            try:
-                await ctx.author.send(f'{ctx.command} can not be used in Private Messages.')
-            except HTTPException:
-                pass
         else:
             print('Ignoring exception in command {}:'.format(
                 ctx.command), file=sys.stderr)
