@@ -73,7 +73,7 @@ class AdminCog(commands.Cog):
         if member.guild.id != 916838066117824553:
             return
         c: TextChannel = self.bot.get_channel(
-            976840575254933504) if not self.bot.debug_toggle else self.bot.get_channel(909595117952856084)
+            988698669442269184) if not self.bot.debug_toggle else self.bot.get_channel(909595117952856084)
         embed = defaultEmbed(
             '進群',
             f'用戶: {member.mention}\n'
