@@ -76,8 +76,12 @@ class FishCog(commands.Cog):
                 else:
                     await interaction.followup.send(f'單純的摸**{self.fish_adj}的{self.fish}**而已, 沒有摸到flow幣 qwq\n目前 flow 幣: {await self.flow_app.get_user_flow(interaction.user.id)}', ephemeral=True)
             else:
+                if interaction.id == message_author:
+                    chance = 90
+                else:
+                    chance = 50
                 verb = fish['verb']
-                if value <= 50:  # 50% Chance of increasing flow amount by 20
+                if value <= chance:  # 50% Chance of increasing flow amount by 20
                     await self.flow_app.transaction(interaction.user.id, int(flow))
                     await interaction.followup.send(f'摸**{self.fish_adj}的{self.fish}**摸到 {flow} flow幣!\n目前 flow 幣: {await self.flow_app.get_user_flow(interaction.user.id)}', ephemeral=True)
                     # e.g. 摸抹香鯨摸到 20 flow幣!
@@ -102,6 +106,8 @@ class FishCog(commands.Cog):
     async def on_message(self, message):  # 機率放魚
         if message.author == self.bot.user:
             return
+        global message_author
+        message_author = message.author
         random_number = randint(1, 100)
         if random_number == 1 and not isinstance(message.channel, Thread):
             fish = random.choice(list(fish_data.keys()))
