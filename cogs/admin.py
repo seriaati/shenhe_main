@@ -15,22 +15,6 @@ class AdminCog(commands.Cog):
         self.debug: bool = self.bot.debug_toggle
 
     @commands.Cog.listener()
-    async def on_presence_update(self, before: Member, after: Member):
-        if before.guild.id != 916838066117824553:
-            return
-        # 可以你麻煩你程式到yuyu 10:45~7:00時上線就留記錄嗎?
-        target_id = 410036441129943050 if self.bot.debug_toggle else 565171333684658177
-        if before.id != target_id or after.id != target_id:
-            return
-        now = datetime.now().time()
-        if not time_in_range(time(22, 45, 0), time(7, 0, 0), now):
-            return
-        channel = self.bot.get_channel(
-            909595117952856084) if self.bot.debug_toggle else self.bot.get_channel(976840575254933504)
-        if before.status == Status.offline and after.status == Status.online:
-            await channel.send(f'{(self.bot.get_user(target_id)).mention} 偷偷起床了')
-
-    @commands.Cog.listener()
     async def on_message(self, message: Message):
         if message.author.id == self.bot.user.id:
             return
