@@ -7,14 +7,14 @@ fish_data = {
 #        'verb': None,
 #        'image_url': 'https://i.imgur.com/L4grW7M.jpg'
 #    },
-    '鮭魚': {
-        'flow': 2,
-        'flow_chance': 40,
-        'type_0': True,
-        'cute': False,
-        'verb': None,
-        'image_url': 'https://i.imgur.com/r7xp3v0.png'
-    },
+#    '鮭魚': {
+#        'flow': 2,
+#        'flow_chance': 40,
+#        'type_0': True,
+#        'cute': False,
+#        'verb': None,
+#        'image_url': 'https://i.imgur.com/r7xp3v0.png'
+#    },
 #    '鱈魚': {
 #        'flow': 2,
 #        'flow_chance': 40,
@@ -23,14 +23,14 @@ fish_data = {
 #        'verb': None,
 #        'image_url': 'https://i.imgur.com/hA2cDUi.jpg'
 #    },
-    '鮪魚': {
-        'flow': 2,
-        'flow_chance': 40,
-        'type_0': True,
-        'cute': False,
-        'verb': None,
-        'image_url': 'https://i.imgur.com/JhC9N8q.jpg'
-    },
+#    '鮪魚': {
+#        'flow': 2,
+#        'flow_chance': 40,
+#       'type_0': True,
+#        'cute': False,
+#        'verb': None,
+#        'image_url': 'https://i.imgur.com/JhC9N8q.jpg'
+#    },
 #    '鰻魚': {
 #        'flow': 2,
 #        'flow_chance': 40,
@@ -71,14 +71,14 @@ fish_data = {
 #        'verb': ['鉗到了','咬到了'],
 #        'image_url': 'https://i.imgur.com/YQLW9UM.jpg'
 #    },
-    '螃蟹': {
-        'flow': 5,
-        'flow_chance': None,
-        'type_0': False,
-        'cute': False,
-        'verb': ['鉗到了','咬到了'],
-        'image_url': 'https://i.imgur.com/CHKRi6P.jpg'
-    },
+#    '螃蟹': {
+#        'flow': 5,
+#        'flow_chance': None,
+#        'type_0': False,
+#        'cute': False,
+#        'verb': ['鉗到了','咬到了'],
+#        'image_url': 'https://i.imgur.com/CHKRi6P.jpg'
+#   },
     '心海': {
         'flow': 7,
         'flow_chance': None,
