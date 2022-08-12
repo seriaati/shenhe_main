@@ -52,7 +52,7 @@ class FishCog(commands.Cog):
     class TouchFishButton(Button):  # 摸魚按鈕
         def __init__(self, fish: str, db: aiosqlite.Connection, fish_adj: str, author: User | Member):
             super().__init__(style=ButtonStyle.blurple,
-                             label=f'撫摸{self.fish_adj}的{fish}')
+                             label=f'撫摸{fish_adj}的{fish}')
             self.fish = fish
             self.flow_app = FlowApp(db)
             self.fish_adj = fish_adj
