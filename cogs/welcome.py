@@ -39,7 +39,7 @@ class WelcomeCog(commands.Cog):
                 await loading_message.delete()
                 await message.channel.send(content=message.author.mention, embed=errEmbed(message='如果你認為這是一個錯誤, 請私訊 <@410036441129943050>').set_author(name='無效的 UID', icon_url=message.author.avatar))          
             except Exception as e:
-                print(e.with_traceback())
+                print(traceback.format_exc())
                 await loading_message.delete()
                 await message.channel.send(content=message.author.mention, embed=errEmbed(message=f'請私訊 <@410036441129943050>').set_author(name='未知錯誤', icon_url=message.author.avatar))
             else:
