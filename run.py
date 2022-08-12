@@ -19,6 +19,7 @@ from cogs.roles import ReactionRoles
 from cogs.welcome import WelcomeCog
 from debug import DebugView
 from utility.utils import errEmbed, log
+from enkanetwork import EnkaNetworkAPI
 
 load_dotenv()
 user_name = getpass.getuser()
@@ -55,6 +56,7 @@ class ShenheBot(commands.Bot):
         self.session = aiohttp.ClientSession()
         self.db = await aiosqlite.connect('main.db')
         self.debug_toggle = debug_toggle
+        self.enka_client = EnkaNetworkAPI()
         await self.load_extension('jishaku')
         for filepath in Path('./cogs').glob('**/*.py'):
             cog_name = Path(filepath).stem
