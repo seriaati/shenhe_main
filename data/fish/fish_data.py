@@ -223,4 +223,40 @@ fish_data = {
         'verb': ['抓走，去跳靖妖儺舞了',],
         'image_url': 'https://imgur.com/rO57u7J.jpg'
     },
+    '千鶴': {
+        'flow': 19,
+        'flow_chance': None,
+        'type_0': False,
+        'cute': True,
+        'verb': ['打飛了','扇了一巴掌','踢了一腳'],
+        'image_url': 'https://imgur.com/rO57u7J.jpg'
+    },
+    '瑠夏': {
+        'flow': 13,
+        'flow_chance': None,
+        'type_0': False,
+        'cute': True,
+        'verb': ['扇了一巴掌',],
+        'image_url': 'https://i.imgur.com/i11S3G5.jpg'
+    },
+    '麻美': {
+        'flow': 14,
+        'flow_chance': None,
+        'type_0': False,
+        'cute': False,
+        'verb': ['打飛了','扇了一巴掌','誘惑了'],
+        'image_url': 'https://i.imgur.com/whojfGO.png'
+    },
+    '櫻澤墨': {
+        'flow': 13,
+        'flow_chance': None,
+        'type_0': False,
+        'cute': True,
+        'verb': ['...了',],
+        'image_url': 'https://i.imgur.com/Uki0etF.png'
+    },
+    
+    
+    
+
 }

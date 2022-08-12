@@ -2,24 +2,26 @@ import random
 from random import randint
 
 import aiosqlite
+from data.fish.fish_data import fish_data
 from debug import DefaultView
-from discord import ButtonStyle, Interaction, Thread, app_commands
+from discord import (ButtonStyle, Interaction, Member, Message, Thread, User,
+                     app_commands)
 from discord.app_commands import Choice
 from discord.ext import commands
 from discord.ui import Button
 from utility.apps.FlowApp import FlowApp
 from utility.utils import ayaakaaEmbed
-from data.fish.fish_data import fish_data
 
 
 class FishCog(commands.Cog):
     def __init__(self, bot):
-        self.bot = bot
+        self.bot: commands.Bot = bot
         self.debug_toggle = self.bot.debug_toggle
 
     global adj_list
 
-    adj_list = ['可愛', '奇怪', '神奇', '變態', '色色', '野生', '開心', '傷心', '生氣', '長長', '短短', '大大', '小小']
+    adj_list = ['可愛', '奇怪', '神奇', '變態', '色色', '野生',
+                '開心', '傷心', '生氣', '長長', '短短', '大大', '小小']
 
     # fish_type = 1 扣幣
     # fish_type = 0 不扣幣
@@ -48,12 +50,13 @@ class FishCog(commands.Cog):
         return result, fish_adj
 
     class TouchFishButton(Button):  # 摸魚按鈕
-        def __init__(self, fish: str, db: aiosqlite.Connection, fish_adj: str):
+        def __init__(self, fish: str, db: aiosqlite.Connection, fish_adj: str, author: User | Member):
+            super().__init__(style=ButtonStyle.blurple,
+                             label=f'撫摸{self.fish_adj}的{fish}')
             self.fish = fish
             self.flow_app = FlowApp(db)
             self.fish_adj = fish_adj
-            super().__init__(style=ButtonStyle.blurple,
-                             label=f'撫摸{self.fish_adj}的{fish}')
+            self.author = author
 
         async def callback(self, interaction: Interaction):
             self.view.stop()
@@ -76,8 +79,12 @@ class FishCog(commands.Cog):
                 else:
                     await interaction.followup.send(f'單純的摸**{self.fish_adj}的{self.fish}**而已, 沒有摸到flow幣 qwq\n目前 flow 幣: {await self.flow_app.get_user_flow(interaction.user.id)}', ephemeral=True)
             else:
+                if interaction.user.id == self.author.id:
+                    chance = 90
+                else:
+                    chance = 50
                 verb = fish['verb']
-                if value <= 50:  # 50% Chance of increasing flow amount by 20
+                if value <= chance:  # 50% Chance of increasing flow amount by 20
                     await self.flow_app.transaction(interaction.user.id, int(flow))
                     await interaction.followup.send(f'摸**{self.fish_adj}的{self.fish}**摸到 {flow} flow幣!\n目前 flow 幣: {await self.flow_app.get_user_flow(interaction.user.id)}', ephemeral=True)
                     # e.g. 摸抹香鯨摸到 20 flow幣!
@@ -87,10 +94,10 @@ class FishCog(commands.Cog):
                     # e.g. 抹香鯨 鯨爆了，損失了 20 flow幣 qwq
 
     class TouchFish(DefaultView):  # 摸魚view
-        def __init__(self, index: str, db: aiosqlite.Connection, fish_adj: str):
+        def __init__(self, index: str, db: aiosqlite.Connection, fish_adj: str, author: User | Member):
             super().__init__(timeout=None)
             self.add_item(FishCog.TouchFishButton(
-                index, db, fish_adj))
+                index, db, fish_adj, author))
 
     def get_fish_choices():  # 取得所有魚種
         choices = []
@@ -99,14 +106,15 @@ class FishCog(commands.Cog):
         return choices
 
     @commands.Cog.listener()
-    async def on_message(self, message):  # 機率放魚
-        if message.author == self.bot.user:
+    async def on_message(self, message: Message):  # 機率放魚
+        if message.author.id == self.bot.user.id:
             return
         random_number = randint(1, 100)
         if random_number == 1 and not isinstance(message.channel, Thread):
             fish = random.choice(list(fish_data.keys()))
             embed, fish_adj = self.generate_fish_embed(fish)
-            view = FishCog.TouchFish(fish, self.bot.db, fish_adj)
+            view = FishCog.TouchFish(
+                fish, self.bot.db, fish_adj, message.author)
             await message.channel.send(embed=embed, view=view)
 
    # /releasefish
