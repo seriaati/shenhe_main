@@ -229,7 +229,7 @@ fish_data = {
         'type_0': False,
         'cute': True,
         'verb': ['打飛了','扇了一巴掌','踢了一腳'],
-        'image_url': 'https://imgur.com/rO57u7J.jpg'
+        'image_url': 'https://i.imgur.com/6eSbhSm.jpg'
     },
     '瑠夏': {
         'flow': 13,
