@@ -340,7 +340,7 @@ class FlowCog(commands.Cog, name='flow'):
                 await c.execute('INSERT INTO flow_shop_log (log_uuid) VALUES (?)', (log_uuid,))
                 await c.execute('UPDATE flow_shop_log SET flow = ?, item = ?, buyer_id = ? WHERE log_uuid = ?', (int(flow), self.values[0], int(i.user.id), str(log_uuid)))
                 await self.flow_app.transaction(i.user.id, -int(flow))
-                await i.response.send_message(f"<:wish:982419859117838386> {i.user.mention} 商品 **{self.values[0]}** 購買成功, 詳情請查看私訊")
+                await i.response.send_message(f"<:wish:982419859117838386> {i.user.mention} 商品 **{self.values[0]}** 購買成功, 請稍等律律來交付商品")
                 msg = await i.original_response()
                 thread = await msg.create_thread(name=f'{i.user} • {self.values[0]} 購買討論串')
                 await thread.add_user(i.user)
