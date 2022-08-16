@@ -545,7 +545,7 @@ class FlowCog(commands.Cog, name='flow'):
                     f"接收人: {confirmer.mention} **+{flow}** flow幣\n{str}")
             await i.followup.send(embed=embed)
             t = i.guild.get_thread(i.channel.id)
-            await t.edit(archived=True)
+            await t.edit(archived=True, locked=True)
             await c.execute('DELETE FROM find WHERE msg_id = ?', (i.message.id,))
             await self.db.commit()
 
