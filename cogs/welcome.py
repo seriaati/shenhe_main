@@ -50,7 +50,7 @@ class WelcomeCog(commands.Cog):
                 if user_id is not None:
                     uid_owner = self.bot.get_user(user_id[0])
                     if uid_owner is None:
-                        await c.execute('DELETE FROM genshin_accounts WHERE user_id = ?', (user_id[0]))
+                        await c.execute('DELETE FROM genshin_accounts WHERE user_id = ?', (user_id[0],))
                     else:
                         return await message.channel.send(content=message.author.mention, embed=errEmbed(message=f'{uid_owner.mention} 已經註冊這個 UID 了').set_author(name='UID 已被註冊', icon_url=message.author.avatar))
                 await c.execute('INSERT INTO genshin_accounts (user_id, uid) VALUES (?, ?) ON CONFLICT (user_id) DO UPDATE SET uid = ? WHERE user_id =?', (message.author.id, uid, uid, message.author.id))
