@@ -637,6 +637,7 @@ class FlowCog(commands.Cog, name='flow'):
 
         view = FlowCog.FindView()
         await i.response.send_message(view=view, ephemeral=True)
+        await view.wait()
         flow = int(view.flow)
         title = view.title
         description = view.description
