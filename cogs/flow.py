@@ -7,10 +7,10 @@ import aiosqlite
 import discord
 from dateutil import parser
 from debug import DefaultView
-from discord import Button, Interaction, Member, SelectOption, app_commands
+from discord import Button, Interaction, Member, SelectOption, TextStyle, app_commands
 from discord.app_commands import Choice
 from discord.ext import commands
-from discord.ui import Select, Modal
+from discord.ui import Select, Modal, TextInput
 from utility.apps.FlowApp import FlowApp
 from utility.utils import defaultEmbed, errEmbed, log
 
@@ -30,7 +30,7 @@ class FlowCog(commands.Cog, name='flow'):
         )
         self.bot.tree.add_command(self.acc_context_menu)
         self.bot.tree.add_command(self.give_context_menu)
-        
+
     async def cog_unload(self) -> None:
         self.bot.tree.remove_command(
             self.acc_context_menu.name, type=self.acc_context_menu.type)
@@ -108,15 +108,17 @@ class FlowCog(commands.Cog, name='flow'):
         result = await c.fetchone()
         flow = await self.flow_app.get_user_flow(member.id)
         time_state_str = ''
-        time_coin_list = ['<:morning:982608491426508810>', '<:noon:982608493313929246>', '<:night:982608497290125366>']
+        time_coin_list = ['<:morning:982608491426508810>',
+                          '<:noon:982608493313929246>', '<:night:982608497290125366>']
         for index in range(0, 3):
-            new_time = (parser.parse(result[index])).strftime("%Y-%m-%d %H:%M:%S")
+            new_time = (parser.parse(result[index])).strftime(
+                "%Y-%m-%d %H:%M:%S")
             time_state_str += f'{time_coin_list[index]} {new_time}\n'
         embed = defaultEmbed()
-        embed.add_field(name=f'{flow} flow',value=time_state_str)
+        embed.add_field(name=f'{flow} flow', value=time_state_str)
         embed.set_author(name=f'flow 帳號', icon_url=member.avatar)
         await i.response.send_message(embed=embed)
-    
+
     async def acc_ctx_menu(self, i: Interaction, member: Member):
         check, msg = await self.flow_app.checkFlowAccount(member.id)
         if check == False:
@@ -127,12 +129,14 @@ class FlowCog(commands.Cog, name='flow'):
         result = await c.fetchone()
         flow = await self.flow_app.get_user_flow(member.id)
         time_state_str = ''
-        time_coin_list = ['<:morning:982608491426508810>', '<:noon:982608493313929246>', '<:night:982608497290125366>']
+        time_coin_list = ['<:morning:982608491426508810>',
+                          '<:noon:982608493313929246>', '<:night:982608497290125366>']
         for index in range(0, 3):
-            new_time = (parser.parse(result[index])).strftime("%Y-%m-%d %H:%M:%S")
+            new_time = (parser.parse(result[index])).strftime(
+                "%Y-%m-%d %H:%M:%S")
             time_state_str += f'{time_coin_list[index]} {new_time}\n'
         embed = defaultEmbed()
-        embed.add_field(name=f'{flow} flow',value=time_state_str)
+        embed.add_field(name=f'{flow} flow', value=time_state_str)
         embed.set_author(name=f'flow 帳號', icon_url=member.avatar)
         await i.response.send_message(embed=embed, ephemeral=True)
 
@@ -150,24 +154,24 @@ class FlowCog(commands.Cog, name='flow'):
             return await i.response.send_message(embed=errEmbed(f'需要至少: {flow} flow').set_author(name="flow 幣不足", icon_url=i.user.avatar), ephemeral=True)
         await self.flow_app.transaction(i.user.id, -flow)
         await self.flow_app.transaction(member.id, flow)
-        embed = defaultEmbed(message=
-            f"{self.bot.get_user(i.user.id).mention} **- {flow}** flow幣\n"
-            f"{self.bot.get_user(member.id).mention} **+ {flow}** flow幣").set_author(name='交易成功', icon_url=i.user.avatar)
+        embed = defaultEmbed(message=f"{self.bot.get_user(i.user.id).mention} **- {flow}** flow幣\n"
+                             f"{self.bot.get_user(member.id).mention} **+ {flow}** flow幣").set_author(name='交易成功', icon_url=i.user.avatar)
         await i.response.send_message(content=f'{i.user.mention}{member.mention}', embed=embed)
-        
+
     class GiveFlowModal(Modal):
         def __init__(self, member: Member):
-            super().__init__(title=f'給 {member.display_name} flow 幣', timeout=None)
-            
+            super().__init__(
+                title=f'給 {member.display_name} flow 幣', timeout=None)
+
         flow = discord.ui.TextInput(
             label='Flow 幣數量',
             placeholder='輸入要給予的 flow 幣數量',
         )
-        
+
         async def on_submit(self, i: Interaction) -> None:
             await i.response.defer()
             self.stop()
-    
+
     async def give_ctx_menu(self, i: Interaction, member: Member):
         modal = FlowCog.GiveFlowModal(member)
         await i.response.send_modal(modal)
@@ -187,9 +191,8 @@ class FlowCog(commands.Cog, name='flow'):
             return await i.response.send_message(embed=errEmbed(f'需要至少: {flow} flow').set_author(name="flow 幣不足", icon_url=i.user.avatar), ephemeral=True)
         await self.flow_app.transaction(i.user.id, -flow)
         await self.flow_app.transaction(member.id, flow)
-        embed = defaultEmbed(message=
-            f"{self.bot.get_user(i.user.id).mention} **- {flow}** flow幣\n"
-            f"{self.bot.get_user(member.id).mention} **+ {flow}** flow幣").set_author(name='交易成功', icon_url=i.user.avatar)
+        embed = defaultEmbed(message=f"{self.bot.get_user(i.user.id).mention} **- {flow}** flow幣\n"
+                             f"{self.bot.get_user(member.id).mention} **+ {flow}** flow幣").set_author(name='交易成功', icon_url=i.user.avatar)
         await i.followup.send(content=f'{i.user.mention}{member.mention}', embed=embed)
 
     @app_commands.command(name='take收錢', description='將某人的flow幣轉回銀行')
@@ -355,7 +358,7 @@ class FlowCog(commands.Cog, name='flow'):
                 await thread.send(embed=embed)
                 log(False, False, 'shop buy', i.user.id)
             await self.db.commit()
-    
+
     @app_commands.command(name='shop商店', description='顯示 flow 商店')
     async def show(self, i: Interaction):
         check, msg = await self.flow_app.checkFlowAccount(i.user.id)
@@ -459,15 +462,13 @@ class FlowCog(commands.Cog, name='flow'):
                 if type == index:
                     await i.followup.send(embed=defaultEmbed(message=f"{confirmer.mention} 已接受 {author.mention} 的 **{title}** {action_str[index-1]}").set_author(name='委託接受', icon_url=confirmer.avatar))
             if type == 4:
-                embedDM = defaultEmbed(message=
-                    f"當{confirmer.mention}完成幫忙的內容時, 請按OK來結算flow幣\n"
-                    f"按下後, 你的flow幣將會 **-{flow}**\n"
-                    f"對方則會 **+{flow}**")
+                embedDM = defaultEmbed(message=f"當{confirmer.mention}完成幫忙的內容時, 請按OK來結算flow幣\n"
+                                       f"按下後, 你的flow幣將會 **-{flow}**\n"
+                                       f"對方則會 **+{flow}**")
             else:
-                embedDM = defaultEmbed(message=
-                    f"當{confirmer.mention}完成委託的內容時, 請按OK來結算flow幣\n"
-                    f"按下後, 你的flow幣將會 **-{flow}**\n"
-                    f"對方則會 **+{flow}**")
+                embedDM = defaultEmbed(message=f"當{confirmer.mention}完成委託的內容時, 請按OK來結算flow幣\n"
+                                       f"按下後, 你的flow幣將會 **-{flow}**\n"
+                                       f"對方則會 **+{flow}**")
             embedDM.set_author(name='結算單', icon_url=author.avatar)
             view = FlowCog.ConfirmView(self.db)
             confirm_message = await thread.send(embed=embedDM, view=view)
@@ -549,17 +550,71 @@ class FlowCog(commands.Cog, name='flow'):
             await c.execute('DELETE FROM find WHERE msg_id = ?', (i.message.id,))
             await self.db.commit()
 
-    @app_commands.command(name='find發布委託', description='發布委託')
-    @app_commands.rename(type='委託類型', title='幫助名稱', flow='flow幣數量', tag='tag人開關')
-    @app_commands.describe(title='需要什麼幫助?', flow='這個幫助值多少flow幣?', tag='是否要tag委託通知?')
-    @app_commands.choices(type=[
-        Choice(name='1類委託 其他玩家進入你的世界(例如: 陪玩, 打素材等)', value=1),
-        Choice(name='2類委託 你進入其他玩家的世界(例如: 拿特產)', value=2),
-        Choice(name='3類委託 其他委託(例如: 打apex, valorant)', value=3),
-        Choice(name='4類委託 可以幫助別人(讓拿素材, 可幫打刀鐔等)', value=4)],
-        tag=[Choice(name='不tag', value=0),
-             Choice(name='tag', value=1)])
-    async def find(self, i: Interaction, type: int, title: str, flow: int, tag: int = 1):
+    class FindView(DefaultView):
+        def __init__(self):
+            super().__init__(timeout=None)
+            self.title = ''
+            self.description = ''
+            self.flow = None
+            self.type = None
+
+            self.add_item(FlowCog.FindTypeSelect())
+
+    class FindTypeSelect(Select):
+        def __init__(self):
+            options = [
+                SelectOption(
+                    label='1類委託', description='其他玩家進入你的世界(例如: 陪玩, 打素材等)', value=1),
+                SelectOption(
+                    label='2類委託', description='你進入其他玩家的世界(例如: 拿特產)', value=2),
+                SelectOption(
+                    label='3類委託', description='其他委託(例如: 打apex, valorant)', value=3),
+                SelectOption(
+                    label='4類委託', description='可以幫助別人(讓拿素材, 可幫打刀鐔等)', value=4)
+            ]
+            super().__init__(placeholder='選擇委託類型', options=options)
+
+        async def callback(self, i: Interaction) -> Any:
+            self.view: FlowCog.FindView
+            modal = FlowCog.FindModal()
+            await i.response.send_modal(modal=modal)
+            await modal.wait()
+            self.view.type = self.values[0]
+            self.view.title = modal.title
+            self.view.description = modal.description
+            self.view.flow = modal.flow
+            self.view.stop()
+
+    class FindModal(Modal):
+        title = TextInput(
+            label='標題',
+            placeholder='跟公子以及他的同夥要錢錢！'
+        )
+        description = TextInput(
+            label='敘述',
+            placeholder='打周本 x5',
+            style=TextStyle.long,
+            required=False
+        )
+        flow = TextInput(
+            label='flow 幣數量',
+            placeholder='100'
+        )
+
+        def __init__(self) -> None:
+            super().__init__(title='發布委託', timeout=None)
+
+        async def on_submit(self, i: Interaction) -> None:
+            if not self.flow.value.isnumeric():
+                return await i.response.send_message(embed=errEmbed(message='例如 100, 1000, 10000').set_author(name='flow 幣數量: 請輸入數字', icon_url=i.user.avatar), ephemeral=True)
+            self.stop()
+            await i.response.defer()
+
+    @app_commands.command(name='find', description='發布委託')
+    @app_commands.rename(tag='tag人開關')
+    @app_commands.describe(tag='是否要tag委託通知?')
+    @app_commands.choices(tag=[Choice(name='不tag', value=0), Choice(name='tag', value=1)])
+    async def find(self, i: Interaction, tag: int = 1):
         check, msg = self.check_in_find_channel(i.channel.id)
         if not check:
             return await i.response.send_message(msg, ephemeral=True)
@@ -579,10 +634,19 @@ class FlowCog(commands.Cog, name='flow'):
                     role_name = r.name
                     role_found = True
                     break
+
+        view = FlowCog.FindView()
+        await i.response.send_message(view=view, ephemeral=True)
+        flow = int(view.flow)
+        title = view.title
+        description = view.description
+        type = int(view.type)
+
         check, msg = await self.check_flow(i.user.id, flow)
         if check == False:
             await i.response.send_message(embed=msg, ephemeral=True)
             return
+
         if not role_found:
             role_str = f'請至 {channel.mention} 選擇世界等級身份組'
         else:
@@ -596,47 +660,49 @@ class FlowCog(commands.Cog, name='flow'):
                     role_str = role_name
                 else:
                     role_str = f'<= {role_name}'
+
         c: aiosqlite.Cursor = await self.bot.db.cursor()
         await c.execute('SELECT uid FROM genshin_accounts WHERE user_id = ?', (i.user.id,))
         uid = await c.fetchone()
         uid = uid[0]
+
+        embed = defaultEmbed(title, description)
         if type == 1:
-            embed = defaultEmbed(
-                f'請求幫助: {title}',
-                f'發布者: {i.user.mention}\n'
+            embed.set_author(name='1 類委託 - 請求幫助')
+            embed.add_field(
+                name='資訊',
+                value=f'發布者: {i.user.mention}\n'
                 f'flow幣: {flow}\n'
                 f'世界等級: {role_str}\n'
                 f'發布者 UID: {uid}'
             )
         elif type == 2:
-            embed = defaultEmbed(
-                f'需要素材: {title}',
-                f'發布者: {i.user.mention}\n'
+            embed.set_author(name='2 類委託 - 需要素材')
+            embed.add_field(
+                name='資訊',
+                value=f'發布者: {i.user.mention}\n'
                 f'flow幣: {flow}\n'
                 f'世界等級: {role_str}\n'
                 f'發布者 UID: {uid}'
             )
         elif type == 3:
-            embed = defaultEmbed(
-                f'請求幫助: {title}',
-                f'發布者: {i.user.mention}\n'
+            embed.set_author(name='3 類委託 - 其他')
+            embed.add_field(
+                name='資訊',
+                value=f'發布者: {i.user.mention}\n'
                 f'flow幣: {flow}'
             )
         elif type == 4:
-            embed = defaultEmbed(
-                f'可以幫忙: {title}',
-                f'發布者: {i.user.mention}\n'
+            embed.set_author(name='1 類委託 - 可以幫助')
+            embed.add_field(
+                name='資訊',
+                value=f'發布者: {i.user.mention}\n'
                 f'flow幣: {flow}\n'
-                f'發布者世界等級: {role_name}\n'
+                f'世界等級: {role_name}\n'
                 f'發布者 UID: {uid}'
             )
-        if tag == 1:
-            g = self.bot.get_guild(916838066117824553)  # 緣神有你
-            role = g.get_role(965141973700857876)  # 委託通知
-            await i.channel.send(role.mention)
         view = self.AcceptView(self.bot.db, self.bot)
-        await i.response.send_message(embed=embed, view=view)
-        msg = await i.original_response()
+        msg = await i.channel.send(content='<@965141973700857876>' if tag == 1 else '', embed=embed, view=view)
         c: aiosqlite.Cursor = await self.bot.db.cursor()
         await c.execute('INSERT INTO find(msg_id, flow, title, type, author_id) VALUES (?, ?, ?, ?, ?)', (msg.id, flow, title, type, i.user.id))
         await self.bot.db.commit()
