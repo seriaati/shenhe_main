@@ -580,9 +580,9 @@ class FlowCog(commands.Cog, name='flow'):
             await i.response.send_modal(modal)
             await modal.wait()
             self.view.type = self.values[0]
-            self.view.title = modal.find_title
-            self.view.description = modal.description
-            self.view.flow = modal.flow
+            self.view.title = modal.find_title.value
+            self.view.description = modal.description.value
+            self.view.flow = modal.flow.value
             self.view.stop()
 
     class FindModal(Modal):
