@@ -580,13 +580,13 @@ class FlowCog(commands.Cog, name='flow'):
             await i.response.send_modal(modal)
             await modal.wait()
             self.view.type = self.values[0]
-            self.view.title = modal.title
+            self.view.title = modal.find_title
             self.view.description = modal.description
             self.view.flow = modal.flow
             self.view.stop()
 
     class FindModal(Modal):
-        title = TextInput(
+        find_title = TextInput(
             label='標題',
             placeholder='跟公子以及他的同夥要錢錢！'
         )
