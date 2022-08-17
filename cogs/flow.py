@@ -577,7 +577,7 @@ class FlowCog(commands.Cog, name='flow'):
         async def callback(self, i: Interaction) -> Any:
             self.view: FlowCog.FindView
             modal = FlowCog.FindModal()
-            await i.response.send_modal(modal=modal)
+            await i.response.send_modal(modal)
             await modal.wait()
             self.view.type = self.values[0]
             self.view.title = modal.title
