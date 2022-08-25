@@ -286,7 +286,6 @@ class MusicCog(commands.GroupCog, name='music'):
             await action(False)
 
     @app_commands.command(name='disconnect斷線', description='讓申鶴悄悄的離開目前所在的語音台')
-    @app_commands.checks.has_role('小雪團隊')
     async def music_disconnect(self, i: Interaction):
         if not i.guild.voice_client:
             return await i.response.send_message(embed=errEmbed(message='輸入 `/play` 來播放歌曲').set_author(name='播放器不存在', icon_url=i.user.avatar), ephemeral=True)
