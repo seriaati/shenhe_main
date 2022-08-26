@@ -703,7 +703,7 @@ class FlowCog(commands.Cog, name='flow'):
                 f'發布者 UID: {uid}'
             )
         view = self.AcceptView(self.bot.db, self.bot)
-        msg = await i.channel.send(content='<@965141973700857876>' if tag == 1 else '', embed=embed, view=view)
+        msg = await i.channel.send(content='<@&965141973700857876>' if tag == 1 else '', embed=embed, view=view)
         c: aiosqlite.Cursor = await self.bot.db.cursor()
         await c.execute('INSERT INTO find(msg_id, flow, title, type, author_id) VALUES (?, ?, ?, ?, ?)', (msg.id, flow, title, type, i.user.id))
         await self.bot.db.commit()
