@@ -1,4 +1,4 @@
-from random import randint
+from random import choice, randint
 
 from debug import DefaultView
 from discord import Interaction, Member, Message, Role, app_commands
@@ -6,6 +6,7 @@ from discord.ext import commands
 from discord.ui import Button
 from utility.apps.FlowApp import FlowApp
 from utility.utils import defaultEmbed, errEmbed, log
+import random
 
 
 class OtherCMDCog(commands.Cog, name='other'):
@@ -92,6 +93,12 @@ class OtherCMDCog(commands.Cog, name='other'):
         channel = self.bot.get_channel(966549110540877875)
         await ctx.send("<a:check_animated:982579879239352370> 語錄擷取成功", delete_after=3)
         await channel.send(embed=embed)
+    
+    @app_commands.command(name='pickrandom')
+    async def pickrandom(self, i: Interaction):
+        v = i.user.voice.channel
+        r = choice(v.members)
+        await i.response.send_message(f'{r.display_name}#{r.discriminator}')
 
     @app_commands.command(
         name='cleanup清理',
