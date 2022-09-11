@@ -13,6 +13,8 @@ from discord.ext import commands
 from discord.ui import Select, Modal, TextInput
 from utility.apps.FlowApp import FlowApp
 from utility.utils import defaultEmbed, errEmbed, log
+import pytz
+from pytz import timezone
 
 
 class FlowCog(commands.Cog, name='flow'):
@@ -55,7 +57,7 @@ class FlowCog(commands.Cog, name='flow'):
                 except:
                     pass
                 return
-            now = datetime.now()
+            now = datetime.now(timezone('Asia/Taipei'))
             c: aiosqlite.Cursor = await self.bot.db.cursor()
             if "早" in message.content:
                 start = datetime(year=now.year, month=now.month,
