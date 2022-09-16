@@ -1,6 +1,6 @@
 import asyncio
 import io
-from datetime import datetime, time
+from datetime import datetime, time, timezone
 import aiosqlite
 
 from discord import (File, Interaction, Member, Message, NotFound, RawMessageDeleteEvent,
@@ -40,6 +40,8 @@ class AdminCog(commands.Cog):
 
     @commands.Cog.listener()
     async def on_raw_message_delete(self, payload: RawMessageDeleteEvent):
+        now = now
+        now += timezone('Asia/Taipei').utcoffset(now)
         if payload.guild_id != 916838066117824553:
             return
         c: TextChannel = self.bot.get_channel(
@@ -56,7 +58,7 @@ class AdminCog(commands.Cog):
                 f'「{payload.cached_message.content} {attachment_str}」\n\n'
                 f'用戶: {payload.cached_message.author.mention}\n'
                 f'頻道: {payload.cached_message.channel.mention}\n'
-                f'時間: {datetime.now().strftime("%m/%d/%Y %H:%M:%S")}\n'
+                f'時間: {now.strftime("%m/%d/%Y %H:%M:%S")}\n'
                 f'附近訊息: {payload.cached_message.jump_url}'
             )
             embed.set_footer(
@@ -70,6 +72,8 @@ class AdminCog(commands.Cog):
 
     @commands.Cog.listener()
     async def on_member_join(self, member: Member):
+        now = now
+        now += timezone('Asia/Taipei').utcoffset(now)
         if member.guild.id != 916838066117824553:
             return
         c: TextChannel = self.bot.get_channel(
@@ -77,7 +81,7 @@ class AdminCog(commands.Cog):
         embed = defaultEmbed(
             '進群',
             f'用戶: {member.mention}\n'
-            f'時間: {datetime.now().strftime("%m/%d/%Y %H:%M:%S")}\n'
+            f'時間: {now.strftime("%m/%d/%Y %H:%M:%S")}\n'
         )
         embed.set_author(name=member, icon_url=member.avatar)
         embed.set_footer(text=f'用戶 ID: {member.id}')
@@ -85,6 +89,8 @@ class AdminCog(commands.Cog):
 
     @commands.Cog.listener()
     async def on_member_remove(self, member: Member):
+        now = now
+        now += timezone('Asia/Taipei').utcoffset(now)
         if member.guild.id != 916838066117824553:
             return
         c: TextChannel = self.bot.get_channel(
@@ -92,7 +98,7 @@ class AdminCog(commands.Cog):
         embed = defaultEmbed(
             '退群',
             f'用戶: {member.mention}\n'
-            f'時間: {datetime.now().strftime("%m/%d/%Y %H:%M:%S")}\n'
+            f'時間: {now.strftime("%m/%d/%Y %H:%M:%S")}\n'
         )
         embed.set_author(name=member, icon_url=member.avatar)
         embed.set_footer(text=f'用戶 ID: {member.id}')
