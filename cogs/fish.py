@@ -79,10 +79,7 @@ class FishCog(commands.Cog):
                 else:
                     await interaction.followup.send(f'單純的摸**{self.fish_adj}的{self.fish}**而已, 沒有摸到flow幣 qwq\n目前 flow 幣: {await self.flow_app.get_user_flow(interaction.user.id)}', ephemeral=True)
             else:
-                if interaction.user.id == self.author.id:
-                    chance = 90
-                else:
-                    chance = 50
+                chance = 40
                 verb = fish['verb']
                 if value <= chance:  # 50% Chance of increasing flow amount by 20
                     await self.flow_app.transaction(interaction.user.id, int(flow))
