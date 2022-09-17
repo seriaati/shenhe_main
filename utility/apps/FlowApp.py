@@ -1,4 +1,5 @@
-from datetime import datetime, timezone
+from datetime import datetime
+from pytz import timezone
 from typing import Union
 
 import aiosqlite
