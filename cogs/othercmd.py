@@ -51,14 +51,14 @@ class OtherCMDCog(commands.Cog, name="other"):
         if count is None:
             await i.response.send_message(
                 embed=errEmbed().set_author(
-                    name="這個人沒有色色過", icon_url=i.user.display_avatar.url
+                    name="這個人沒有色色過", icon_url=user.display_avatar.url
                 ),
                 ephemeral=True,
             )
         else:
             await i.response.send_message(
                 embed=defaultEmbed(message=f"{count[0]}次").set_author(
-                    name="好色喔", icon_url=i.user.display_avatar.url
+                    name="好色喔", icon_url=user.display_avatar.url
                 )
             )
 
@@ -69,6 +69,20 @@ class OtherCMDCog(commands.Cog, name="other"):
         if "機率" in message.content:
             value = randint(1, 100)
             await message.channel.send(f"{value}%")
+        if "好色喔" in message.content:
+            c = await self.bot.client.db.cursor()
+            emojis = [
+                "<:word_hao:1021424223199187025>",
+                "<:word_se:1021424220976193646>",
+                "<:word_o:1021424218337984545>",
+            ]
+            for e in emojis:
+                await message.add_reaction(e)
+            await c.execute(
+                "INSERT INTO hao_se_o (user_id, count) VALUES(?, ?) ON CONFLICT (user_id) DO UPDATE SET count = count + 1 WHERE user_id = ?",
+                (message.author.id, 1, message.author.id),
+            )
+            await self.bot.db.commit()
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
