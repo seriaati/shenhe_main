@@ -70,7 +70,7 @@ class OtherCMDCog(commands.Cog, name="other"):
             value = randint(1, 100)
             await message.channel.send(f"{value}%")
         if "好色喔" in message.content:
-            c = await self.bot.client.db.cursor()
+            c = await self.bot.db.cursor()
             emojis = [
                 "<:word_hao:1021424223199187025>",
                 "<:word_se:1021424220976193646>",
