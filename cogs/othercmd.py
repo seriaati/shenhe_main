@@ -28,7 +28,7 @@ class OtherCMDCog(commands.Cog, name="other"):
 
     async def hao_se_o_context_menu(self, i: Interaction, message: Message):
         c = await i.client.db.cursor()
-        await i.response.send_message('已新增', ephemeral=True)
+        await i.response.send_message("已新增", ephemeral=True)
         emojis = [
             "<:word_hao:1021424223199187025>",
             "<:word_se:1021424220976193646>",
@@ -43,19 +43,23 @@ class OtherCMDCog(commands.Cog, name="other"):
         await i.client.db.commit()
 
     @app_commands.command(name="好色喔", description="好色喔")
-    async def hao_se_o(self, i: Interaction, user: Member):
+    async def hao_se_o(self, i: Interaction, user: Member = None):
         user = user or i.user
         c = await i.client.db.cursor()
         await c.execute("SELECT count FROM hao_se_o WHERE user_id = ?", (user.id,))
         count = await c.fetchone()
         if count is None:
             await i.response.send_message(
-                embed=errEmbed().set_author(name="這個人沒有色色過"), ephemeral=True
+                embed=errEmbed().set_author(
+                    name="這個人沒有色色過", icon_url=i.user.display_avatar.url
+                ),
+                ephemeral=True,
             )
         else:
             await i.response.send_message(
-                embed=defaultEmbed(message=f"{count[0]}次").set_author(name="好色喔"),
-                ephemeral=True,
+                embed=defaultEmbed(message=f"{count[0]}次").set_author(
+                    name="好色喔", icon_url=i.user.display_avatar.url
+                )
             )
 
     @commands.Cog.listener()
