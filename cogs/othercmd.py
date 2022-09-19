@@ -2,6 +2,7 @@ from random import choice, randint
 
 from debug import DefaultView
 from discord import Interaction, Member, Message, Role, app_commands
+from discord.app_commands import Choice
 from discord.ext import commands
 from discord.ui import Button
 from utility.apps.FlowApp import FlowApp
@@ -43,24 +44,37 @@ class OtherCMDCog(commands.Cog, name="other"):
         await i.client.db.commit()
 
     @app_commands.command(name="haose", description="好色喔")
-    async def hao_se_o(self, i: Interaction, user: Member = None):
-        user = user or i.user
+    @app_commands.rename(user='使用者', leaderbaord='排行榜')
+    @app_commands.choices(leaderboard=[Choice(name='查看排行榜', value=1)])
+    async def hao_se_o(self, i: Interaction, user: Member = None, leaderboard: int = 0):
         c = await i.client.db.cursor()
-        await c.execute("SELECT count FROM hao_se_o WHERE user_id = ?", (user.id,))
-        count = await c.fetchone()
-        if count is None:
-            await i.response.send_message(
-                embed=errEmbed().set_author(
-                    name="這個人沒有色色過", icon_url=user.display_avatar.url
-                ),
-                ephemeral=True,
-            )
+        if leaderboard == 1:
+            await c.execute('SELECT user_id, count FROM hao_se_o ORDER BY count DESC')
+            data = await c.fetchall()
+            embed =  defaultEmbed('好色喔排行榜')
+            desc = ''
+            for index, tpl in enumerate(data):
+                user = i.guild.get_member(tpl[0]) or await i.guild.fetch_member(tpl[0])
+                desc += f'{index+1}. {user.mention} - {tpl[1]}次'
+            embed.description = desc
+            await i.response.send_message(embed=embed)
         else:
-            await i.response.send_message(
-                embed=defaultEmbed(message=f"{count[0]}次").set_author(
-                    name="好色喔", icon_url=user.display_avatar.url
+            user = user or i.user
+            await c.execute("SELECT count FROM hao_se_o WHERE user_id = ?", (user.id,))
+            count = await c.fetchone()
+            if count is None:
+                await i.response.send_message(
+                    embed=errEmbed().set_author(
+                        name="這個人沒有色色過", icon_url=user.display_avatar.url
+                    ),
+                    ephemeral=True,
                 )
-            )
+            else:
+                await i.response.send_message(
+                    embed=defaultEmbed(message=f"{count[0]}次").set_author(
+                        name="好色喔", icon_url=user.display_avatar.url
+                    )
+                )
 
     @commands.Cog.listener()
     async def on_message(self, message):
