@@ -6,7 +6,6 @@ from discord.ext import commands
 from discord.ui import Button
 from utility.apps.FlowApp import FlowApp
 from utility.utils import defaultEmbed, errEmbed, log
-import random
 
 
 class OtherCMDCog(commands.Cog, name='other'):
@@ -17,12 +16,25 @@ class OtherCMDCog(commands.Cog, name='other'):
             name='語錄',
             callback=self.quote_context_menu
         )
+        self.hao_se_o_ctx_kenu = app_commands.ContextMenu(
+            name='好色喔',
+            callback=self.hao_se_o_context_menu
+        )
         self.bot.tree.add_command(self.quote_ctx_menu)
 
     async def cog_unload(self) -> None:
         self.bot.tree.remove_command(
             self.quote_ctx_menu.name, type=self.quote_ctx_menu.type)
 
+    async def hao_se_o_context_menu(self, i: Interaction, message: Message):
+        c = await i.client.db.cursor()
+        await i.response.defer()
+        emojis = ['<:word_hao:1021424223199187025>', '<:word_se:1021424220976193646>', '<:word_o:1021424218337984545>']
+        for e in emojis:
+            await message.add_reaction(e)
+        await c.execute('INSERT INTO hao_se_o (user_id, count) VALUES(?, ?) ON CONFLICT (user_id) DO UPDATE SET count = count + 1 WHERE user_id = ?', (i.user.id, 1, i.user.id))
+        await i.client.db.commit()
+    
     @commands.Cog.listener()
     async def on_message(self, message):
         if message.author == self.bot.user:
