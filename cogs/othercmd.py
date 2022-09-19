@@ -55,7 +55,7 @@ class OtherCMDCog(commands.Cog, name="other"):
             desc = ''
             for index, tpl in enumerate(data):
                 user = i.guild.get_member(tpl[0]) or await i.guild.fetch_member(tpl[0])
-                desc += f'{index+1}. {user.mention} - {tpl[1]}次'
+                desc += f'{index+1}. {user.mention} - {tpl[1]}次\n'
             embed.description = desc
             await i.response.send_message(embed=embed)
         else:
