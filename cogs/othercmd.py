@@ -44,7 +44,7 @@ class OtherCMDCog(commands.Cog, name="other"):
         await i.client.db.commit()
 
     @app_commands.command(name="haose", description="好色喔")
-    @app_commands.rename(user='使用者', leaderbaord='排行榜')
+    @app_commands.rename(user='使用者', leaderboard='排行榜')
     @app_commands.choices(leaderboard=[Choice(name='查看排行榜', value=1)])
     async def hao_se_o(self, i: Interaction, user: Member = None, leaderboard: int = 0):
         c = await i.client.db.cursor()
