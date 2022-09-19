@@ -42,7 +42,7 @@ class OtherCMDCog(commands.Cog, name="other"):
         )
         await i.client.db.commit()
 
-    @app_commands.command(name="好色喔", description="好色喔")
+    @app_commands.command(name="haose", description="好色喔")
     async def hao_se_o(self, i: Interaction, user: Member = None):
         user = user or i.user
         c = await i.client.db.cursor()
