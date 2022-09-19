@@ -28,7 +28,7 @@ class OtherCMDCog(commands.Cog, name="other"):
 
     async def hao_se_o_context_menu(self, i: Interaction, message: Message):
         c = await i.client.db.cursor()
-        await i.response.defer()
+        await i.response.send_message('已新增', ephemeral=True)
         emojis = [
             "<:word_hao:1021424223199187025>",
             "<:word_se:1021424220976193646>",
