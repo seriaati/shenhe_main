@@ -51,9 +51,9 @@ class OtherCMDCog(commands.Cog, name="other"):
         if leaderboard == 1:
             await c.execute('SELECT user_id, count FROM hao_se_o ORDER BY count DESC')
             data = await c.fetchall()
-            embed =  defaultEmbed('好色喔排行榜')
+            embed =  defaultEmbed('好色喔排行榜前15名')
             desc = ''
-            for index, tpl in enumerate(data):
+            for index, tpl in enumerate(data[:15]):
                 user = i.guild.get_member(tpl[0]) or await i.guild.fetch_member(tpl[0])
                 desc += f'{index+1}. {user.mention} - {tpl[1]}次\n'
             embed.description = desc
