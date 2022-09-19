@@ -38,7 +38,7 @@ class OtherCMDCog(commands.Cog, name="other"):
             await message.add_reaction(e)
         await c.execute(
             "INSERT INTO hao_se_o (user_id, count) VALUES(?, ?) ON CONFLICT (user_id) DO UPDATE SET count = count + 1 WHERE user_id = ?",
-            (i.user.id, 1, i.user.id),
+            (message.author.id, 1, message.author.id),
         )
         await i.client.db.commit()
 
