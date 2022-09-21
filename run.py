@@ -55,9 +55,8 @@ class ShenheBot(commands.Bot):
     async def setup_hook(self) -> None:
         self.session = aiohttp.ClientSession()
         self.db = await aiosqlite.connect('main.db')
-        c = await self.db.cursor()
-        await c.execute('CREATE TABLE IF NOT EXISTS hao_se_o (user_id INTEGER PRIMARY KEY, count INTEGER)')
-        await self.db.commit()
+        self.repeat = False
+        self.prev = False
         self.debug_toggle = debug_toggle
         self.enka_client = EnkaNetworkAPI()
         await self.load_extension('jishaku')

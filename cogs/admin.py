@@ -16,12 +16,31 @@ from discord import (
 )
 from discord.ext import commands
 from utility.utils import defaultEmbed, errEmbed, time_in_range
+import importlib
+import sys
 
 
 class AdminCog(commands.Cog):
     def __init__(self, bot):
         self.bot: commands.Bot = bot
         self.debug: bool = self.bot.debug_toggle
+
+    @app_commands.command(name="reload", description="重新載入擴充功能")
+    async def reload(self, i: Interaction):
+        await i.response.defer()
+        modules = list(sys.modules.values())
+        for module in modules:
+            if module is None:
+                continue
+            if module.__name__.startswith(("cogs.", "utility.")):
+                try:
+                    importlib.reload(module)
+                except Exception as e:
+                    return await i.followup.send(
+                        embed=errEmbed(module.__name__, f"```{e}```"),
+                        ephemeral=True,
+                    )
+        await i.followup.send("success", ephemeral=True)
 
     @commands.Cog.listener()
     async def on_message(self, message: Message):
