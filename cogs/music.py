@@ -12,7 +12,7 @@ from wavelink.ext import spotify
 load_dotenv()
 
 
-class MusicCog(commands.GroupCog, name="music"):
+class MusicCog(commands.Cog):
     def __init__(self, bot: commands.Bot):
         super().__init__()
         self.bot = bot
@@ -48,7 +48,7 @@ class MusicCog(commands.GroupCog, name="music"):
         except asyncio.TimeoutError:
             await player.disconnect()
 
-    @app_commands.command(name="music", description="music")
+    @app_commands.command(name="music", description="播放音樂")
     async def music(self, i: Interaction):
         if i.user.voice is None:
             return await i.response.send_message(
