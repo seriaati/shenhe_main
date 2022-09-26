@@ -205,7 +205,7 @@ fish_data = {
         'type_0': False,
         'cute': True,
         'verb': ['潑了一臉香菇','扇了一巴掌',],
-        'image_url': 'https://imgur.com/a/JIA52KH.png'
+        'image_url': 'https://i.imgur.com/7ZZ2dHL.png'
     },
     '咲希': {
         'flow': 10,
