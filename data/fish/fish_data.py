@@ -168,7 +168,7 @@ fish_data = {
         'image_url': 'https://i.imgur.com/4V1gKTJ.jpg'
     },
     '奏': {
-        'flow': 10,
+        'flow': 39,
         'flow_chance': None,
         'type_0': False,
         'cute': True,
@@ -205,7 +205,7 @@ fish_data = {
         'type_0': False,
         'cute': True,
         'verb': ['潑了一臉香菇','扇了一巴掌',],
-        'image_url': 'https://i.imgur.com/bVNHgMy.jpg'
+        'image_url': 'https://imgur.com/a/JIA52KH.png'
     },
     '咲希': {
         'flow': 10,
@@ -231,22 +231,6 @@ fish_data = {
         'verb': ['打飛了','扇了一巴掌','踢了一腳'],
         'image_url': 'https://i.imgur.com/6eSbhSm.jpg'
     },
-    '瑠夏': {
-        'flow': 13,
-        'flow_chance': None,
-        'type_0': False,
-        'cute': True,
-        'verb': ['扇了一巴掌',],
-        'image_url': 'https://i.imgur.com/i11S3G5.jpg'
-    },
-    '麻美': {
-        'flow': 14,
-        'flow_chance': None,
-        'type_0': False,
-        'cute': False,
-        'verb': ['打飛了','扇了一巴掌','誘惑了'],
-        'image_url': 'https://i.imgur.com/whojfGO.png'
-    },
     '櫻澤墨': {
         'flow': 13,
         'flow_chance': None,
@@ -254,6 +238,14 @@ fish_data = {
         'cute': True,
         'verb': ['...了',],
         'image_url': 'https://i.imgur.com/Uki0etF.png'
+    },
+    'Suisei': {
+        'flow': 12,
+        'flow_chance': None,
+        'type_0': False,
+        'cute': True,
+        'verb': ['扇了一巴掌',],
+        'image_url': 'https://yt3.ggpht.com/ytc/AMLnZu-0m7dbn-y21dl-MfaM8t36EbRRwib1hnHzCMkwbg=s900-c-k-c0x00ffffff-no-rj'
     },
     
     
