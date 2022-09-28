@@ -16,7 +16,8 @@ class MusicCog(commands.Cog):
     def __init__(self, bot: commands.Bot):
         super().__init__()
         self.bot = bot
-        bot.loop.create_task(self.connect_nodes())
+        if not self.bot.debug_toggle:
+            bot.loop.create_task(self.connect_nodes())
 
     async def connect_nodes(self):
         await self.bot.wait_until_ready()

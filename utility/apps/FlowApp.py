@@ -54,7 +54,7 @@ class FlowApp:
         await self.db.commit()
         user_log = '{0:+d}'.format(int(flow_for_user))
         bank_log = '{0:+d}'.format(-int(flow_for_user))
-        await c.execute('UPDATE flow_accounts SET last_trans = ? WHERE user_id = ?', (now, user_id))
+        await c.execute('UPDATE flow_accounts SET last_trans = ? WHERE user_id = ?', (datetime.strftime(now, "%Y/%m/%d %H:%M:%S"), user_id))
         await self.db.commit()
         log(True, False, 'Transaction',
             f'user({user_id}): {user_log}, bank: {bank_log}')

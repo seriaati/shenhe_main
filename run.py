@@ -55,6 +55,7 @@ class ShenheBot(commands.Bot):
     async def setup_hook(self) -> None:
         self.session = aiohttp.ClientSession()
         self.db = await aiosqlite.connect('main.db')
+        await self.db.execute("CREATE TABLE IF NOT EXISTS custom_role (user_id INTEGER, tier INTEGER DEFAULT 0, role_id INTEGER, last_pay_time TEXT, PRIMARY KEY (user_id))")
         self.repeat = False
         self.prev = False
         self.debug_toggle = debug_toggle
