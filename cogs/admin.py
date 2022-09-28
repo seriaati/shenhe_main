@@ -83,7 +83,6 @@ class AdminCog(commands.Cog):
     @commands.Cog.listener()
     async def on_raw_message_delete(self, payload: RawMessageDeleteEvent):
         now = datetime.now()
-        now += timezone("Asia/Taipei").utcoffset(now)
         if payload.guild_id != 916838066117824553:
             return
         c: TextChannel = (
@@ -120,7 +119,6 @@ class AdminCog(commands.Cog):
     @commands.Cog.listener()
     async def on_member_join(self, member: Member):
         now = datetime.now()
-        now += timezone("Asia/Taipei").utcoffset(now)
         if member.guild.id != 916838066117824553:
             return
         c: TextChannel = (
@@ -138,7 +136,6 @@ class AdminCog(commands.Cog):
     @commands.Cog.listener()
     async def on_member_remove(self, member: Member):
         now = datetime.now()
-        now += timezone("Asia/Taipei").utcoffset(now)
         if member.guild.id != 916838066117824553:
             return
         c: TextChannel = (

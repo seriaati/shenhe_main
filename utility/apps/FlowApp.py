@@ -19,7 +19,6 @@ class FlowApp:
 
     async def transaction(self, user_id: int, flow_for_user: int, time_state: str = None, is_new_account: bool = False, is_removing_account: bool = False):
         now = datetime.now()
-        now += timezone('Asia/Taipei').utcoffset(now)
         time_states = ['morning', 'noon', 'night']
         if is_removing_account:
             log(True, False, 'Removing Acc',

@@ -57,7 +57,6 @@ class FlowCog(commands.Cog, name='flow'):
                     pass
                 return
             now = datetime.now()
-            now += timezone('Asia/Taipei').utcoffset(now)
             c: aiosqlite.Cursor = await self.bot.db.cursor()
             if "早" in message.content:
                 start = datetime(year=now.year, month=now.month,
