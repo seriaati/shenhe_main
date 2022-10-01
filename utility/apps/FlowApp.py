@@ -1,5 +1,4 @@
 from datetime import datetime, timedelta
-from pytz import timezone
 from typing import Union
 
 import aiosqlite
@@ -36,7 +35,7 @@ class FlowApp:
             await self.db.commit()
             return
         if is_new_account:
-            default_time = datetime.now()-timedelta(days=1)
+            default_time = now-timedelta(days=1)
             c = await self.db.cursor()
             await c.execute("INSERT INTO flow_accounts(user_id) VALUES(?)", (user_id,))
             await c.execute(
