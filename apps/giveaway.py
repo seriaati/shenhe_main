@@ -71,7 +71,7 @@ class Modal(ui.Modal):
 
     async def on_submit(self, i: Interaction):
         await i.client.db.execute(
-            "INSERT INTO giveaway_gifts (name, num) VALUES (?, ?) ON CONFLICT DO UPDATE SET num = ? WHERE name = ?",
+            "INSERT INTO giveaway_gifts (name, num) VALUES (?, ?) ON CONFLICT (name) DO UPDATE SET num = ? WHERE name = ?",
             (self.name.value, self.num.value, self.num.value, self.name.value),
         )
         await i.client.db.commit()
@@ -115,7 +115,7 @@ class StartModal(ui.Modal):
         async with i.client.db.execute("SELECT SUM(num) FROM giveaway_gifts") as cursor:
             gift_sum = (await cursor.fetchone())[0]
         await i.client.db.execute(
-            "INSERT INTO giveaway (id, goal, ticket, current, members) VALUES (1, ?, ?, 0, ?) ON CONFLICT DO UPDATE SET goal = ?, ticket = ?, current = 0, members = ? WHERE id = 1",
+            "INSERT INTO giveaway (id, goal, ticket, current, members) VALUES (1, ?, ?, 0, ?) ON CONFLICT (id) DO UPDATE SET goal = ?, ticket = ?, current = 0, members = ? WHERE id = 1",
             (
                 self.goal.value,
                 self.ticket.value,
