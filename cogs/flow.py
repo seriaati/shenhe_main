@@ -35,7 +35,7 @@ class FlowCog(commands.Cog, name="flow"):
             if not check:
                 await register_flow_account(user_id, self.bot.db)
             if "早" in message.content:
-                start = time(0, 0, 0)
+                start = time(4, 0, 0)
                 end = time(11, 59, 59)
                 gave = await free_flow(user_id, start, end, "morning", self.bot.db)
                 if gave:
@@ -48,7 +48,7 @@ class FlowCog(commands.Cog, name="flow"):
                     await message.add_reaction("<:noon:982608493313929246>")
             elif "晚" in message.content:
                 start = time(17, 0, 0)
-                end = time(23, 59, 59)
+                end = time(3, 59, 59)
                 gave = await free_flow(user_id, start, end, "night", self.bot.db)
                 if gave:
                     await message.add_reaction("<:night:982608497290125366>")
