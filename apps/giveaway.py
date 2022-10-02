@@ -325,7 +325,7 @@ async def reveal_giveaway_winner(i: Interaction):
                 members = i.guild.members
             msg = await i.channel.send(f"可能是... <@{random.choice(members)}>")
             await asyncio.sleep(1.5)
-            for _ in range(2):
+            for _ in range(3):
                 await msg.edit(content=f"可能是... <@{random.choice(members)}>")
                 await asyncio.sleep(1.5)
             winner_user = i.guild.get_member(winner)
