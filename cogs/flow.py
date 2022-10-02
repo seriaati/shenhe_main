@@ -186,7 +186,7 @@ class FlowCog(commands.Cog, name="flow"):
                     user_name = "(已離開伺服器)"
                 else:
                     user_name = discord_user.display_name
-                embed.description += f"{rank}. {user_name} {user[1]}\n"
+                embed.description += f"{rank}. {user_name} | {user[1]}\n"
                 rank += 1
             embeds.append(embed)
         await GeneralPaginator(i, embeds).start()
