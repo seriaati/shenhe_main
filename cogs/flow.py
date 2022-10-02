@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, time
 from typing import Any, List
 
 import aiosqlite
@@ -35,20 +35,20 @@ class FlowCog(commands.Cog, name="flow"):
             if not check:
                 await register_flow_account(user_id, self.bot.db)
             if "早" in message.content:
-                start = datetime.time(0, 0, 0)
-                end = datetime.time(11, 59, 59)
+                start = time(0, 0, 0)
+                end = time(11, 59, 59)
                 gave = await free_flow(user_id, start, end, "morning", self.bot.db)
                 if gave:
                     await message.add_reaction("<:morning:982608491426508810>")
             elif "午" in message.content:
-                start = datetime.time(12, 0, 0)
-                end = datetime.time(16, 59, 59)
+                start = time(12, 0, 0)
+                end = time(16, 59, 59)
                 gave = await free_flow(user_id, start, end, "noon", self.bot.db)
                 if gave:
                     await message.add_reaction("<:noon:982608493313929246>")
             elif "晚" in message.content:
-                start = datetime.time(17, 0, 0)
-                end = datetime.time(23, 59, 59)
+                start = time(17, 0, 0)
+                end = time(23, 59, 59)
                 gave = await free_flow(user_id, start, end, "night", self.bot.db)
                 if gave:
                     await message.add_reaction("<:night:982608497290125366>")
