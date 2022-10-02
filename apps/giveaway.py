@@ -21,7 +21,7 @@ class View(ui.View):
             name="未知錯誤", icon_url=i.user.display_avatar.url
         )
         await i.response.send_message(embed=embed)
-    
+
     async def interaction_check(self, i: Interaction) -> bool:
         role = utils.find(lambda r: r.name == "小雪團隊", i.guild.roles)
         return role in i.user.roles
@@ -99,6 +99,7 @@ class Start(ui.Button):
 
 
 class StartModal(ui.Modal):
+    goal = ui.TextInput(label="目標金額", placeholder="請輸入目標金額")
     ticket = ui.TextInput(label="參加抽獎所需金額", placeholder="請輸入參加抽獎所需金額")
 
     def __init__(self):
@@ -116,10 +117,10 @@ class StartModal(ui.Modal):
         await i.client.db.execute(
             "INSERT INTO giveaway (id, goal, ticket, current, members) VALUES (1, ?, ?, 0, ?) ON CONFLICT DO UPDATE SET goal = ?, ticket = ?, current = 0, members = ? WHERE id = 1",
             (
-                int(self.ticket.value)*int(gift_sum),
+                self.goal.value,
                 self.ticket.value,
                 "[]",
-                int(self.ticket.value)*int(gift_sum),
+                self.goal.value,
                 self.ticket.value,
                 "[]",
             ),
@@ -155,6 +156,7 @@ class Giveaway(ui.View):
         super().__init__(timeout=None)
         self.add_item(Join())
         self.add_item(Leave())
+        self.add_item(ForceEnd())
 
     async def on_error(self, i: Interaction, error, item):
         embed = error_embed(message=f"```\n{error}\n```").set_author(
@@ -173,6 +175,14 @@ class Join(ui.Button):
         ) as cursor:
             data = await cursor.fetchone()
         members = data[0]
+        members: List = ast.literal_eval(members)
+        if i.user.id in members:
+            return await i.response.send_message(
+                embed=error_embed().set_author(
+                    name="你已經參加過抽獎了", icon_url=i.user.display_avatar.url
+                ),
+                ephemeral=True,
+            )
         ticket = data[1]
         flow = await get_user_flow(i.user.id, i.client.db)
         if flow < int(ticket):
@@ -183,7 +193,6 @@ class Join(ui.Button):
                 ephemeral=True,
             )
         await flow_transaction(i.user.id, -ticket, i.client.db)
-        members: List = ast.literal_eval(members)
         members.append(i.user.id)
         await i.client.db.execute(
             "UPDATE giveaway SET members = ?, current = current + ?",
@@ -233,6 +242,36 @@ class Leave(ui.Button):
             embed=await return_giveaway_progress_embed(i), view=Giveaway()
         )
 
+
+class ForceEnd(ui.Button):
+    def __init__(self):
+        super().__init__(label="強制結束", style=ButtonStyle.grey, custom_id="force_end")
+
+    async def callback(self, i: Interaction):
+        role = utils.find(lambda r: r.name == "小雪團隊", i.guild.roles)
+        if role not in i.user.roles:
+            return await i.response.send_message(
+                embed=error_embed(message="你沒有權限").set_author(
+                    name="權限不足", icon_url=i.user.display_avatar.url
+                ),
+                ephemeral=True,
+            )
+        async with i.client.db.execute("SELECT members FROM giveaway") as cursor:
+            members = (await cursor.fetchone())[0]
+        members = ast.literal_eval(members)
+        async with i.client.db.execute("SELECT SUM(num) FROM giveaway_gifts") as cursor:
+            gift_sum = (await cursor.fetchone())[0]
+        if gift_sum > len(members):
+            return await i.response.send_message(
+                embed=error_embed(message="參與人數不足").set_author(
+                    name="獎品總數量大於目前參與人數", icon_url=i.user.display_avatar.url
+                ),
+                ephemeral=True,
+            )
+        await i.message.delete()
+        await reveal_giveaway_winner(i)
+
+
 async def return_giveaway_progress_embed(i: Interaction):
     embed = default_embed("🎉 抽獎啦 🎉")
     async with i.client.db.execute("SELECT * FROM giveaway") as cursor:
@@ -278,14 +317,22 @@ async def reveal_giveaway_winner(i: Interaction):
     index = 0
     for gift in gifts:
         for _ in range(gift[1]):
+            if not members:
+                members = i.guild.members
             winner = random.choice(members)
             members.remove(winner)
-            msg = await i.channel.send(f"抽獎中... <@{random.choice(members)}>")
+            if not members:
+                members = i.guild.members
+            msg = await i.channel.send(f"可能是... <@{random.choice(members)}>")
             await asyncio.sleep(1.5)
-            for _ in range(3):
-                await msg.edit(content=f"抽獎中... <@{random.choice(members)}>")
+            for _ in range(2):
+                await msg.edit(content=f"可能是... <@{random.choice(members)}>")
                 await asyncio.sleep(1.5)
-            await msg.edit(content=f"<@{winner}>")
+            winner_user = i.guild.get_member(winner)
+            winner_role = utils.find(lambda r: r.name == "抽獎得獎者", i.guild.roles)
+            await winner_user.add_roles(winner_role)
+            await asyncio.sleep(1.5)
+            await msg.edit(content=f"可能是...<@{winner}>")
             gift_list[index] = f"• {gift[0]} - <@{winner}>"
             value = ""
             gift_list.reverse()
