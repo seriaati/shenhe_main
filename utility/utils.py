@@ -1,5 +1,5 @@
 import os
-from datetime import datetime
+from datetime import datetime, time
 import discord
 import genshin
 from dotenv import load_dotenv
@@ -7,17 +7,23 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-def defaultEmbed(title: str = '', message: str = ''):
+def default_embed(title: str = '', message: str = ''):
     return discord.Embed(title=title, description=message, color=0xa68bd3)
 
 
-def ayaakaaEmbed(title: str = '', message: str = ''):
+def ayaaka_embed(title: str = '', message: str = ''):
     return discord.Embed(title=title, description=message, color=0xADC6E5)
 
 
-def errEmbed(title: str = '', message: str = ''):
+def error_embed(title: str = '', message: str = ''):
     return discord.Embed(title=title, description=message, color=0xfc5165)
 
+def time_in_range(start: time, end: time, x: time) -> bool:
+    """Return true if x is in the range [start, end]"""
+    if start <= end:
+        return start <= x <= end
+    else:
+        return start <= x or x <= end
 
 def log(is_system: bool, is_error: bool, log_type: str, log_msg: str):
     now = datetime.now()

@@ -1,422 +1,354 @@
-import calendar
 import uuid
 from datetime import datetime
 from typing import Any, List
 
 import aiosqlite
 import discord
+from apps.flow import (check_flow_account, flow_transaction, free_flow,
+                       get_blank_flow, get_user_flow, register_flow_account)
 from dateutil import parser
 from debug import DefaultView
-from discord import Button, Interaction, Member, SelectOption, TextStyle, app_commands
+from discord import (Button, Interaction, Member, SelectOption, TextStyle,
+                     app_commands)
 from discord.app_commands import Choice
 from discord.ext import commands
-from discord.ui import Select, Modal, TextInput
-from utility.apps.FlowApp import FlowApp
-from utility.utils import defaultEmbed, errEmbed, log
-from pytz import timezone
+from discord.ui import Modal, Select, TextInput
+from utility.paginators.paginator import GeneralPaginator
+from utility.utils import default_embed, divide_chunks, error_embed
 
 
-class FlowCog(commands.Cog, name='flow'):
+class FlowCog(commands.Cog, name="flow"):
     def __init__(self, bot) -> None:
         self.bot: commands.Bot = bot
-        self.flow_app = FlowApp(self.bot.db)
         self.debug_toggle = self.bot.debug_toggle
-        self.acc_context_menu = app_commands.ContextMenu(
-            name='查看 flow 帳號',
-            callback=self.acc_ctx_menu
-        )
-        self.give_context_menu = app_commands.ContextMenu(
-            name='給 flow 幣',
-            callback=self.give_ctx_menu
-        )
-        self.bot.tree.add_command(self.acc_context_menu)
-        self.bot.tree.add_command(self.give_context_menu)
-
-    async def cog_unload(self) -> None:
-        self.bot.tree.remove_command(
-            self.acc_context_menu.name, type=self.acc_context_menu.type)
-        self.bot.tree.remove_command(
-            self.give_context_menu.name, type=self.give_context_menu.type)
 
     @commands.Cog.listener()
     async def on_message(self, message):
         user_id = message.author.id
-        user = self.bot.get_user(message.author.id)
         if message.author.bot:
             return
 
         if "早" in message.content or "午" in message.content or "晚" in message.content:
-            if '早午晚' in message.content:
-                await message.add_reaction('<:PaimonSeria:958341967698337854>')
-                return
-            check, msg = await self.flow_app.checkFlowAccount(user_id)
-            if check == False:
-                try:
-                    await user.send(embed=msg)
-                except:
-                    pass
-                return
-            now = datetime.now()
-            c: aiosqlite.Cursor = await self.bot.db.cursor()
+            if "早午晚" in message.content:
+                return await message.add_reaction("<:PaimonSeria:958341967698337854>")
+            check = await check_flow_account(user_id, self.bot.db)
+            if not check:
+                await register_flow_account(user_id, self.bot.db)
             if "早" in message.content:
-                start = datetime(year=now.year, month=now.month,
-                                 day=now.day, hour=5, minute=0, second=0, microsecond=0)
-                end = datetime(year=now.year, month=now.month, day=now.day,
-                               hour=11, minute=59, second=0, microsecond=0)
-                if start <= now <= end:
-                    await c.execute('SELECT morning FROM flow_accounts WHERE user_id = ?', (user_id,))
-                    morning = await c.fetchone()
-                    if parser.parse(morning[0]).day != now.day:
-                        await self.flow_app.transaction(
-                            user_id, 1, time_state='morning')
-                        await message.add_reaction('<:morning:982608491426508810>')
+                start = datetime.time(0, 0, 0)
+                end = datetime.time(11, 59, 59)
+                gave = await free_flow(user_id, start, end, "morning", self.bot.db)
+                if gave:
+                    await message.add_reaction("<:morning:982608491426508810>")
             elif "午" in message.content:
-                start = datetime(year=now.year, month=now.month, day=now.day,
-                                 hour=12, minute=0, second=0, microsecond=0)
-                end = datetime(year=now.year, month=now.month, day=now.day,
-                               hour=17, minute=59, second=0, microsecond=0)
-                if start <= now <= end:
-                    await c.execute('SELECT noon FROM flow_accounts WHERE user_id = ?', (user_id,))
-                    noon = await c.fetchone()
-                    if parser.parse(noon[0]).day != now.day:
-                        await self.flow_app.transaction(
-                            user_id, 1, time_state='noon')
-                        await message.add_reaction('<:noon:982608493313929246>')
+                start = datetime.time(12, 0, 0)
+                end = datetime.time(16, 59, 59)
+                gave = await free_flow(user_id, start, end, "noon", self.bot.db)
+                if gave:
+                    await message.add_reaction("<:noon:982608493313929246>")
             elif "晚" in message.content:
-                start = datetime(year=now.year, month=now.month, day=now.day,
-                                 hour=18, minute=0, second=0, microsecond=0)
-                end = datetime(year=now.year, month=now.month+1 if now.day == calendar.monthrange(now.year, now.month)[
-                               1] else now.month, day=1 if now.day == calendar.monthrange(now.year, now.month)[1] else now.day+1, hour=4, minute=59, second=0, microsecond=0)
-                if start <= now <= end:
-                    await c.execute('SELECT night FROM flow_accounts WHERE user_id = ?', (user_id,))
-                    night = await c.fetchone()
-                    if parser.parse(night[0]).day != now.day:
-                        await self.flow_app.transaction(
-                            user_id, 1, time_state='night')
-                        await message.add_reaction('<:night:982608497290125366>')
+                start = datetime.time(17, 0, 0)
+                end = datetime.time(23, 59, 59)
+                gave = await free_flow(user_id, start, end, "night", self.bot.db)
+                if gave:
+                    await message.add_reaction("<:night:982608497290125366>")
 
-    @app_commands.command(name='acc帳號', description='查看flow帳號')
-    @app_commands.rename(member='其他人')
-    @app_commands.describe(member='查看其他群友的flow帳號')
+    def has_flow_account():
+        async def predicate(i: Interaction) -> bool:
+            check = await check_flow_account(i.user.id, i.client.db)
+            if not check:
+                await register_flow_account(i.user.id, i.client.db)
+            return True
+
+        return app_commands.check(predicate)
+
+    @has_flow_account()
+    @app_commands.command(name="acc", description="查看 flow 帳號")
+    @app_commands.rename(member="使用者")
+    @app_commands.describe(member="查看其他使用者的flow帳號")
     async def acc(self, i: Interaction, member: Member = None):
         member = member or i.user
-        check, msg = await self.flow_app.checkFlowAccount(member.id)
-        if check == False:
-            return await i.response.send_message(embed=msg, ephemeral=True)
-        db: aiosqlite.Connection = self.bot.db
-        c = await db.cursor()
-        await c.execute('SELECT morning, noon, night FROM flow_accounts WHERE user_id = ?', (member.id,))
-        result = await c.fetchone()
-        flow = await self.flow_app.get_user_flow(member.id)
-        time_state_str = ''
-        time_coin_list = ['<:morning:982608491426508810>',
-                          '<:noon:982608493313929246>', '<:night:982608497290125366>']
-        for index in range(0, 3):
-            new_time = (parser.parse(result[index])).strftime(
-                "%Y-%m-%d %H:%M:%S")
-            time_state_str += f'{time_coin_list[index]} {new_time}\n'
-        embed = defaultEmbed()
-        embed.add_field(name=f'{flow} flow', value=time_state_str)
-        embed.set_author(name=f'flow 帳號', icon_url=member.avatar)
+        async with i.client.db.execute(
+            "SELECT morning, noon, night FROM flow_accounts WHERE user_id = ?",
+            (member.id,),
+        ) as cursor:
+            data = await cursor.fetchone()
+        flow = await get_user_flow(member.id, i.client.db)
+        value = ""
+        emojis = [
+            "<:morning:982608491426508810>",
+            "<:noon:982608493313929246>",
+            "<:night:982608497290125366>",
+        ]
+        for index in range(3):
+            datetime_obj = parser.parse(data[index])
+            formated_time = datetime_obj.strftime("%Y-%m-%d %H:%M:%S")
+            value += f"{emojis[index]} {formated_time}\n"
+        embed = default_embed()
+        embed.add_field(name=f"{flow} flow", value=value)
+        embed.set_author(name=f"flow 帳號", icon_url=member.avatar)
         await i.response.send_message(embed=embed)
 
-    async def acc_ctx_menu(self, i: Interaction, member: Member):
-        check, msg = await self.flow_app.checkFlowAccount(member.id)
-        if check == False:
-            return await i.response.send_message(embed=msg, ephemeral=True)
-        db: aiosqlite.Connection = self.bot.db
-        c = await db.cursor()
-        await c.execute('SELECT morning, noon, night FROM flow_accounts WHERE user_id = ?', (member.id,))
-        result = await c.fetchone()
-        flow = await self.flow_app.get_user_flow(member.id)
-        time_state_str = ''
-        time_coin_list = ['<:morning:982608491426508810>',
-                          '<:noon:982608493313929246>', '<:night:982608497290125366>']
-        for index in range(0, 3):
-            new_time = (parser.parse(result[index])).strftime(
-                "%Y-%m-%d %H:%M:%S")
-            time_state_str += f'{time_coin_list[index]} {new_time}\n'
-        embed = defaultEmbed()
-        embed.add_field(name=f'{flow} flow', value=time_state_str)
-        embed.set_author(name=f'flow 帳號', icon_url=member.avatar)
-        await i.response.send_message(embed=embed, ephemeral=True)
-
-    @app_commands.command(name='give給錢', description='給其他人flow幣')
-    @app_commands.rename(member='某人', flow='要給予的flow幣數量')
+    @has_flow_account()
+    @app_commands.command(name="give", description="給其他人flow幣")
+    @app_commands.rename(member="使用者", flow="要給予的flow幣數量")
     async def give(self, i: Interaction, member: Member, flow: int):
-        log(False, False, 'Give', f'{i.user.id} give {flow} to {member.id}')
         if flow < 0:
             return await i.response.send_message(
-                embed=errEmbed(message='<:PaimonSeria:958341967698337854> 還想學土司跟ceye洗錢啊!').set_author(
-                    name='不可以給負數flow幣', icon_url=i.user.avatar),
-                ephemeral=True)
-        user_flow = await self.flow_app.get_user_flow(i.user.id)
+                embed=error_embed(
+                    message="<:PaimonSeria:958341967698337854> 還想學土司跟ceye洗錢啊!"
+                ).set_author(name="不可以給負數 flow 幣", icon_url=i.user.display_avatar.url),
+                ephemeral=True,
+            )
+        user_flow = await get_user_flow(i.user.id, i.client.db)
         if user_flow < flow:
-            return await i.response.send_message(embed=errEmbed(f'需要至少: {flow} flow').set_author(name="flow 幣不足", icon_url=i.user.avatar), ephemeral=True)
-        await self.flow_app.transaction(i.user.id, -flow)
-        await self.flow_app.transaction(member.id, flow)
-        embed = defaultEmbed(message=f"{self.bot.get_user(i.user.id).mention} **- {flow}** flow幣\n"
-                             f"{self.bot.get_user(member.id).mention} **+ {flow}** flow幣").set_author(name='交易成功', icon_url=i.user.avatar)
-        await i.response.send_message(content=f'{i.user.mention}{member.mention}', embed=embed)
-
-    class GiveFlowModal(Modal):
-        def __init__(self, member: Member):
-            super().__init__(
-                title=f'給 {member.display_name} flow 幣', timeout=None)
-
-        flow = discord.ui.TextInput(
-            label='Flow 幣數量',
-            placeholder='輸入要給予的 flow 幣數量',
+            return await i.response.send_message(
+                embed=error_embed(f"需要至少: {flow} flow").set_author(
+                    name="flow 幣不足", icon_url=i.user.display_avatar.url
+                ),
+                ephemeral=True,
+            )
+        await flow_transaction(i.user.id, -flow, i.client.db)
+        await flow_transaction(member.id, flow, i.client.db)
+        embed = default_embed(
+            message=f"{i.user.mention} | -{flow} flow\n"
+            f"{member.mention} | +{flow} flow"
+        ).set_author(name="交易成功", icon_url=i.user.display_avatar.url)
+        await i.response.send_message(
+            content=f"{i.user.mention} {member.mention}", embed=embed
         )
 
-        async def on_submit(self, i: Interaction) -> None:
-            await i.response.defer()
-            self.stop()
-
-    async def give_ctx_menu(self, i: Interaction, member: Member):
-        modal = FlowCog.GiveFlowModal(member)
-        await i.response.send_modal(modal)
-        await modal.wait()
-        flow = modal.flow.value
-        if not flow.isnumeric():
-            return await i.response.send_message(embed=errEmbed().set_author(name='請輸入數字', icon_url=i.user.avatar), ephemeral=True)
-        flow = int(flow)
-        log(False, False, 'Give', f'{i.user.id} give {flow} to {member.id}')
-        if flow < 0:
-            return await i.response.send_message(
-                embed=errEmbed(message='<:PaimonSeria:958341967698337854> 還想學土司跟ceye洗錢啊!').set_author(
-                    name='不可以給負數flow幣', icon_url=i.user.avatar),
-                ephemeral=True)
-        user_flow = await self.flow_app.get_user_flow(i.user.id)
-        if user_flow < flow:
-            return await i.response.send_message(embed=errEmbed(f'需要至少: {flow} flow').set_author(name="flow 幣不足", icon_url=i.user.avatar), ephemeral=True)
-        await self.flow_app.transaction(i.user.id, -flow)
-        await self.flow_app.transaction(member.id, flow)
-        embed = defaultEmbed(message=f"{self.bot.get_user(i.user.id).mention} **- {flow}** flow幣\n"
-                             f"{self.bot.get_user(member.id).mention} **+ {flow}** flow幣").set_author(name='交易成功', icon_url=i.user.avatar)
-        await i.followup.send(content=f'{i.user.mention}{member.mention}', embed=embed)
-
-    @app_commands.command(name='take收錢', description='將某人的flow幣轉回銀行')
-    @app_commands.rename(member='某人', flow='要拿取的flow幣數量', private='私人訊息')
-    @app_commands.choices(private=[
-        Choice(name='是', value=0),
-        Choice(name='否', value=1)])
-    @app_commands.checks.has_role('小雪團隊')
-    async def take(self, i: Interaction, member: Member, flow: int, private: int):
-        check, msg = await self.flow_app.checkFlowAccount(member.id)
-        if check == False:
-            await i.response.send_message(embed=msg, ephemeral=True)
-            return
-        await self.flow_app.transaction(member.id, -flow)
-        embed = defaultEmbed(
+    @app_commands.command(name="take", description="將一個使用者的 flow 幣轉回銀行")
+    @app_commands.rename(member="使用者", flow="要拿取的flow幣數量", private="私人訊息")
+    @app_commands.choices(
+        private=[Choice(name="是", value=1), Choice(name="否", value=0)]
+    )
+    @app_commands.checks.has_role("小雪團隊")
+    async def take(self, i: Interaction, member: Member, flow: int, private: int = 1):
+        check = await check_flow_account(member.id, i.client.db)
+        if not check:
+            await register_flow_account(member.id, i.client.db)
+        await flow_transaction(member.id, -flow, i.client.db)
+        embed = default_embed(
             "已成功施展「反」摩拉克斯的力量",
-            f"{i.user.mention} 從 {self.bot.get_user(member.id).mention} 的帳戶裡拿走了**{flow}**枚flow幣"
+            f"{i.user.mention} 從 {member.mention} 的帳戶裡拿走了 {flow} 枚 flow 幣",
         )
-        ephemeral_toggler = True if private == 0 else False
-        await i.response.send_message(embed=embed, ephemeral=ephemeral_toggler)
+        ephemeral = True if private == 1 else False
+        await i.response.send_message(embed=embed, ephemeral=ephemeral)
 
-    @app_commands.command(name='make送錢', description='從銀行轉出flow幣給某人')
-    @app_commands.rename(member='某人', flow='要給予的flow幣數量', private='私人訊息')
-    @app_commands.choices(private=[
-        Choice(name='是', value=0),
-        Choice(name='否', value=1)])
-    @app_commands.checks.has_role('小雪團隊')
+    @app_commands.command(name="make", description="從銀行轉出flow幣給某位使用者")
+    @app_commands.rename(member="使用者", flow="要給予的flow幣數量", private="私人訊息")
+    @app_commands.choices(
+        private=[Choice(name="是", value=1), Choice(name="否", value=0)]
+    )
+    @app_commands.checks.has_role("小雪團隊")
     async def make(self, i: Interaction, member: Member, flow: int, private: int = 1):
-        check, msg = await self.flow_app.checkFlowAccount(member.id)
-        if check == False:
-            await i.response.send_message(embed=msg, ephemeral=True)
-            return
-        await self.flow_app.transaction(member.id, int(flow))
-        acceptor = self.bot.get_user(member.id)
-        embed = defaultEmbed(
+        check = await check_flow_account(member.id, i.client.db)
+        if not check:
+            await register_flow_account(member.id, i.client.db)
+        await flow_transaction(member.id, flow, i.client.db)
+        embed = default_embed(
             "已成功施展摩拉克斯的力量",
-            f"{i.user.mention} 給了 {acceptor.mention} {flow} 枚flow幣"
+            f"{i.user.mention} 給了 {member.mention} {flow} 枚 flow 幣",
         )
-        ephemeral_toggler = True if private == 0 else False
-        await i.response.send_message(embed=embed, ephemeral=ephemeral_toggler)
+        ephemeral = True if private == 1 else False
+        await i.response.send_message(embed=embed, ephemeral=ephemeral)
 
-    @app_commands.command(name='total總額', description='查看目前群組帳號及銀行flow幣分配情況')
+    @app_commands.command(name="total", description="查看目前群組帳號及銀行 flow 幣分配情況")
     async def total(self, i: Interaction):
-        c: aiosqlite.Cursor = await self.bot.db.cursor()
-        await c.execute('SELECT SUM(flow) FROM flow_accounts')
-        sum = await c.fetchone()
-        bank = await self.flow_app.get_bank_flow()
-        await c.execute('SELECT COUNT(*) FROM flow_accounts')
-        account_count = await c.fetchone()
-        embed = defaultEmbed(
-            f'目前共{account_count[0]}個flow帳號',
-            f'用戶 {sum[0]} +銀行 {bank} = {sum[0]+bank} 枚flow幣'
+        bank = await get_blank_flow(i.client.db)
+        async with i.client.db.execute(
+            "SELECT COUNT(user_id) FROM flow_accounts"
+        ) as cursor:
+            user_count = (await cursor.fetchone())[0]
+            await cursor.execute("SELECT SUM(flow) FROM flow_accounts")
+            flow_sum = (await cursor.fetchone())[0]
+        embed = default_embed(
+            f"目前共 {user_count} 個 flow 帳號",
+            f"用戶 {flow_sum} + 銀行 {bank} = {flow_sum+bank} 枚 flow 幣",
         )
         await i.response.send_message(embed=embed)
 
-    @app_commands.command(name='flows所有帳號', description='查看群組內所有flow帳號')
-    @app_commands.rename(category='範圍')
-    @app_commands.describe(category='選擇要查看的flow幣範圍')
-    @app_commands.choices(category=[
-        Choice(name='小於 100 flow', value=0),
-        Choice(name='100~200 flow', value=1),
-        Choice(name='200~300 flow', value=2),
-        Choice(name='大於 300 flow', value=3),
-        Choice(name='總覽', value=4)])
-    async def flows(self, i: Interaction, category: int):
-        category_list = ['小於 100 flow', '100~200 flow',
-                         '200~300 flow', '大於 300 flow', '總覽']
-        result_list = []
-        c: aiosqlite.Cursor = await self.bot.db.cursor()
-        if category == 0:
-            await c.execute('SELECT user_id, flow FROM flow_accounts WHERE flow<100')
-            result = await c.fetchall()
-            for index, tuple in enumerate(result):
-                result_list.append(
-                    f'{i.client.get_user(tuple[0])}: {tuple[1]}')
-        elif category == 1:
-            await c.execute('SELECT user_id, flow FROM flow_accounts WHERE flow BETWEEN 100 AND 200')
-            result = await c.fetchall()
-            for index, tuple in enumerate(result):
-                result_list.append(
-                    f'{i.client.get_user(tuple[0])}: {tuple[1]}')
-        elif category == 2:
-            await c.execute('SELECT user_id, flow FROM flow_accounts WHERE flow BETWEEN 201 AND 300')
-            result = await c.fetchall()
-            for index, tuple in enumerate(result):
-                result_list.append(
-                    f'{i.client.get_user(tuple[0])}: {tuple[1]}')
-        elif category == 3:
-            await c.execute('SELECT user_id, flow FROM flow_accounts WHERE flow>300')
-            result = await c.fetchall()
-            for index, tuple in enumerate(result):
-                result_list.append(
-                    f'{i.client.get_user(tuple[0])}: {tuple[1]}')
-        elif category == 4:
-            await c.execute('SELECT user_id, flow FROM flow_accounts')
-            result = await c.fetchall()
-            for index, tuple in enumerate(result):
-                result_list.append(
-                    f'{i.client.get_user(tuple[0])}: {tuple[1]}'
-                )
-        if len(result_list) == 0:
-            await i.response.send_message(embed=errEmbed('此範圍還沒有任何 flow帳號'), ephemeral=True)
-        else:
-            value_str = ''
-            for user_str in result_list:
-                value_str += f'{user_str}\n'
-            await i.response.send_message(embed=defaultEmbed(category_list[category], value_str))
+    @app_commands.command(name="flow_leaderboard", description="查看 flow 幣排行榜")
+    async def flow_leaderboard(self, i: Interaction):
+        async with i.client.db.execute(
+            "SELECT user_id, flow FROM flow_accounts ORDER BY flow DESC"
+        ) as cursor:
+            data = await cursor.fetchall()
+        embeds = []
+        data = list(divide_chunks(data, 10))
+        rank = 1
+        for page_number, page in enumerate(data):
+            embed = default_embed(f"flow 幣排行榜 (第 {page_number+1} 頁)")
+            for _, user in enumerate(page):
+                discord_user = i.client.get_user(user[0])
+                if discord_user is None:
+                    user_name = "(已離開伺服器)"
+                else:
+                    user_name = discord_user.display_name
+                embed.description += f"{rank}. {user_name} {user[1]}\n"
+                rank += 1
+            embeds.append(embed)
+        await GeneralPaginator(i, embeds).start()
 
     class ShopItemView(DefaultView):
-        def __init__(self, item_names: List, action: str, db: aiosqlite.Connection, author: Member):
+        def __init__(
+            self,
+            item_names: List,
+            action: str,
+            db: aiosqlite.Connection,
+            author: Member,
+        ):
             super().__init__(timeout=None)
             self.author = author
             self.add_item(FlowCog.ShopItemSelect(item_names, action, db))
 
         async def interaction_check(self, interaction: Interaction) -> bool:
             if self.author.id != interaction.user.id:
-                await interaction.response.send_message(embed=errEmbed().set_author(name='輸入 `/shop` 來打開你的商店', icon_url=interaction.user.avatar), ephemeral=True)
+                await interaction.response.send_message(
+                    embed=error_embed().set_author(
+                        name="這不是你的操作視窗", icon_url=interaction.user.avatar
+                    ),
+                    ephemeral=True,
+                )
             return self.author.id == interaction.user.id
 
     class ShopItemSelect(Select):
         def __init__(self, item_names: List, action: str, db: aiosqlite.Connection):
             self.action = action
             self.db = db
-            self.flow_app = FlowApp(self.db)
             options = []
             for item_name in item_names:
                 options.append(SelectOption(label=item_name, value=item_name))
-            super().__init__(placeholder=f'選擇要購買的商品', min_values=1, max_values=1, options=options)
+            super().__init__(
+                placeholder=f"選擇要購買的商品", min_values=1, max_values=1, options=options
+            )
 
         async def callback(self, i: Interaction) -> Any:
-            c = await self.db.cursor()
-            if self.action == 'remove':
-                await c.execute('DELETE FROM flow_shop WHERE name = ?', (self.values[0],))
-                await i.response.send_message(f'商品**{self.values[0]}**移除成功', ephemeral=True)
-            elif self.action == 'buy':
-                await c.execute('SELECT flow, current, max FROM flow_shop WHERE name= ?', (self.values[0],))
-                result = await c.fetchone()
-                flow: int = result[0]
-                current: int = result[1]
-                max: int = result[2]
-                user_flow = await self.flow_app.get_user_flow(i.user.id)
+            if self.action == "remove":
+                await i.client.db.execute(
+                    "DELETE FROM flow_shop WHERE name = ?", (self.values[0],)
+                )
+                await i.client.db.commit()
+                await i.response.send_message(
+                    f"商品 **{self.values[0]}** 移除成功", ephemeral=True
+                )
+            elif self.action == "buy":
+                async with i.client.db.execute(
+                    "SELECT flow, current, max FROM flow_shop WHERE name= ?",
+                    (self.values[0],),
+                ) as cursor:
+                    data = await cursor.fetchone()
+                flow = data[0]
+                current = data[1]
+                max = data[2]
+                user_flow = await get_user_flow(i.user.id, i.client.db)
                 if user_flow < flow:
-                    return await i.response.send_message(embed=errEmbed().set_author(name="你的flow幣不足夠購買這項商品", icon_url=i.user.avatar), ephemeral=True)
+                    return await i.response.send_message(
+                        embed=error_embed().set_author(
+                            name="你的flow幣不足夠購買這項商品", icon_url=i.user.display_avatar.url
+                        ),
+                        ephemeral=True,
+                    )
                 if current == max:
-                    return await i.response.send_message(embed=errEmbed().set_author(name="這個商品已經售罄了", icon_url=i.user.avatar), ephemeral=True)
+                    return await i.response.send_message(
+                        embed=error_embed().set_author(
+                            name="此商品已售罄", icon_url=i.user.display_avatar.url
+                        ),
+                        ephemeral=True,
+                    )
                 log_uuid = str(uuid.uuid4())
-                await c.execute('UPDATE flow_shop SET current = ? WHERE name = ?', (current+1, self.values[0]))
-                await c.execute('INSERT INTO flow_shop_log (log_uuid) VALUES (?)', (log_uuid,))
-                await c.execute('UPDATE flow_shop_log SET flow = ?, item = ?, buyer_id = ? WHERE log_uuid = ?', (int(flow), self.values[0], int(i.user.id), str(log_uuid)))
-                await self.flow_app.transaction(i.user.id, -int(flow))
-                await i.response.send_message(f"<:wish:982419859117838386> {i.user.mention} 商品 **{self.values[0]}** 購買成功, 請稍等律律來交付商品")
+                async with i.client.db.execute(
+                    "UPDATE flow_shop SET current = ? WHERE name = ?",
+                    (current + 1, self.values[0]),
+                ) as cursor:
+                    await cursor.execute(
+                        "INSERT INTO flow_shop_log (log_uuid) VALUES (?)", (log_uuid,)
+                    )
+                    await cursor.execute(
+                        "UPDATE flow_shop_log SET flow = ?, item = ?, buyer_id = ? WHERE log_uuid = ?",
+                        (int(flow), self.values[0], int(i.user.id), str(log_uuid)),
+                    )
+                    await i.client.db.commit()
+                await flow_transaction(i.user.id, -flow, i.client.db)
+                await i.response.send_message(
+                    f"<:wish:982419859117838386> {i.user.mention} 商品 **{self.values[0]}** 購買成功, 請等候律律來交付商品"
+                )
                 msg = await i.original_response()
-                thread = await msg.create_thread(name=f'{i.user} • {self.values[0]} 購買討論串')
+                thread = await msg.create_thread(
+                    name=f"{i.user} • {self.values[0]} 購買討論串"
+                )
                 await thread.add_user(i.user)
                 lulurR = i.client.get_user(665092644883398671)
                 await thread.add_user(lulurR)
-                embed = defaultEmbed(
+                embed = default_embed(
                     "📜 購買證明",
                     f"購買人: {i.user.mention}\n"
                     f"商品: {self.values[0]}\n"
                     f"收據UUID: {log_uuid}\n"
-                    f"價格: {flow}")
+                    f"價格: {flow}",
+                )
                 await thread.send(embed=embed)
-                log(False, False, 'shop buy', i.user.id)
-            await self.db.commit()
 
-    @app_commands.command(name='shop商店', description='顯示 flow 商店')
+    @has_flow_account()
+    @app_commands.command(name="shop", description="flow 商店")
     async def show(self, i: Interaction):
-        check, msg = await self.flow_app.checkFlowAccount(i.user.id)
-        if check == False:
-            return await i.response.send_message(embed=msg, ephemeral=True)
-        c: aiosqlite.Cursor = await self.bot.db.cursor()
-        await c.execute('SELECT name, flow, current, max FROM flow_shop')
-        result = await c.fetchall()
-        item_str = ''
+        async with i.client.db.execute(
+            "SELECT name, flow, current, max FROM flow_shop"
+        ) as cursor:
+            data = await cursor.fetchall()
+        item_str = ""
         item_names = []
-        for index, tuple in enumerate(result):
-            item_names.append(tuple[0])
-            item_str += f'• {tuple[0]} - **{tuple[1]}** flow ({tuple[2]}/{tuple[3]})\n\n'
-        embed = defaultEmbed("🛒 flow商店", item_str)
-        view = FlowCog.ShopItemView(item_names, 'buy', self.bot.db, i.user)
+        for _, tpl in enumerate(data):
+            item_names.append(tpl[0])
+            item_str += f"• {tpl[0]} - **{tpl[1]}** flow ({tpl[2]}/{tpl[3]})\n\n"
+        embed = default_embed("🛒 flow商店", item_str)
+        view = FlowCog.ShopItemView(item_names, "buy", i.client.db, i.user)
         await i.response.send_message(embed=embed, view=view)
 
-    @app_commands.command(name='additem', description='新增商品')
-    @app_commands.rename(item='商品名稱', flow='價格', max='最大購買次數')
-    @app_commands.checks.has_role('小雪團隊')
+    @app_commands.command(name="additem", description="新增商品")
+    @app_commands.rename(item="商品名稱", flow="價格", max="最大購買次數")
+    @app_commands.checks.has_role("小雪團隊")
     async def additem(self, i: Interaction, item: str, flow: int, max: int):
-        c: aiosqlite.Cursor = await self.bot.db.cursor()
-        await c.execute('INSERT INTO flow_shop(name) values(?)', (item,))
-        await c.execute('UPDATE flow_shop SET flow = ?, current = 0, max = ? WHERE name = ?', (flow, max, item))
-        await self.bot.db.commit()
-        await i.response.send_message(f"商品**{item}**新增成功", ephemeral=True)
+        async with i.client.db.execute(
+            "INSERT INTO flow_shop (name) VALUES (?)", (item,)
+        ) as cursor:
+            await cursor.execute(
+                "UPDATE flow_shop SET flow = ?, current = 0, max = ? WHERE name = ?",
+                (flow, max, item),
+            )
+            await i.client.db.commit()
+        await i.response.send_message(f"商品 **{item}** 新增成功", ephemeral=True)
 
-    @app_commands.command(name='removeitem', description='刪除商品')
-    @app_commands.checks.has_role('小雪團隊')
+    @app_commands.command(name="removeitem", description="刪除商品")
+    @app_commands.checks.has_role("小雪團隊")
     async def removeitem(self, i: Interaction):
-        c: aiosqlite.Cursor = await self.bot.db.cursor()
-        await c.execute('SELECT name FROM flow_shop')
-        result = await c.fetchall()
+        async with i.client.db.execute("SELECT name FROM flow_shop") as cursor:
+            data = await cursor.fetchall()
         item_names = []
-        for index, tuple in enumerate(result):
-            item_names.append(tuple[0])
-        view = FlowCog.ShopItemView(
-            item_names, 'remove', self.bot.db, i.user)
+        for _, tpl in enumerate(data):
+            item_names.append(tpl[0])
+        view = FlowCog.ShopItemView(item_names, "remove", self.bot.db, i.user)
         await i.response.send_message(view=view, ephemeral=True)
 
-    def check_in_find_channel(self, channel_id: int):
-        find_channel_id = 909595117952856084 if self.debug_toggle else 960861105503232030
-        if channel_id != find_channel_id:
-            channel = self.bot.get_channel(find_channel_id)
-            return False, f"請在{channel.mention}裡使用此指令"
-        else:
-            return True, None
+    def in_find_channel():
+        async def predicate(i: Interaction) -> bool:
+            find_channel_id = (
+                909595117952856084 if i.client.debug_toggle else 960861105503232030
+            )
+            return i.channel.id == find_channel_id
+
+        return app_commands.check(predicate)
 
     async def check_flow(self, user_id: int, flow: int):
-        user_flow = await self.flow_app.get_user_flow(user_id)
+        user_flow = await get_user_flow(user_id, self.bot.db)
         if user_flow < 0 and flow >= 0:
             return True, None
         if flow < 0:
-            result = errEmbed("發布失敗, 請輸入大於 1 的flow幣")
+            result = error_embed("發布失敗, 請輸入大於 0 的flow幣")
             return False, result
         elif user_flow < int(flow):
-            result = errEmbed("發布失敗, 請勿輸入大於自己擁有數量的flow幣")
+            result = error_embed("發布失敗, 請勿輸入大於自己擁有數量的flow幣")
             return False, result
         else:
             return True, None
@@ -429,21 +361,32 @@ class FlowCog(commands.Cog, name='flow'):
 
         async def interaction_check(self, i: Interaction) -> bool:
             c = await self.db.cursor()
-            await c.execute('SELECT author_id FROM find WHERE msg_id = ?', (i.message.id,))
+            await c.execute(
+                "SELECT author_id FROM find WHERE msg_id = ?", (i.message.id,)
+            )
             author_id = await c.fetchone()
             author_id = author_id[0]
             if i.user.id == author_id:
-                await i.response.send_message(embed=errEmbed('不能自己接自己的委託'), ephemeral=True)
+                await i.response.send_message(
+                    embed=error_embed().set_author(
+                        name="不能自己接自己的委託", icon_url=i.user.display_avatar.url
+                    ),
+                    ephemeral=True,
+                )
             return i.user.id != author_id
 
-        @discord.ui.button(label='接受委託', style=discord.ButtonStyle.green, custom_id='accept_commision_button')
+        @discord.ui.button(
+            label="接受委託",
+            style=discord.ButtonStyle.green,
+            custom_id="accept_commision_button",
+        )
         async def confirm(self, i: Interaction, button: discord.ui.Button):
             self.stop()
             button.disabled = True
             await i.response.edit_message(view=self)
             msg = i.message
-            c: aiosqlite.Cursor = await self.db.cursor()
-            await c.execute('SELECT * FROM find WHERE msg_id = ?', (msg.id,))
+            c = await self.db.cursor()
+            await c.execute("SELECT * FROM find WHERE msg_id = ?", (msg.id,))
             result = await c.fetchone()
             flow = result[1]
             title = result[2]
@@ -451,111 +394,144 @@ class FlowCog(commands.Cog, name='flow'):
             author_id = result[4]
             author = i.client.get_user(author_id)
             confirmer = i.client.get_user(i.user.id)
-            await c.execute('SELECT uid FROM genshin_accounts WHERE user_id = ?', (confirmer.id,))
+            await c.execute(
+                "SELECT uid FROM genshin_accounts WHERE user_id = ?", (confirmer.id,)
+            )
             uid = (await c.fetchone())[0]
             thread = await msg.create_thread(name=f"{author.name} • {title}")
             await thread.add_user(author)
             await thread.add_user(confirmer)
             if type == 2:
-                await thread.send(embed=defaultEmbed(message=uid).set_author(name='接受人 uid', icon_url=confirmer.avatar))
-            action_str = ['委託', '素材委託', '委託', '幫助']
+                await thread.send(
+                    embed=default_embed(message=uid).set_author(
+                        name="接受人 uid", icon_url=confirmer.avatar
+                    )
+                )
+            action_str = ["委託", "素材委託", "委託", "幫助"]
             for index in range(1, 5):
                 if type == index:
-                    await i.followup.send(embed=defaultEmbed(message=f"{confirmer.mention} 已接受 {author.mention} 的 **{title}** {action_str[index-1]}").set_author(name='委託接受', icon_url=confirmer.avatar))
+                    await i.followup.send(
+                        embed=default_embed(
+                            message=f"{confirmer.mention} 已接受 {author.mention} 的 **{title}** {action_str[index-1]}"
+                        ).set_author(name="委託接受", icon_url=confirmer.avatar)
+                    )
             if type == 4:
-                embedDM = defaultEmbed(message=f"當{confirmer.mention}完成幫忙的內容時, 請按OK來結算flow幣\n"
-                                       f"按下後, 你的flow幣將會 **-{flow}**\n"
-                                       f"對方則會 **+{flow}**")
+                embedDM = default_embed(
+                    message=f"當{confirmer.mention}完成幫忙的內容時, 請按OK來結算flow幣\n"
+                    f"按下後, 你的flow幣將會 **-{flow}**\n"
+                    f"對方則會 **+{flow}**"
+                )
             else:
-                embedDM = defaultEmbed(message=f"當{confirmer.mention}完成委託的內容時, 請按OK來結算flow幣\n"
-                                       f"按下後, 你的flow幣將會 **-{flow}**\n"
-                                       f"對方則會 **+{flow}**")
-            embedDM.set_author(name='結算單', icon_url=author.avatar)
+                embedDM = default_embed(
+                    message=f"當{confirmer.mention}完成委託的內容時, 請按OK來結算flow幣\n"
+                    f"按下後, 你的flow幣將會 **-{flow}**\n"
+                    f"對方則會 **+{flow}**"
+                )
+            embedDM.set_author(name="結算單", icon_url=author.avatar)
             view = FlowCog.ConfirmView(self.db)
             confirm_message = await thread.send(embed=embedDM, view=view)
-            await c.execute('UPDATE find SET msg_id = ?, confirmer_id = ? WHERE msg_ID = ?', (confirm_message.id, i.user.id, i.message.id))
+            await c.execute(
+                "UPDATE find SET msg_id = ?, confirmer_id = ? WHERE msg_ID = ?",
+                (confirm_message.id, i.user.id, i.message.id),
+            )
+            await c.close()
             await self.db.commit()
 
     class ConfirmView(DefaultView):
         def __init__(self, db: aiosqlite.Connection):
             self.db = db
-            self.flow_app = FlowApp(self.db)
             super().__init__(timeout=None)
 
         async def interaction_check(self, i: Interaction) -> bool:
-            c = await self.db.cursor()
-            await c.execute('SELECT author_id FROM find WHERE msg_id = ?', (i.message.id,))
-            author_id = await c.fetchone()
-            author_id = author_id[0]
+            async with i.client.db.execute(
+                "SELECT author_id FROM find WHERE msg_id = ?", (i.message.id,)
+            ) as cursor:
+                author_id = (await cursor.fetchone())[0]
             if i.user.id != author_id:
-                await i.response.send_message(embed=errEmbed('你不是這個委託的發布者!'), ephemeral=True)
+                await i.response.send_message(
+                    embed=error_embed("你不是這個委託的發布者!"), ephemeral=True
+                )
             return i.user.id == author_id
 
-        @discord.ui.button(label='OK', style=discord.ButtonStyle.blurple, custom_id='ok_confirm_button')
+        @discord.ui.button(
+            label="OK", style=discord.ButtonStyle.blurple, custom_id="ok_confirm_button"
+        )
         async def ok_confirm(self, i: Interaction, button: Button):
             self.stop()
             button.disabled = True
             await i.response.edit_message(view=self)
-            c: aiosqlite.Cursor = await self.db.cursor()
-            await c.execute('SELECT * FROM find WHERE msg_id = ?', (i.message.id,))
+            c: aiosqlite.Cursor = await i.client.db.cursor()
+            await c.execute("SELECT * FROM find WHERE msg_id = ?", (i.message.id,))
             result = await c.fetchone()
             flow = result[1]
             title = result[2]
             type = result[3]
             author_id = result[4]
             confirmer_id = result[5]
-            str = ''
+            check = await check_flow_account(confirmer_id, i.client.db)
+            if not check:
+                await register_flow_account(confirmer_id, i.client.db)
+            str = ""
             author = i.client.get_user(author_id)
             confirmer = i.client.get_user(confirmer_id)
-            await c.execute('SELECT find_free_trial FROM flow_accounts WHERE user_id = ?', (author_id,))
-            result = await c.fetchone()
-            author_free_trial = result[0]
-            await c.execute('SELECT find_free_trial FROM flow_accounts WHERE user_id = ?', (confirmer_id,))
-            result = await c.fetchone()
-            if result is None:
-                await self.flow_app.register(confirmer_id)
-            await c.execute('SELECT find_free_trial FROM flow_accounts WHERE user_id = ?', (confirmer_id,))
-            result = await c.fetchone()
-            confirmer_free_trial = result[0]
+            await c.execute(
+                "SELECT find_free_trial FROM flow_accounts WHERE user_id = ?",
+                (author_id,),
+            )
+            author_free_trial = (await c.fetchone())[0]
+            await c.execute(
+                "SELECT find_free_trial FROM flow_accounts WHERE user_id = ?",
+                (confirmer_id,),
+            )
+            confirmer_free_trial = (await c.fetchone())[0]
             if type == 4:
                 new_flow = flow
                 if confirmer_free_trial < 10 and flow >= 10:
-                    new_flow = flow-10
-                    await c.execute('UPDATE flow_accounts SET find_free_trial = ? WHERE user_id = ?', (confirmer_free_trial+1, confirmer_id))
-                    str = f'({confirmer.mention}受到 10 flow幣贊助)\n'
-                    f'已使用 {confirmer_free_trial+1}/10 次贊助機會'
-                await self.flow_app.transaction(author_id, flow)
-                await self.flow_app.transaction(confirmer_id, -int(new_flow))
-                embed = defaultEmbed(
+                    new_flow = flow - 10
+                    await c.execute(
+                        "UPDATE flow_accounts SET find_free_trial = ? WHERE user_id = ?",
+                        (confirmer_free_trial + 1, confirmer_id),
+                    )
+                    str = f"({confirmer.mention}受到 10 flow幣贊助)\n"
+                    f"已使用 {confirmer_free_trial+1}/10 次贊助機會"
+                await flow_transaction(author_id, flow, i.client.db)
+                await flow_transaction(confirmer_id, -new_flow, i.client.db)
+                embed = default_embed(
                     "🆗 結算成功",
                     f"幫忙名稱: {title}\n"
                     f"幫助人: {author.mention} **+{flow}** flow幣\n"
-                    f"被幫助人: {confirmer.mention} **-{new_flow}** flow幣\n{str}")
+                    f"被幫助人: {confirmer.mention} **-{new_flow}** flow幣\n{str}",
+                )
             else:
                 new_flow = flow
                 if author_free_trial < 10 and flow >= 10:
-                    new_flow = flow-10
-                    await c.execute('UPDATE flow_accounts SET find_free_trial = ? WHERE user_id = ?', (author_free_trial+1, author_id))
-                    str = f'({author.mention}受到 10 flow幣贊助)\n'
-                    f'已使用 {author_free_trial+1}/10 次贊助機會'
-                await self.flow_app.transaction(author_id, -int(new_flow))
-                await self.flow_app.transaction(confirmer_id, flow)
-                embed = defaultEmbed(
+                    new_flow = flow - 10
+                    await c.execute(
+                        "UPDATE flow_accounts SET find_free_trial = ? WHERE user_id = ?",
+                        (author_free_trial + 1, author_id),
+                    )
+                    str = f"({author.mention}受到 10 flow幣贊助)\n"
+                    f"已使用 {author_free_trial+1}/10 次贊助機會"
+                await flow_transaction(author_id, -new_flow, i.client.db)
+                await flow_transaction(confirmer_id, flow, i.client.db)
+                embed = default_embed(
                     "🆗 結算成功",
                     f"委託名稱: {title}\n"
                     f"委託人: {author.mention} **-{new_flow}** flow幣\n"
-                    f"接收人: {confirmer.mention} **+{flow}** flow幣\n{str}")
+                    f"接收人: {confirmer.mention} **+{flow}** flow幣\n{str}",
+                )
             await i.followup.send(embed=embed)
             t = i.guild.get_thread(i.channel.id)
             await t.edit(archived=True, locked=True)
-            await c.execute('DELETE FROM find WHERE msg_id = ?', (i.message.id,))
+            await c.execute("DELETE FROM find WHERE msg_id = ?", (i.message.id,))
+            await c.close()
             await self.db.commit()
 
     class FindView(DefaultView):
         def __init__(self):
             super().__init__(timeout=None)
-            self.title = ''
-            self.description = ''
+            self.title = ""
+            self.description = ""
             self.flow = None
             self.type = None
 
@@ -565,15 +541,15 @@ class FlowCog(commands.Cog, name='flow'):
         def __init__(self):
             options = [
                 SelectOption(
-                    label='1類委託', description='其他玩家進入你的世界(例如: 陪玩, 打素材等)', value=1),
+                    label="1類委託", description="其他玩家進入你的世界(例如: 陪玩, 打素材等)", value=1
+                ),
+                SelectOption(label="2類委託", description="你進入其他玩家的世界(例如: 拿特產)", value=2),
                 SelectOption(
-                    label='2類委託', description='你進入其他玩家的世界(例如: 拿特產)', value=2),
-                SelectOption(
-                    label='3類委託', description='其他委託(例如: 打apex, valorant)', value=3),
-                SelectOption(
-                    label='4類委託', description='可以幫助別人(讓拿素材, 可幫打刀鐔等)', value=4)
+                    label="3類委託", description="其他委託(例如: 打apex, valorant)", value=3
+                ),
+                SelectOption(label="4類委託", description="可以幫助別人(讓拿素材, 可幫打刀鐔等)", value=4),
             ]
-            super().__init__(placeholder='選擇委託類型', options=options)
+            super().__init__(placeholder="選擇委託類型", options=options)
 
         async def callback(self, i: Interaction) -> Any:
             self.view: FlowCog.FindView
@@ -587,49 +563,43 @@ class FlowCog(commands.Cog, name='flow'):
             self.view.stop()
 
     class FindModal(Modal):
-        find_title = TextInput(
-            label='標題',
-            placeholder='跟公子以及他的同夥要錢錢！'
-        )
+        find_title = TextInput(label="標題", placeholder="跟公子以及他的同夥要錢錢！")
         description = TextInput(
-            label='敘述',
-            placeholder='打周本 x5',
-            style=TextStyle.long,
-            required=False
+            label="敘述", placeholder="打周本 x5", style=TextStyle.long, required=False
         )
-        flow = TextInput(
-            label='flow 幣數量',
-            placeholder='100'
-        )
+        flow = TextInput(label="flow 幣數量", placeholder="100")
 
         def __init__(self) -> None:
-            super().__init__(title='發布委託', timeout=None)
+            super().__init__(title="發布委託", timeout=None)
 
         async def on_submit(self, i: Interaction) -> None:
             if not self.flow.value.isnumeric():
-                return await i.response.send_message(embed=errEmbed(message='例如 100, 1000, 10000').set_author(name='flow 幣數量: 請輸入數字', icon_url=i.user.avatar), ephemeral=True)
+                return await i.response.send_message(
+                    embed=error_embed(message="例如 100, 1000, 10000").set_author(
+                        name="flow 幣數量: 請輸入數字", icon_url=i.user.display_avatar.url
+                    ),
+                    ephemeral=True,
+                )
             self.stop()
             await i.response.defer()
 
-    @app_commands.command(name='find', description='發布委託')
-    @app_commands.rename(tag='tag人開關')
-    @app_commands.describe(tag='是否要tag委託通知?')
-    @app_commands.choices(tag=[Choice(name='不tag', value=0), Choice(name='tag', value=1)])
+    @in_find_channel()
+    @has_flow_account()
+    @app_commands.command(name="find", description="發布委託")
+    @app_commands.rename(tag="tag人開關")
+    @app_commands.describe(tag="是否要tag 委託通知 身份組?")
+    @app_commands.choices(
+        tag=[Choice(name="不 tag", value=0), Choice(name="我 tag 爆", value=1)]
+    )
     async def find(self, i: Interaction, tag: int = 1):
-        check, msg = self.check_in_find_channel(i.channel.id)
-        if not check:
-            return await i.response.send_message(msg, ephemeral=True)
-        check, msg = await self.flow_app.checkFlowAccount(i.user.id)
-        if check == False:
-            await i.response.send_message(embed=msg, ephemeral=True)
-            return
         channel = i.client.get_channel(962311051683192842)
         role_found = False
         if not self.debug_toggle:
             WLroles = []
             for index in range(1, 9):
-                WLroles.append(discord.utils.get(
-                    i.user.guild.roles, name=f"W{str(index)}"))
+                WLroles.append(
+                    discord.utils.get(i.user.guild.roles, name=f"W{str(index)}")
+                )
             for r in WLroles:
                 if r in i.user.roles:
                     role_name = r.name
@@ -639,7 +609,7 @@ class FlowCog(commands.Cog, name='flow'):
         view = FlowCog.FindView()
         await i.response.send_message(view=view, ephemeral=True)
         await view.wait()
-        if '' in [view.title, view.flow]:
+        if "" in [view.title, view.flow]:
             return
         flow = int(view.flow)
         title = view.title
@@ -652,63 +622,68 @@ class FlowCog(commands.Cog, name='flow'):
             return
 
         if not role_found:
-            role_str = f'請至 {channel.mention} 選擇世界等級身份組'
+            role_str = f"請至 {channel.mention} 選擇世界等級身份組"
         else:
             if type == 1:
-                if role_name == 'W8':
+                if role_name == "W8":
                     role_str = role_name
                 else:
-                    role_str = f'>= {role_name}'
+                    role_str = f">= {role_name}"
             else:
-                if role_name == 'W1':
+                if role_name == "W1":
                     role_str = role_name
                 else:
-                    role_str = f'<= {role_name}'
+                    role_str = f"<= {role_name}"
 
-        c: aiosqlite.Cursor = await self.bot.db.cursor()
-        await c.execute('SELECT uid FROM genshin_accounts WHERE user_id = ?', (i.user.id,))
+        c: aiosqlite.Cursor = await i.client.db.cursor()
+        await c.execute(
+            "SELECT uid FROM genshin_accounts WHERE user_id = ?", (i.user.id,)
+        )
         uid = await c.fetchone()
         uid = uid[0]
 
-        embed = defaultEmbed(title, description)
+        embed = default_embed(title, description)
         if type == 1:
-            embed.set_author(name='1 類委託 - 請求幫助')
+            embed.set_author(name="1 類委託 - 請求幫助")
             embed.add_field(
-                name='資訊',
-                value=f'發布者: {i.user.mention}\n'
-                f'flow幣: {flow}\n'
-                f'世界等級: {role_str}\n'
-                f'發布者 UID: {uid}'
+                name="資訊",
+                value=f"發布者: {i.user.mention}\n"
+                f"flow幣: {flow}\n"
+                f"世界等級: {role_str}\n"
+                f"發布者 UID: {uid}",
             )
         elif type == 2:
-            embed.set_author(name='2 類委託 - 需要素材')
+            embed.set_author(name="2 類委託 - 需要素材")
             embed.add_field(
-                name='資訊',
-                value=f'發布者: {i.user.mention}\n'
-                f'flow幣: {flow}\n'
-                f'世界等級: {role_str}\n'
-                f'發布者 UID: {uid}'
+                name="資訊",
+                value=f"發布者: {i.user.mention}\n"
+                f"flow幣: {flow}\n"
+                f"世界等級: {role_str}\n"
+                f"發布者 UID: {uid}",
             )
         elif type == 3:
-            embed.set_author(name='3 類委託 - 其他')
+            embed.set_author(name="3 類委託 - 其他")
             embed.add_field(
-                name='資訊',
-                value=f'發布者: {i.user.mention}\n'
-                f'flow幣: {flow}'
+                name="資訊", value=f"發布者: {i.user.mention}\n" f"flow幣: {flow}"
             )
         elif type == 4:
-            embed.set_author(name='1 類委託 - 可以幫助')
+            embed.set_author(name="1 類委託 - 可以幫助")
             embed.add_field(
-                name='資訊',
-                value=f'發布者: {i.user.mention}\n'
-                f'flow幣: {flow}\n'
-                f'世界等級: {role_name}\n'
-                f'發布者 UID: {uid}'
+                name="資訊",
+                value=f"發布者: {i.user.mention}\n"
+                f"flow幣: {flow}\n"
+                f"世界等級: {role_name}\n"
+                f"發布者 UID: {uid}",
             )
         view = self.AcceptView(self.bot.db, self.bot)
-        msg = await i.channel.send(content='<@&965141973700857876>' if tag == 1 else '', embed=embed, view=view)
-        c: aiosqlite.Cursor = await self.bot.db.cursor()
-        await c.execute('INSERT INTO find(msg_id, flow, title, type, author_id) VALUES (?, ?, ?, ?, ?)', (msg.id, flow, title, type, i.user.id))
+        msg = await i.channel.send(
+            content="<@&965141973700857876>" if tag == 1 else "", embed=embed, view=view
+        )
+        await c.execute(
+            "INSERT INTO find(msg_id, flow, title, type, author_id) VALUES (?, ?, ?, ?, ?)",
+            (msg.id, flow, title, type, i.user.id),
+        )
+        await c.close()
         await self.bot.db.commit()
 
 

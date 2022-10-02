@@ -8,25 +8,22 @@ from pathlib import Path
 
 import aiohttp
 import aiosqlite
-from discord import (Game, HTTPException, Intents, Interaction, Message,
+from discord import (Game, Intents, Interaction, Message,
                      Status, app_commands)
 from discord.ext import commands
 from dotenv import load_dotenv
 
-from cogs.flow import FlowCog
-from cogs.gvaway import GiveAwayCog
 from cogs.roles import ReactionRoles
 from cogs.welcome import WelcomeCog
 from debug import DebugView
-from utility.utils import errEmbed, log
-from enkanetwork import EnkaNetworkAPI
+from utility.utils import error_embed, log
 
 load_dotenv()
 user_name = getpass.getuser()
 if user_name == "seria":
-    token = os.getenv('YAE_TOKEN')
-    prefix = ['!', '！']
-    application_id = os.getenv('YAE_APP_ID')
+    token = os.getenv('YELAN_TOKEN')
+    prefix = ['?']
+    application_id = os.getenv('YELAN_APP_ID')
     debug_toggle = True
 else:
     token = os.getenv('SHENHE_MAIN_TOKEN')
@@ -58,21 +55,16 @@ class ShenheBot(commands.Bot):
         self.repeat = False
         self.prev = False
         self.debug_toggle = debug_toggle
-        self.enka_client = EnkaNetworkAPI()
         await self.load_extension('jishaku')
         for filepath in Path('./cogs').glob('**/*.py'):
             cog_name = Path(filepath).stem
             await self.load_extension(f'cogs.{cog_name}')
         if not self.debug_toggle:
-            self.add_view(FlowCog.AcceptView(self.db, self))
-            self.add_view(FlowCog.ConfirmView(self.db))
-            self.add_view(GiveAwayCog.GiveAwayView(self.db, self))
             self.add_view(ReactionRoles.WorldLevelView())
             self.add_view(ReactionRoles.RoleView())
             self.add_view(ReactionRoles.NationalityChooser([1, 2, 3]))
             self.add_view(WelcomeCog.AcceptRules(self.db))
             self.add_view(WelcomeCog.StartTutorial(self.db))
-            self.add_view(WelcomeCog.Welcome(None))
 
     async def on_ready(self):
         await self.change_presence(
@@ -112,8 +104,8 @@ tree = bot.tree
 @tree.error
 async def err_handle(i: Interaction, e: app_commands.AppCommandError):
     if isinstance(e, app_commands.errors.MissingRole):
-        embed = errEmbed(message='你不是小雪團隊的一員').set_author(
-            name='權限不足', icon_url=i.user.avatar)
+        embed = error_embed(message='你不是小雪團隊的一員').set_author(
+            name='權限不足', icon_url=i.user.display_avatar.url)
         if i.response._responded:
             await i.edit_original_response(embed=embed)
         else:
@@ -121,7 +113,7 @@ async def err_handle(i: Interaction, e: app_commands.AppCommandError):
     else:
         seria = i.client.get_user(410036441129943050)
         view = DebugView(traceback.format_exc())
-        embed = errEmbed(message=f'```py\n{e}\n```').set_author(
-            name='未知錯誤', icon_url=i.user.avatar)
+        embed = error_embed(message=f'```py\n{e}\n```').set_author(
+            name='未知錯誤', icon_url=i.user.display_avatar.url)
         await i.channel.send(content=f'{seria.mention} 系統已將錯誤回報給小雪, 請耐心等待修復', embed=embed, view=view)
 bot.run(token)

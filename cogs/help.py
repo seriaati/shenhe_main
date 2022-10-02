@@ -2,7 +2,7 @@ from discord.ui import Select
 from discord import SelectOption, app_commands, Interaction, Embed
 from discord.ext import commands
 from debug import DefaultView
-from utility.utils import defaultEmbed
+from utility.utils import default_embed
 
 
 class Dropdown(Select):
@@ -27,7 +27,7 @@ class Dropdown(Select):
                 selected_option = option
                 index = index
                 break
-        embed = defaultEmbed(
+        embed = default_embed(
             f'{selected_option.emoji} {selected_option.label}', selected_option.description)
         commands = self.bot.get_cog(cogs[index]).__cog_app_commands__
         for command in commands:
@@ -61,7 +61,7 @@ class HelpCog(commands.Cog):
             )
         return embed
 
-    @app_commands.command(name='help幫助', description='獲得幫助')
+    @app_commands.command(name='help', description='獲得幫助')
     async def help(self, interaction: Interaction):
         view = DropdownView(self.bot)
         await interaction.response.send_message(view=view)

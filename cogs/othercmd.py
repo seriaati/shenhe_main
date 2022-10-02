@@ -5,14 +5,12 @@ from discord import Interaction, Member, Message, Role, app_commands
 from discord.app_commands import Choice
 from discord.ext import commands
 from discord.ui import Button
-from utility.apps.FlowApp import FlowApp
-from utility.utils import defaultEmbed, errEmbed, log
+from utility.utils import default_embed, error_embed, log
 
 
 class OtherCMDCog(commands.Cog, name="other"):
     def __init__(self, bot):
         self.bot = bot
-        self.flow_app = FlowApp(self.bot.db)
         self.quote_ctx_menu = app_commands.ContextMenu(
             name="語錄", callback=self.quote_context_menu
         )
@@ -51,7 +49,7 @@ class OtherCMDCog(commands.Cog, name="other"):
         if leaderboard == 1:
             await c.execute('SELECT user_id, count FROM hao_se_o ORDER BY count DESC')
             data = await c.fetchall()
-            embed =  defaultEmbed('好色喔排行榜前15名')
+            embed =  default_embed('好色喔排行榜前15名')
             desc = ''
             for index, tpl in enumerate(data[:15]):
                 user = i.guild.get_member(tpl[0]) or await i.guild.fetch_member(tpl[0])
@@ -64,14 +62,14 @@ class OtherCMDCog(commands.Cog, name="other"):
             count = await c.fetchone()
             if count is None:
                 await i.response.send_message(
-                    embed=errEmbed().set_author(
+                    embed=error_embed().set_author(
                         name="這個人沒有色色過", icon_url=user.display_avatar.url
                     ),
                     ephemeral=True,
                 )
             else:
                 await i.response.send_message(
-                    embed=defaultEmbed(message=f"{count[0]}次").set_author(
+                    embed=default_embed(message=f"{count[0]}次").set_author(
                         name="好色喔", icon_url=user.display_avatar.url
                     )
                 )
@@ -103,7 +101,7 @@ class OtherCMDCog(commands.Cog, name="other"):
         if payload.emoji.name == "QuoteTimeWakuWaku":
             if payload.channel_id == 965842415913152522:
                 return await self.bot.get_channel(payload.channel_id).send(
-                    embed=errEmbed().set_author(name="不可以在色色台語錄唷"), delete_after=3
+                    embed=error_embed().set_author(name="不可以在色色台語錄唷"), delete_after=3
                 )
             log(True, False, "Quote", payload.user_id)
             member = self.bot.get_user(payload.user_id)
@@ -115,7 +113,7 @@ class OtherCMDCog(commands.Cog, name="other"):
             await channel.send(
                 f"<a:check_animated:982579879239352370> 語錄擷取成功", delete_after=3
             )
-            embed = defaultEmbed(
+            embed = default_embed(
                 f"語錄",
                 f"「{msg.content}」\n  -{msg.author.mention}\n\n[點我回到該訊息]({msg.jump_url})",
             )
@@ -155,12 +153,12 @@ class OtherCMDCog(commands.Cog, name="other"):
     async def quote(self, ctx):
         if ctx.message.channel.id == 965842415913152522:
             return await ctx.send(
-                embed=errEmbed().set_author(name="不可以在色色台語錄唷"), delete_after=3
+                embed=error_embed().set_author(name="不可以在色色台語錄唷"), delete_after=3
             )
         log(True, False, "Quote", ctx.author.id)
         await ctx.message.delete()
         msg = await ctx.channel.fetch_message(ctx.message.reference.message_id)
-        embed = defaultEmbed(
+        embed = default_embed(
             f"語錄",
             f"「{msg.content}」\n  -{msg.author.mention}\n\n[點我回到該訊息]({msg.jump_url})",
         )
@@ -179,7 +177,7 @@ class OtherCMDCog(commands.Cog, name="other"):
     @app_commands.rename(number="訊息數量", member="使用者")
     async def cleanup(self, interaction: Interaction, number: int, member: Member):
         await interaction.response.send_message(
-            embed=defaultEmbed("<a:LOADER:982128111904776242> 刪除中"), ephemeral=True
+            embed=default_embed("<a:LOADER:982128111904776242> 刪除中"), ephemeral=True
         )
 
         def is_me(m):
@@ -197,30 +195,30 @@ class OtherCMDCog(commands.Cog, name="other"):
             limit = 0
             msg_count += 1
         await interaction.edit_original_response(
-            embed=defaultEmbed(f"🗑️ 已移除來自 {member} 的 {number} 個訊息")
+            embed=default_embed(f"🗑️ 已移除來自 {member} 的 {number} 個訊息")
         )
 
     @app_commands.command(name="members總人數", description="查看目前群組總人數")
     async def members(self, i: Interaction):
         g = i.user.guild
         await i.response.send_message(
-            embed=defaultEmbed("群組總人數", f"目前共 {len(g.members)} 人")
+            embed=default_embed("群組總人數", f"目前共 {len(g.members)} 人")
         )
 
     async def quote_context_menu(self, i: Interaction, msg: Message) -> None:
         if msg.channel.id == 965842415913152522:
             return await i.response.send_message(
-                embed=errEmbed().set_author(name="不可以在色色台語錄唷"), ephemeral=True
+                embed=error_embed().set_author(name="不可以在色色台語錄唷"), ephemeral=True
             )
         log(True, False, "Quote", i.user.id)
-        embed = defaultEmbed(
+        embed = default_embed(
             f"語錄",
             f"「{msg.content}」\n  -{msg.author.mention}\n\n[點我回到該訊息]({msg.jump_url})",
         )
         embed.set_thumbnail(url=str(msg.author.avatar))
         channel = self.bot.get_channel(966549110540877875)
         await i.response.send_message(
-            embed=defaultEmbed().set_author(name="語錄擷取成功", icon_url=i.user.avatar),
+            embed=default_embed().set_author(name="語錄擷取成功", icon_url=i.user.display_avatar.url),
             ephemeral=True,
         )
         await channel.send(embed=embed)
@@ -235,13 +233,13 @@ class OtherCMDCog(commands.Cog, name="other"):
             memberStr += f"{count}. {member.mention}\n"
             count += 1
         await i.response.send_message(
-            embed=defaultEmbed(f"{role.name} ({len(role.members)})", memberStr)
+            embed=default_embed(f"{role.name} ({len(role.members)})", memberStr)
         )
 
     @app_commands.command(name="avatar頭像", description="查看一個用戶的頭像(並且偷偷下載)")
     @app_commands.rename(member="使用者")
     async def avatar(self, i: Interaction, member: Member):
-        embed = defaultEmbed(member)
+        embed = default_embed(member)
         view = DefaultView()
         view.add_item(Button(label="下載頭像", url=member.avatar.url))
         embed.set_image(url=member.avatar)

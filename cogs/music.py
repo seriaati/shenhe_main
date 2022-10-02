@@ -5,8 +5,8 @@ import wavelink
 from discord import Interaction, app_commands
 from discord.ext import commands
 from dotenv import load_dotenv
-from utility.apps import musicApp
-from utility.utils import errEmbed
+from apps import musicApp
+from utility.utils import error_embed
 from wavelink.ext import spotify
 
 load_dotenv()
@@ -16,7 +16,8 @@ class MusicCog(commands.Cog):
     def __init__(self, bot: commands.Bot):
         super().__init__()
         self.bot = bot
-        bot.loop.create_task(self.connect_nodes())
+        if not self.bot.debug_toggle:
+            bot.loop.create_task(self.connect_nodes())
 
     async def connect_nodes(self):
         await self.bot.wait_until_ready()
@@ -52,7 +53,7 @@ class MusicCog(commands.Cog):
     async def music(self, i: Interaction):
         if i.user.voice is None:
             return await i.response.send_message(
-                embed=errEmbed().set_author(
+                embed=error_embed().set_author(
                     name="請在語音台中使用此指令", icon_url=i.user.display_avatar.url
                 ),
                 ephemeral=True,
@@ -66,7 +67,7 @@ class MusicCog(commands.Cog):
         if player.channel.id != i.user.voice.channel.id:
             if player.is_playing():
                 return await i.response.send_message(
-                    embed=errEmbed(
+                    embed=error_embed(
                         message="你跟目前申鶴所在的語音台不同,\n且申鶴目前正在為那邊的使用者播歌\n請等待至對方播放完畢"
                     ).set_author(name="錯誤", icon_url=i.user.display_avatar.url),
                     ephemeral=True,

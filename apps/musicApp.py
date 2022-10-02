@@ -5,7 +5,7 @@ from typing import Any
 
 from discord import ButtonStyle, Interaction, Member, Embed, SelectOption
 from discord.ui import Button, Modal, Select, View, TextInput
-from utility.utils import defaultEmbed, errEmbed
+from utility.utils import default_embed, error_embed
 import wavelink
 import random
 from wavelink.ext import spotify
@@ -44,7 +44,7 @@ class View(View):
         check = i.user.id == self.author.id
         if not check:
             await i.response.send_message(
-                embed=errEmbed(message="自己用 /music 來打開一個播放器").set_author(
+                embed=error_embed(message="自己用 /music 來打開一個播放器").set_author(
                     name="你很懶餒", icon_url=i.user.display_avatar.url
                 ),
                 ephemeral=True,
@@ -53,7 +53,7 @@ class View(View):
 
     async def on_error(self, i: Interaction, error: Exception, item) -> None:
         await i.channel.send(
-            embed=errEmbed(message=f"```py\n{error}\n```").set_author(
+            embed=error_embed(message=f"```py\n{error}\n```").set_author(
                 name="出錯了餒", icon_url=i.user.display_avatar.url
             )
         )
@@ -241,7 +241,7 @@ class AddSongModal(Modal):
         if re.match(regex, query) is not None:  # query is a url
             if decoded := spotify.decode_url(query):
                 if decoded["type"] is spotify.SpotifySearchType.unusable:
-                    embed = errEmbed().set_author(
+                    embed = error_embed().set_author(
                         name="無效的 Spotify 連結", icon_url=i.user.display_avatar.url
                     )
                     await i.edit_original_response(
@@ -257,7 +257,7 @@ class AddSongModal(Modal):
                         player.queue.put(partial)
                     if not player.is_playing():
                         await player.play(first := player.queue[0])
-                    embed = defaultEmbed().set_author(
+                    embed = default_embed().set_author(
                         name="已新增 Spotify 播放清單/專輯", icon_url=i.user.display_avatar.url
                     )
                     if hasattr(first, "thumb"):
@@ -269,7 +269,7 @@ class AddSongModal(Modal):
                     )
                     await player.play(track)
                     embed = (
-                        defaultEmbed()
+                        default_embed()
                         .set_author(
                             name="已新增 Spotify 歌曲", icon_url=i.user.display_avatar.url
                         )
@@ -289,13 +289,13 @@ class AddSongModal(Modal):
                         )
                     except wavelink.errors.LoadTrackError:
                         return await i.followup.send(
-                            embed=errEmbed().set_author(
+                            embed=error_embed().set_author(
                                 name="無效的 YouTube 播放清單連結",
                                 icon_url=i.user.display_avatar.url,
                             ),
                             ephemeral=True,
                         )
-                    embed = defaultEmbed()
+                    embed = default_embed()
                     embed.set_author(
                         name="已新增 Youtube 播放清單", icon_url=i.user.display_avatar.url
                     )
@@ -321,7 +321,7 @@ class AddSongModal(Modal):
                         )
                     except IndexError:
                         return await i.followup.send(
-                            embed=errEmbed().set_author(
+                            embed=error_embed().set_author(
                                 name="無效的 YouTube 歌曲連結",
                                 icon_url=i.user.display_avatar.url,
                             ),
@@ -332,7 +332,7 @@ class AddSongModal(Modal):
                     else:
                         player.queue.put(track)
                     embed = (
-                        defaultEmbed()
+                        default_embed()
                         .set_author(
                             name="已新增 Youtube 歌曲", icon_url=i.user.display_avatar.url
                         )
@@ -351,7 +351,7 @@ class AddSongModal(Modal):
                         label=track.title, description=track.author, value=track.uri
                     )
                 )
-            embed = defaultEmbed().set_author(
+            embed = default_embed().set_author(
                 name=f"關鍵字搜尋: {query}", icon_url=i.user.display_avatar.url
             )
             view.clear_items()
@@ -381,7 +381,7 @@ class ChooseSongSelect(Select):
             await player.play(track)
         else:
             player.queue.put(track)
-        embed = defaultEmbed()
+        embed = default_embed()
         embed.set_author(name="已新增 Youtube 歌曲", icon_url=i.user.display_avatar.url)
         embed.set_image(url=track.thumb)
         await i.edit_original_response(embed=embed, view=self.view)
@@ -397,7 +397,7 @@ class Reload(Button):
         await return_music_embeds(i, i.guild.voice_client)
 
 async def get_player_embed(player: wavelink.Player) -> Embed:
-    embed = defaultEmbed()
+    embed = default_embed()
     current = player.track
     if current is None:
         embed.title = "目前沒有正在播放的歌曲"
@@ -414,7 +414,7 @@ async def get_player_embed(player: wavelink.Player) -> Embed:
 
 
 async def get_queue_embed(queue: wavelink.Queue, repeat: bool) -> Embed:
-    embed = defaultEmbed()
+    embed = default_embed()
     if queue.is_empty:
         embed.title = "空的待播放清單"
         embed.description = "點按下方的按鈕來新增歌曲"

@@ -15,7 +15,7 @@ from discord import (
     app_commands,
 )
 from discord.ext import commands
-from utility.utils import defaultEmbed, errEmbed, time_in_range
+from utility.utils import default_embed, error_embed, time_in_range
 import importlib
 import sys
 
@@ -32,12 +32,12 @@ class AdminCog(commands.Cog):
         for module in modules:
             if module is None:
                 continue
-            if module.__name__.startswith(("cogs.", "utility.")):
+            if module.__name__.startswith(("cogs.", "utility.", "apps.", "data.")):
                 try:
                     importlib.reload(module)
                 except Exception as e:
                     return await i.followup.send(
-                        embed=errEmbed(module.__name__, f"```{e}```"),
+                        embed=error_embed(module.__name__, f"```{e}```"),
                         ephemeral=True,
                     )
         await i.followup.send("success", ephemeral=True)
@@ -98,7 +98,7 @@ class AdminCog(commands.Cog):
             attachment_str = (
                 "(含有附件)" if len(payload.cached_message.attachments) != 0 else ""
             )
-            embed = defaultEmbed(
+            embed = default_embed(
                 "訊息刪除",
                 f"「{payload.cached_message.content} {attachment_str}」\n\n"
                 f"用戶: {payload.cached_message.author.mention}\n"
@@ -126,7 +126,7 @@ class AdminCog(commands.Cog):
             if not self.bot.debug_toggle
             else self.bot.get_channel(909595117952856084)
         )
-        embed = defaultEmbed(
+        embed = default_embed(
             "進群", f"用戶: {member.mention}\n" f'時間: {now.strftime("%m/%d/%Y %H:%M:%S")}\n'
         )
         embed.set_author(name=member, icon_url=member.avatar)
@@ -143,7 +143,7 @@ class AdminCog(commands.Cog):
             if not self.bot.debug_toggle
             else self.bot.get_channel(909595117952856084)
         )
-        embed = defaultEmbed(
+        embed = default_embed(
             "退群", f"用戶: {member.mention}\n" f'時間: {now.strftime("%m/%d/%Y %H:%M:%S")}\n'
         )
         embed.set_author(name=member, icon_url=member.avatar)
@@ -162,7 +162,7 @@ class AdminCog(commands.Cog):
         )
         await member.add_roles(role)
         await i.response.send_message(
-            embed=defaultEmbed(
+            embed=default_embed(
                 message=f"{member.mention} 已被 {i.user.mention} 禁言 {minute} 分鐘"
             ).set_author(name="禁言", icon_url=member.avatar)
         )
@@ -181,7 +181,7 @@ class AdminCog(commands.Cog):
         )
         await member.remove_roles(role)
         await i.response.send_message(
-            embed=defaultEmbed(
+            embed=default_embed(
                 message=f"{i.user.mention} 已取消 {member.mention} 的禁言"
             ).set_author(name="取消禁言", icon_url=member.avatar)
         )

@@ -3,7 +3,7 @@ from discord import ButtonStyle, Interaction, SelectOption, app_commands
 from discord.ext import commands
 from discord.ui import Button, Select
 from discord.utils import get
-from utility.utils import defaultEmbed, errEmbed
+from utility.utils import default_embed, error_embed
 
 
 class ReactionRoles(commands.Cog):
@@ -28,15 +28,15 @@ class ReactionRoles(commands.Cog):
             r = get(g.roles, name=f'W{self.number}')
             if r in interaction.user.roles:
                 await interaction.user.remove_roles(r)
-                await interaction.response.send_message(embed=defaultEmbed().set_author(name=f'已撤回世界等級{self.number}身份組', icon_url=interaction.user.avatar), ephemeral=True)
+                await interaction.response.send_message(embed=default_embed().set_author(name=f'已撤回世界等級{self.number}身份組', icon_url=interaction.user.avatar), ephemeral=True)
             else:
                 for index in range(1, 9):
                     r = get(g.roles, name=f'W{index}')
                     if r in interaction.user.roles:
-                        return await interaction.response.send_message(embed=errEmbed(message='請先按該數字撤回身份組再選擇新的').set_author(name=f'你已經擁有世界等級{index}身份組了', icon_url=interaction.user.avatar), ephemeral=True)
+                        return await interaction.response.send_message(embed=error_embed(message='請先按該數字撤回身份組再選擇新的').set_author(name=f'你已經擁有世界等級{index}身份組了', icon_url=interaction.user.avatar), ephemeral=True)
                 r = get(g.roles, name=f'W{self.number}')
                 await interaction.user.add_roles(r)
-                await interaction.response.send_message(embed=defaultEmbed().set_author(name=f'已給予世界等級{self.number}身份組', icon_url=interaction.user.avatar), ephemeral=True)
+                await interaction.response.send_message(embed=default_embed().set_author(name=f'已給予世界等級{self.number}身份組', icon_url=interaction.user.avatar), ephemeral=True)
 
     class RoleView(DefaultView):
         def __init__(self):
@@ -59,7 +59,7 @@ class ReactionRoles(commands.Cog):
                 await i.user.remove_roles(role)
             else:
                 await i.user.add_roles(role)
-            embed = defaultEmbed(
+            embed = default_embed(
                 '選擇身份組',
                 f'按一次會給予, 再按一次會移除\n\n'
                 f'委託通知: {len(get(i.guild.roles, name="委託通知").members)}\n'
@@ -72,7 +72,7 @@ class ReactionRoles(commands.Cog):
     @app_commands.checks.has_role('小雪團隊')
     async def get_role(self, i: Interaction):
         view = ReactionRoles.RoleView()
-        embed = defaultEmbed(
+        embed = default_embed(
             '選擇身份組',
             f'按一次會給予, 再按一次會移除\n\n'
             f'委託通知: {len(get(i.guild.roles, name="委託通知").members)}\n'
@@ -85,7 +85,7 @@ class ReactionRoles(commands.Cog):
     @app_commands.checks.has_role('小雪團隊')
     async def wr_role(self, i: Interaction):
         wr_menu = ReactionRoles.WorldLevelView()
-        embed = defaultEmbed(
+        embed = default_embed(
             '選擇你的原神世界等級',
             '按按鈕會給予對應身份組, 再按一次會撤回身份組')
         await i.response.send_message(embed=embed, view=wr_menu)
@@ -126,7 +126,7 @@ class ReactionRoles(commands.Cog):
     @app_commands.command(name='nationality', description='國籍身份組')
     @app_commands.checks.has_role('小雪團隊')
     async def nation_role(self, i: Interaction):
-        embed = defaultEmbed('國籍選擇', '選好玩的而已, 按照自己的直覺/心意選一個吧! (不選也是可以的哦)')
+        embed = default_embed('國籍選擇', '選好玩的而已, 按照自己的直覺/心意選一個吧! (不選也是可以的哦)')
         embed.add_field(
             name=':dango: 兔兔島',
             value='在一片迷霧之中 隱藏了一座世外桃源的島嶼\n'

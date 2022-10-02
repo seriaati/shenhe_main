@@ -6,17 +6,14 @@ from discord import ButtonStyle, Interaction, Member, Message, app_commands
 from discord.ext import commands
 from discord.ui import Button, button
 from debug import DefaultView
-from utility.apps.FlowApp import FlowApp
+from apps.flow import register_flow_account, remove_flow_account
 from utility.paginators.TutorialPaginator import TutorialPaginator
-from utility.utils import defaultEmbed, errEmbed, log
-from enkanetwork import UIDNotFounded, VaildateUIDError
-import traceback
+from utility.utils import default_embed, error_embed, log
 
 
 class WelcomeCog(commands.Cog):
     def __init__(self, bot) -> None:
         self.bot: commands.Bot = bot
-        self.flow_app = FlowApp(self.bot.db)
 
     @commands.Cog.listener()
     async def on_message(self, message: Message):
@@ -29,45 +26,19 @@ class WelcomeCog(commands.Cog):
                 return
             uid = int(num[0])
             if len(str(uid)) != 9:
-                return await message.channel.send(content=message.author.mention, embed=errEmbed().set_author(name='UID 長度需為9位數', icon_url=message.author.avatar))
-            if uid // 100000000 != 9:
-                return await message.channel.send(content=message.author.mention, embed=errEmbed().set_author(name='你不是台港澳服玩家', icon_url=message.author.avatar))
-            loading_message = await message.channel.send(content=message.author.mention, embed=defaultEmbed('<a:LOADER:982128111904776242> 正在驗證 UID...', uid))
-            try:
-                await self.bot.enka_client.fetch_user(uid)
-            except UIDNotFounded or VaildateUIDError:
-                await loading_message.delete()
-                await message.channel.send(content=message.author.mention, embed=errEmbed(message='如果你認為這是一個錯誤, 請私訊 <@410036441129943050>').set_author(name='無效的 UID', icon_url=message.author.avatar))          
-            except Exception as e:
-                print(traceback.format_exc())
-                await loading_message.delete()
-                await message.channel.send(content=message.author.mention, embed=errEmbed(message=f'請私訊 <@410036441129943050>').set_author(name='未知錯誤', icon_url=message.author.avatar))
-            else:
-                await loading_message.delete()
-                c: aiosqlite.Cursor = await self.bot.db.cursor()
-                await c.execute('SELECT user_id FROM genshin_accounts WHERE uid = ?', (uid,))
-                user_id = await c.fetchone()
-                if user_id is not None:
-                    uid_owner = self.bot.get_user(user_id[0])
-                    if uid_owner is None:
-                        await c.execute('DELETE FROM genshin_accounts WHERE user_id = ?', (user_id[0],))
-                    else:
-                        return await message.channel.send(content=message.author.mention, embed=errEmbed(message=f'{uid_owner.mention} 已經註冊這個 UID 了').set_author(name='UID 已被註冊', icon_url=message.author.avatar))
-                await c.execute('INSERT INTO genshin_accounts (user_id, uid) VALUES (?, ?) ON CONFLICT (user_id) DO UPDATE SET uid = ? WHERE user_id =?', (message.author.id, uid, uid, message.author.id))
-                await self.bot.db.commit()
-                await message.channel.send(content=message.author.mention, embed=defaultEmbed(message=uid).set_author(name='UID 設置成功', icon_url=message.author.avatar))
+                return await message.channel.send(content=message.author.mention, embed=error_embed().set_author(name='UID 長度需為9位數', icon_url=message.author.avatar))
+            if str(uid)[0] != '9':
+                return await message.channel.send(content=message.author.mention, embed=error_embed().set_author(name='你不是台港澳服玩家', icon_url=message.author.avatar))
+            await self.bot.db.execute('INSERT INTO genshin_accounts (user_id, uid) VALUES (?, ?) ON CONFLICT (user_id) DO UPDATE SET uid = ? WHERE user_id =?', (message.author.id, uid, uid, message.author.id))
+            await self.bot.db.commit()
+            await message.channel.send(content=message.author.mention, embed=default_embed(message=uid).set_author(name='UID 設置成功', icon_url=message.author.avatar))
 
     @commands.Cog.listener()
     async def on_member_remove(self, member: Member):
         if member.guild.id != 916838066117824553:
             return
         log(True, False, 'On Member Remove', member.id)
-        c: aiosqlite.Cursor = await self.bot.db.cursor()
-        await c.execute('SELECT flow FROM flow_accounts WHERE user_id = ?', (member.id,))
-        result = await c.fetchone()
-        if result is not None:
-            flow = await self.flow_app.get_user_flow(member.id)
-            await self.flow_app.transaction(member.id, flow, is_removing_account=True)
+        await remove_flow_account(member.id, self.bot.db)
 
     @commands.Cog.listener()
     async def on_member_update(self, before: Member, after: Member):
@@ -78,14 +49,7 @@ class WelcomeCog(commands.Cog):
         r = before.guild.get_role(978532779098796042)
         if r not in before.roles and r in after.roles:
             log(True, False, 'New Traveler', after.id)
-            c: aiosqlite.Cursor = await self.bot.db.cursor()
-            await c.execute('SELECT * FROM guild_members WHERE user_id = ?', (after.id,))
-            result = await c.fetchone()
-            if result is None:
-                await self.flow_app.register(after.id)
-            else:
-                await self.flow_app.register(after.id, True)
-            await c.execute('INSERT INTO guild_members (user_id) VALUES (?) ON CONFLICT (user_id) DO UPDATE SET user_id = ?', (after.id, after.id))
+            await register_flow_account(after.id, self.bot.db)
             public = self.bot.get_channel(916951131022843964)
             view = WelcomeCog.Welcome(after)
             welcome_strs = ['祝你保底不歪十連雙黃',
@@ -98,7 +62,7 @@ class WelcomeCog(commands.Cog):
                             '七七喜歡你~',
                             '介紹一下兩位台主，<@224441463897849856> 叔叔和 <@272394461646946304> 哥哥 <:omg2:969823532420845668>']
             welcome_str = random.choice(welcome_strs)
-            embed = defaultEmbed(
+            embed = default_embed(
                 f'歡迎 {after.name} !', f'歡迎來到緣神有你(๑•̀ω•́)ノ\n {welcome_str}')
             embed.set_thumbnail(url=after.avatar)
             await public.send(content=after.mention, embed=embed, view=view)
@@ -122,10 +86,10 @@ class WelcomeCog(commands.Cog):
                 'https://media.discordapp.net/attachments/630553822036623370/920326390329516122/rid_genshin211214.gif',
                 'https://media.discordapp.net/attachments/630553822036623370/866703863276240926/rdsg_genshin210719.gif']
             image_url = random.choice(image_urls)
-            embed = defaultEmbed(
+            embed = default_embed(
                 f'{self.member.name} 歡迎歡迎~', '<:penguin_hug:978250194779000892>')
             embed.set_thumbnail(url=image_url)
-            embed.set_author(name=i.user.name, icon_url=i.user.avatar)
+            embed.set_author(name=i.user.name, icon_url=i.user.display_avatar.url)
             await i.response.send_message(embed=embed)
 
     class AcceptRules(DefaultView):
@@ -133,9 +97,9 @@ class WelcomeCog(commands.Cog):
             self.db = db
             super().__init__(timeout=None)
 
-        @button(label='同意以上規則並開始入群導引', style=ButtonStyle.green, custom_id='accept_rule_button')
+        @button(label='同意以上規則', style=ButtonStyle.green, custom_id='accept_rule_button')
         async def accept_rules(self, i: Interaction, button: Button):
-            embed = defaultEmbed(
+            embed = default_embed(
                 '入群導引',
                 '申鶴將會快速的帶領你了解群內的主要系統\n'
                 '請有耐心的做完唷~ <:penguin_hug:978250194779000892>'
@@ -143,8 +107,7 @@ class WelcomeCog(commands.Cog):
             view = WelcomeCog.StartTutorial(self.db)
             traveler = i.guild.get_role(978532779098796042)
             if traveler in i.user.roles:
-                await i.response.send_message(embed=defaultEmbed('你已經做過入群導引啦', '不需要再做囉'), ephemeral=True)
-                return
+                return await i.response.send_message(embed=default_embed('你已經做過入群導引啦', '不需要再做囉'), ephemeral=True)
             await i.response.send_message(embed=embed, view=view, ephemeral=True)
 
     class StartTutorial(DefaultView):
@@ -156,14 +119,14 @@ class WelcomeCog(commands.Cog):
         async def start_tutorial(self, i: Interaction, button: Button):
             embeds = []
             uid_channel = i.client.get_channel(978871680019628032)
-            embed = defaultEmbed(
+            embed = default_embed(
                 '原神系統',
                 '先從輸入你的原神 UID 開始吧!\n'
                 f'請至 {uid_channel.mention} 輸入你的原神 UID'
             )
             embeds.append(embed)
             factory = i.client.get_channel(957268464928718918)
-            embed = defaultEmbed(
+            embed = default_embed(
                 '原神系統',
                 '申鶴有許多原神相關的方便功能\n'
                 '`/farm` 今天能刷的原神素材\n'
@@ -172,10 +135,10 @@ class WelcomeCog(commands.Cog):
                 '`/check` 目前樹脂\n'
                 '`/abyss` 深淵數據\n'
                 '`/remind` 樹脂溢出提醒\n'
-                f'有興趣的話, 可以至 {factory.mention} 使用`/cookie`設置帳號'
+                f'有興趣的話, 可以至 {factory.mention} 使用`/register`設置帳號'
             )
             embeds.append(embed)
-            embed = defaultEmbed(
+            embed = default_embed(
                 'flow幣系統',
                 '本群擁有專屬的經濟系統\n'
                 '可以幫助你獲得免費原神月卡等好物\n'
@@ -184,7 +147,7 @@ class WelcomeCog(commands.Cog):
             )
             embeds.append(embed)
             role = i.client.get_channel(962311051683192842)
-            embed = defaultEmbed(
+            embed = default_embed(
                 '身份組',
                 f'請至 {role.mention} 領取原神等級身份組\n'
                 '向上滑可以看到國籍身份組領取器\n'
@@ -192,14 +155,7 @@ class WelcomeCog(commands.Cog):
                 '按照自己內心的直覺選一個吧! (不選也可以哦)'
             )
             embeds.append(embed)
-            embed = defaultEmbed(
-                '還有更多...',
-                '以上只是申鶴的一小部份而已!\n'
-                '想要查看所有的指令請打`/help`\n'
-                f'有問題歡迎至 {factory.mention} 詢問我(<@410036441129943050>)或 <@831883841417248778>)'
-            )
-            embeds.append(embed)
-            embed = defaultEmbed(
+            embed = default_embed(
                 '祝你好運!',
                 '以上就是入群導引\n'
                 '歡迎加入「緣神有你」!\n'
@@ -208,20 +164,18 @@ class WelcomeCog(commands.Cog):
             embeds.append(embed)
             await TutorialPaginator(i, embeds).start(db=self.db, embeded=True)
 
-    @app_commands.command(name='tutorial使用教學', description='進行flow幣系統教學')
+    @app_commands.command(name='tutorial', description='查看 flow 幣系統使用教學')
     async def flow_tutorial(self, i: Interaction):
         embeds = []
-        embed = defaultEmbed(
+        embed = default_embed(
             'flow幣系統',
             '這是群內專屬的經濟系統\n'
-            '在你入群的時候, 系統已經幫你創建一個帳號\n'
-            '並贈送了 20 flow幣給你\n'
             '輸入`/acc`來看看你的 **flow帳號** 吧!'
         )
         embeds.append(embed)
         gv = i.client.get_channel(965517075508498452)
         role = i.client.get_channel(962311051683192842)
-        embed = defaultEmbed(
+        embed = default_embed(
             '抽獎系統',
             f'抽獎都會在 {gv.mention} 進行\n'
             '抽獎需要支付 flow幣來參與\n'
@@ -229,7 +183,7 @@ class WelcomeCog(commands.Cog):
         )
         c = i.client.get_channel(960861105503232030)
         embeds.append(embed)
-        embed = defaultEmbed(
+        embed = default_embed(
             '委託系統',
             f'萌新:歡迎到 {c.mention} 使用`/find`指令來發布委託\n'
             f'大佬:可以到 {role.mention} 領取 **委託通知** 身份組\n\n'
@@ -238,21 +192,21 @@ class WelcomeCog(commands.Cog):
         )
         embeds.append(embed)
         flow_c = i.client.get_channel(966621141949120532)
-        embed = defaultEmbed(
+        embed = default_embed(
             'flow幣活動',
             '每週都會有不同的活動來取得flow幣\n'
             '包括討伐挑戰, 拍照等等...盡量符合不同玩家的風格\n'
             f'有興趣請往 {flow_c.mention}'
         )
         embeds.append(embed)
-        embed = defaultEmbed(
+        embed = default_embed(
             '祈願系統',
             '我們在 discord 中複製了原神的祈願玩法\n'
             '可以使用`/roll`指令來開啟祈願界面(不要直接在這裡用哦)\n'
             '有機率抽中不同物品, 取決於當期獎品'
         )
         embeds.append(embed)
-        embed = defaultEmbed(
+        embed = default_embed(
             '商店系統',
             '賺到的 **flow幣** 可以在商店進行消費\n'
             '輸入`/shop` 來看看吧\n'
@@ -265,9 +219,9 @@ class WelcomeCog(commands.Cog):
     @app_commands.checks.has_role('小雪團隊')
     async def welcome(self, i: Interaction):
         content = '旅行者們，歡迎來到「緣神有你」。\n在這裡你能收到提瓦特的二手消息, 還能找到志同道合的旅行者結伴同行。\n準備好踏上旅途了嗎? 出發前請先閱讀下方的「旅行者須知」。\n'
-        rules = defaultEmbed(
-            '🔖旅行者須知',
-            '⚠️以下違規情形發生，將直接刪除貼文並禁言\n\n'
+        rules = default_embed(
+            '🔖 旅行者須知',
+            '⚠️ 以下違規情形發生，將直接刪除貼文並禁言\n\n'
             '1. 張貼侵權事物的網址或載點\n'
             '2. 惡意引戰 / 惡意帶風向 / 仇恨言論或霸凌 / 煽動言論\n'
             '3. 交換 / 租借 / 買賣遊戲帳號、外掛\n'

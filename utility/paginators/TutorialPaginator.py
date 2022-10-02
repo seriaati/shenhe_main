@@ -6,7 +6,7 @@ from discord import Interaction, SelectOption, User, ButtonStyle
 from discord.ui import Select, button, Button, View
 from typing import Optional, List, Union
 
-from utility.utils import errEmbed
+from utility.utils import error_embed
 
 
 class _view(View):
@@ -20,7 +20,7 @@ class _view(View):
 
     async def interaction_check(self, interaction: Interaction) -> bool:
         if interaction.user.id != self.author.id:
-            await interaction.response.send_message(embed=errEmbed('你不是這個指令的使用者'), ephemeral=True)
+            await interaction.response.send_message(embed=error_embed('你不是這個指令的使用者'), ephemeral=True)
         return (interaction.user.id == self.author.id)
 
     async def update_children(self, interaction: Interaction):
@@ -45,7 +45,7 @@ class _view(View):
         await c.execute('SELECT uid FROM genshin_accounts WHERE user_id = ?', (interaction.user.id,))
         uid = await c.fetchone()
         if uid is None:
-            await interaction.response.send_message(embed=errEmbed('你似乎還沒有設定UID!', '要設定之後才可以繼續進行哦\n如果因為是亞服UID而沒辦法設定的話, 很抱歉, 可能沒辦法讓你入群了\n設置上有問題嗎? 點上面的小雪頭像來私訊她'), ephemeral=True)
+            await interaction.response.send_message(embed=error_embed('你似乎還沒有設定UID!', '要設定之後才可以繼續進行哦\n如果因為是亞服UID而沒辦法設定的話, 很抱歉, 可能沒辦法讓你入群了\n設置上有問題嗎? 點上面的小雪頭像來私訊她'), ephemeral=True)
         else:
             self.current_page += 1
             if self.current_page == 1:
@@ -54,7 +54,7 @@ class _view(View):
             elif self.current_page == 3:
                 role = interaction.guild.get_role(978626843517288468) # step 2 身份台
                 await interaction.user.add_roles(role)
-            elif self.current_page == 5:
+            elif self.current_page == 4:
                 role = interaction.guild.get_role(978532779098796042) # 旅行者
                 await interaction.user.add_roles(role)
             await self.update_children(interaction)

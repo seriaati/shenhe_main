@@ -1,15 +1,14 @@
 import random
 
 import aiosqlite
+from apps.flow import flow_transaction
 from data.roll.banner import banner
 from data.roll.cutscenes import cutscenes
-from utility.apps.FlowApp import FlowApp
 
 
 class RollApp:
     def __init__(self, db: aiosqlite.Connection) -> None:
         self.db = db
-        self.flow_app = FlowApp(self.db)
 
     def choose_animation(self, prizes: list[str]):
         big_prize = banner['big_prize']
@@ -56,9 +55,9 @@ class RollApp:
     async def give_money(self, user_id: int, prizes: list[str]):
         for prize in prizes:
             if prize == '10 flow 幣':
-                await self.flow_app.transaction(user_id, 10)
+                await flow_transaction(user_id, 10, self.db)
             elif prize == '100 flow 幣':
-                await self.flow_app.transaction(user_id, 100)
+                await flow_transaction(user_id, 100, self.db)
 
     async def gu_system(self, user_id: int, is_ten_pull: bool):
         c = await self.db.cursor()
