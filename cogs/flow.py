@@ -707,7 +707,7 @@ class FlowCog(commands.Cog, name="flow"):
                 if diff.days > 7:
                     remove_ids[user_id] = flow
         for user_id, flow in remove_ids.items():
-            await i.channel.send(content=f"<@{user_id}>",embed=default_embed(f'flow 帳號掰掰 ({flow} flow)','由於距離上次活躍時間已經超過 7 天，你的 flow 帳號已經被移除'))
+            await i.channel.send(content=f"<@{user_id}>",embed=default_embed(f'flow 帳號掰掰 ({flow} flow)','由於距離上次活躍時間已經超過 7 天，你的 flow 帳號已經被移除\n如果你想要拿回裡面的 flow 存款，請 tag <@410036441129943050>'))
 
 
 async def setup(bot: commands.Bot) -> None:
