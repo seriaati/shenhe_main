@@ -85,6 +85,8 @@ class AdminCog(commands.Cog):
         now = datetime.now()
         if payload.guild_id != 916838066117824553:
             return
+        if payload.channel_id == 965842415913152522:
+            return
         c: TextChannel = (
             self.bot.get_channel(988698669442269184)
             if not self.bot.debug_toggle
