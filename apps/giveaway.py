@@ -10,11 +10,13 @@ from apps.flow import flow_transaction, get_user_flow
 
 
 class View(ui.View):
-    def __init__(self):
+    def __init__(self, options: List[SelectOption]):
         super().__init__(timeout=1200)
         self.add_item(AddGift())
         self.add_item(RemoveGift())
         self.add_item(Start())
+        self.add_item(SetRoleName())
+        self.add_item(RoleSelect(options))
 
     async def on_error(self, i: Interaction, error, item):
         embed = error_embed(message=f"```\n{error}\n```").set_author(
@@ -75,7 +77,54 @@ class Modal(ui.Modal):
             (self.name.value, self.num.value, self.num.value, self.name.value),
         )
         await i.client.db.commit()
-        await i.response.edit_message(embed=await return_giveaway_embed(i), view=View())
+        await i.response.edit_message(embed=await return_giveaway_embed(i))
+
+
+class SetRoleName(ui.Button):
+    def __init__(self):
+        super().__init__(
+            label="設定身份組名稱", style=ButtonStyle.gray, custom_id="set_role_name"
+        )
+
+    async def callback(self, i: Interaction):
+        await i.response.send_modal(SetRoleNameModal())
+
+
+class SetRoleNameModal(ui.Modal):
+    role_name = ui.TextInput(
+        label="身份組名稱", placeholder="此抽獎的得獎人（們）會獲得的身份組之名稱", default="名稱內請包含「λ」字符"
+    )
+
+    def __init__(self):
+        super().__init__(title="設定身份組名稱", custom_id="set_role_name_modal")
+
+    async def on_submit(self, i: Interaction):
+        i.client.gv_role_name = self.role_name.value
+        await i.response.edit_message(embed=await return_giveaway_embed(i))
+
+
+class RoleSelect(ui.Select):
+    def __init__(self, options: List[SelectOption]):
+        disabled = False
+        if not options:
+            options = [SelectOption(label="沒有身份組", value="None")]
+            disabled = True
+        super().__init__(
+            placeholder="不可以參加這個抽獎的身份組",
+            options=options,
+            min_values=0,
+            max_values=len(options),
+            custom_id="role_select",
+            disabled=disabled,
+        )
+
+    async def callback(self, i: Interaction):
+        for value in self.values:
+            if value in i.client.gv_role_blacklist:
+                i.client.gv_role_blacklist.remove(value)
+            else:
+                i.client.gv_role_blacklist.append(value)
+        await i.response.edit_message(embed=await return_giveaway_embed(i))
 
 
 class Select(ui.Select):
@@ -87,7 +136,7 @@ class Select(ui.Select):
             "DELETE FROM giveaway_gifts WHERE name = ?", (self.values[0],)
         )
         await i.client.db.commit()
-        await i.response.edit_message(embed=await return_giveaway_embed(i), view=View())
+        await i.response.edit_message(embed=await return_giveaway_embed(i))
 
 
 class Start(ui.Button):
@@ -95,6 +144,13 @@ class Start(ui.Button):
         super().__init__(label="開始抽獎", style=ButtonStyle.blurple, custom_id="start")
 
     async def callback(self, i: Interaction):
+        if i.client.gv_role_name == "":
+            return await i.response.send_message(
+                embed=error_embed().set_author(
+                    name="請先設定身份組名稱", icon_url=i.user.display_avatar.url
+                ),
+                ephemeral=True,
+            )
         await i.response.send_modal(StartModal())
 
 
@@ -112,8 +168,6 @@ class StartModal(ui.Modal):
         await i.response.send_message(embed=embed)
 
     async def on_submit(self, i: Interaction):
-        async with i.client.db.execute("SELECT SUM(num) FROM giveaway_gifts") as cursor:
-            gift_sum = (await cursor.fetchone())[0]
         await i.client.db.execute(
             "INSERT INTO giveaway (id, goal, ticket, current, members) VALUES (1, ?, ?, 0, ?) ON CONFLICT (id) DO UPDATE SET goal = ?, ticket = ?, current = 0, members = ? WHERE id = 1",
             (
@@ -143,11 +197,29 @@ async def return_giveaway_embed(i: Interaction):
     embed = default_embed("抽獎設置")
     async with i.client.db.execute("SELECT * FROM giveaway_gifts") as cursor:
         gifts = await cursor.fetchall()
+    value = ""
     if not gifts:
-        embed.description = "目前沒有獎品可以抽, 請先新增獎品"
+        value = "目前沒有獎品可以抽, 請先新增獎品"
     else:
         for gift in gifts:
-            embed.description += f"• {gift[0]} - {gift[1]}份\n"
+            value += f"• {gift[0]} - {gift[1]}份\n"
+    embed.add_field(name="獎品", value=value, inline=False)
+    value = ""
+    gv_role_blacklist = i.client.gv_role_blacklist
+    if not gv_role_blacklist:
+        value = "目前沒有身分組被設定為不能參加抽獎"
+    else:
+        for role in gv_role_blacklist:
+            role = i.guild.get_role(int(role))
+            value += f"• {role.mention}\n"
+    embed.add_field(name="不可以參加這個抽獎的身份組", value=value, inline=False)
+    value = ""
+    gv_role_name = i.client.gv_role_name
+    if gv_role_name == "":
+        value = "目前沒有設定身份組名稱"
+    else:
+        value = gv_role_name
+    embed.add_field(name="身份組名稱", value=value, inline=False)
     return embed
 
 
@@ -183,6 +255,15 @@ class Join(ui.Button):
                 ),
                 ephemeral=True,
             )
+        for role_id in i.client.gv_role_blacklist:
+            role = i.guild.get_role(int(role_id))
+            if role in i.user.roles:
+                return await i.response.send_message(
+                    embed=error_embed(message=f"因為你有 {role.mention} 身份組").set_author(
+                        name="你不能參加這個抽獎", icon_url=i.user.display_avatar.url
+                    ),
+                    ephemeral=True,
+                )
         ticket = data[1]
         flow = await get_user_flow(i.user.id, i.client.db)
         if flow < int(ticket):
@@ -329,10 +410,14 @@ async def reveal_giveaway_winner(i: Interaction):
                 await msg.edit(content=f"可能是... <@{random.choice(members)}>")
                 await asyncio.sleep(1.5)
             winner_user = i.guild.get_member(winner)
-            winner_role = utils.find(lambda r: r.name == "抽獎得獎者", i.guild.roles)
+            winner_role = utils.find(
+                lambda r: r.name == i.client.gv_role_name, i.guild.roles
+            )
+            if winner_role is None:
+                winner_role = await i.guild.create_role(name=i.client.gv_role_name)
             await winner_user.add_roles(winner_role)
+            await msg.edit(content=f"可能是... <@{winner}>")
             await asyncio.sleep(1.5)
-            await msg.edit(content=f"可能是...<@{winner}>")
             gift_list[index] = f"• {gift[0]} - <@{winner}>"
             value = ""
             gift_list.reverse()

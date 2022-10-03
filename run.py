@@ -55,6 +55,8 @@ class ShenheBot(commands.Bot):
         self.repeat = False
         self.prev = False
         self.debug_toggle = debug_toggle
+        self.gv_role_blacklist = []
+        self.gv_role_name = ""
         await self.load_extension('jishaku')
         for filepath in Path('./cogs').glob('**/*.py'):
             cog_name = Path(filepath).stem

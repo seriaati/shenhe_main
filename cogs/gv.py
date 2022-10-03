@@ -1,5 +1,5 @@
 from apps.giveaway import View, return_giveaway_embed
-from discord import Interaction, app_commands
+from discord import Interaction, app_commands, SelectOption
 from discord.ext import commands
 
 
@@ -14,7 +14,11 @@ class GiveAwayCog(commands.Cog):
     @app_commands.command(name="gv", description="設置抽獎")
     @app_commands.checks.has_role("小雪團隊")
     async def start_giveaway(self, i: Interaction):
-        await i.response.send_message(embed=await return_giveaway_embed(i), view=View())
+        select_options = []
+        for role in i.guild.roles:
+            if "λ" in role.name:
+                select_options.append(SelectOption(label=role.name, value=role.id))
+        await i.response.send_message(embed=await return_giveaway_embed(i), view=View(select_options))
 
 
 async def setup(bot: commands.Bot) -> None:
