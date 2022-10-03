@@ -685,6 +685,29 @@ class FlowCog(commands.Cog, name="flow"):
         )
         await c.close()
         await self.bot.db.commit()
+        
+    @app_commands.command(name="tidy_up", description="整理 flow 帳號")
+    async def tidy_up_flow_acc(self, i: Interaction):
+        await i.response.send_message(content="整理中...", ephemeral=True)
+        async with i.client.db.execute(
+            "SELECT user_id, last_trans, flow FROM flow_accounts"
+        ) as cursor:
+            data = await cursor.fetchall()
+        remove_ids = {}
+        for _, tpl in enumerate(data):
+            user_id = tpl[0]
+            last_trans = tpl[1]
+            flow = tpl[2]
+            discord_user = i.guild.get_member(user_id)
+            if discord_user is None:
+                remove_ids[user_id] = flow
+            else:
+                last_trans = parser.parse(last_trans)
+                diff = datetime.now()-last_trans
+                if diff.days > 7:
+                    remove_ids[user_id] = flow
+        for user_id, flow in remove_ids.items():
+            await i.channel.send(content=f"<@{user_id}>",embed=default_embed(f'flow 帳號掰掰 ({flow} flow)','由於距離上次活躍時間已經超過 7 天，你的 flow 帳號已經被移除'))
 
 
 async def setup(bot: commands.Bot) -> None:
