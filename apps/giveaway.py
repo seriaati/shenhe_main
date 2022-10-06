@@ -409,7 +409,7 @@ async def reveal_giveaway_winner(i: Interaction):
             for _ in range(3):
                 await msg.edit(content=f"可能是... <@{random.choice(members)}>")
                 await asyncio.sleep(1.5)
-            winner_user = i.guild.get_member(winner)
+            winner_user = i.guild.get_member(winner) or await i.guild.fetch_member(winner)
             winner_role = utils.find(
                 lambda r: r.name == i.client.gv_role_name, i.guild.roles
             )
