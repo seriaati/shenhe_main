@@ -93,8 +93,7 @@ class FishCog(commands.Cog):
             #     f"{interaction.user.mention} 摸到**{self.fish_adj}的{self.fish}**了！"
             # )
             # e.g. @綾霞 摸到虱目魚了！
-
-            user_flow = await get_user_flow(interaction.user.id, self.db)
+            
             value = randint(1, 100)  # Picks a random number from 1 - 100
             # 摸虱目魚有機率獲得 1 flow幣
 
@@ -102,12 +101,12 @@ class FishCog(commands.Cog):
                 if value <= int(fish["flow_chance"]):
                     await flow_transaction(interaction.user.id, int(flow), self.db)
                     await interaction.followup.send(
-                        f"{interaction.user.mention} 摸 **{self.fish_adj}的{self.fish}** 摸到 {flow} flow幣!\n目前 flow 幣: {user_flow}",
+                        f"{interaction.user.mention} 摸 **{self.fish_adj}的{self.fish}** 摸到 {flow} flow幣!\n目前 flow 幣: {await get_user_flow(interaction.user.id, self.db)}",
                     )
                     # e.g. 摸虱目魚摸到 1 flow幣!
                 else:
                     await interaction.followup.send(
-                        f"{interaction.user.mention} 單純的摸 **{self.fish_adj}的{self.fish}** 而已, 沒有摸到flow幣 qwq\n目前 flow 幣: {user_flow}",
+                        f"{interaction.user.mention} 單純的摸 **{self.fish_adj}的{self.fish}** 而已, 沒有摸到flow幣 qwq\n目前 flow 幣: {await get_user_flow(interaction.user.id, self.db)}",
                     )
             else:
                 chance = 50
@@ -115,13 +114,13 @@ class FishCog(commands.Cog):
                 if value <= chance:  # 50% Chance of increasing flow amount by 20
                     await flow_transaction(interaction.user.id, int(flow), self.db)
                     await interaction.followup.send(
-                        f"{interaction.user.mention} 摸 **{self.fish_adj}的{self.fish}** 摸到 {flow} flow幣!\n目前 flow 幣: {user_flow}",
+                        f"{interaction.user.mention} 摸 **{self.fish_adj}的{self.fish}** 摸到 {flow} flow幣!\n目前 flow 幣: {await get_user_flow(interaction.user.id, self.db)}",
                     )
                     # e.g. 摸抹香鯨摸到 20 flow幣!
                 else:  # 50% Chance of decreasing flow amount by 20
                     await flow_transaction(interaction.user.id, -int(flow), self.db)
                     await interaction.followup.send(
-                        f"{interaction.user.mention} 被 **{self.fish_adj}的{self.fish}** {random.choice(verb)}, 損失了 {flow} flow幣 qwq\n目前 flow 幣: {user_flow}",
+                        f"{interaction.user.mention} 被 **{self.fish_adj}的{self.fish}** {random.choice(verb)}, 損失了 {flow} flow幣 qwq\n目前 flow 幣: {await get_user_flow(interaction.user.id, self.db)}",
                     )
                     # e.g. 抹香鯨 鯨爆了，損失了 20 flow幣 qwq
 
