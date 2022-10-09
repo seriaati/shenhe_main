@@ -27,7 +27,7 @@ class VoiceCog(commands.GroupCog, name='vc'):
         if new_channel is not None:
             await member.add_roles(vc_role)
         if new_channel == vc:
-            member_vc = await member.guild.create_voice_channel(name=f'{member.name}的語音台', category=vc.category)
+            member_vc = await member.guild.create_voice_channel(name=f'{member.display_name}的語音台', category=vc.category)
             await member.move_to(member_vc)
             await member.add_roles(vc_role)
             await c.execute('INSERT INTO voice (owner_id, channel_id) VALUES (?, ?)', (member.id, member_vc.id))
