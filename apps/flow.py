@@ -65,7 +65,7 @@ async def free_flow(
     if not check:
         await register_flow_account(user_id, db)
     now = datetime.now()
-    if start <= now <= end:
+    if time_in_range(start, end, now.time()):
         async with db.execute(
             f"SELECT {time_type} FROM flow_accounts WHERE user_id = ?",
             (user_id,),
