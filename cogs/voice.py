@@ -1,6 +1,7 @@
 import aiosqlite
 from discord import Interaction, Member, NotFound, VoiceChannel, VoiceState, app_commands, InviteTarget
 from discord.ext import commands
+from discord.utils import find
 from utility.utils import default_embed, error_embed
 import wavelink
 
@@ -12,10 +13,8 @@ class VoiceCog(commands.GroupCog, name='vc'):
 
     @commands.Cog.listener()
     async def on_voice_state_update(self, member: Member, before: VoiceState, after: VoiceState):
-        vc: VoiceChannel = self.bot.get_channel(
-            980772222148952064) if not self.bot.debug_toggle else self.bot.get_channel(980779246035271700)
-        vc_role = member.guild.get_role(
-            980774103344640000) if not self.bot.debug_toggle else member.guild.get_role(980774369771008051)
+        vc: VoiceChannel = find(lambda c: c.name == '創建語音台', member.guild.channels)
+        vc_role = find(lambda r: r.name == '正在使用語音台', member.guild.roles)
         old_channel: VoiceChannel = before.channel
         new_channel: VoiceChannel = after.channel
         c: aiosqlite.Cursor = await self.bot.db.cursor()
@@ -55,7 +54,7 @@ class VoiceCog(commands.GroupCog, name='vc'):
         else:
             return False, error_embed().set_author(name='你不是這個語音台的擁有者', icon_url=self.bot.get_user(user_id).avatar)
 
-    @app_commands.command(name='rename命名', description='重新命名語音台')
+    @app_commands.command(name='rename', description='重新命名語音台')
     @app_commands.rename(new='新名稱')
     @app_commands.describe(new='新的語音台名稱')
     async def vc_rename(self, i: Interaction, new: str):
@@ -68,7 +67,7 @@ class VoiceCog(commands.GroupCog, name='vc'):
         await current_vc.edit(name=new)
         await i.response.send_message(embed=default_embed(message=f'新名稱: {new}').set_author(name='語音台名稱更改成功', icon_url=i.user.display_avatar.url))
 
-    @app_commands.command(name='lock鎖上', description='鎖上語音台')
+    @app_commands.command(name='lock', description='鎖上語音台')
     async def vc_lock(self, i: Interaction):
         if i.user.voice is None:
             return await i.response.send_message(embed=error_embed().set_author(name='你必須在語音台裡才能用這個指令', icon_url=i.user.display_avatar.url), ephemeral=True)
@@ -83,7 +82,7 @@ class VoiceCog(commands.GroupCog, name='vc'):
         await current_vc.set_permissions(traveler, connect=False)
         await i.response.send_message(embed=default_embed(f'{current_vc.name}被鎖上了'))
 
-    @app_commands.command(name='unlock解鎖', description='解鎖語音台')
+    @app_commands.command(name='unlock', description='解鎖語音台')
     async def vc_unlock(self, i: Interaction):
         if i.user.voice is None:
             return await i.response.send_message(embed=error_embed().set_author(name='你必須在語音台裡才能用這個指令', icon_url=i.user.display_avatar.url), ephemeral=True)
@@ -96,7 +95,7 @@ class VoiceCog(commands.GroupCog, name='vc'):
         await current_vc.set_permissions(traveler, connect=True)
         await i.response.send_message(embed=default_embed(f'{current_vc.name}的封印被解除了'))
 
-    @app_commands.command(name='transfer移交', description='移交房主權')
+    @app_commands.command(name='transfer', description='移交房主權')
     @app_commands.rename(new='新房主')
     @app_commands.describe(new='新的房主')
     async def vc_unlock(self, i: Interaction, new: Member):
@@ -111,7 +110,7 @@ class VoiceCog(commands.GroupCog, name='vc'):
         await self.bot.db.commit()
         await i.response.send_message(content=f'{i.user.mention} {new.mention}', embed=default_embed(f'房主換人啦', f' {i.user.mention} 將 {current_vc.name} 的房主權移交給了 {new.mention}'))
 
-    @app_commands.command(name='youtube播放器', description='為當前的語音台創建一個 youtube 播放器')
+    @app_commands.command(name='youtube', description='為當前的語音台創建一個 youtube 播放器')
     async def vc_activity(self, i: Interaction):
         if i.user.voice is None:
             return await i.response.send_message(embed=error_embed().set_author(name='你必須在語音台裡才能用這個指令', icon_url=i.user.display_avatar.url), ephemeral=True)
