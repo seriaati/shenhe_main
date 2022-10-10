@@ -93,7 +93,7 @@ class FishCog(commands.Cog):
             #     f"{interaction.user.mention} 摸到**{self.fish_adj}的{self.fish}**了！"
             # )
             # e.g. @綾霞 摸到虱目魚了！
-            
+
             value = randint(1, 100)  # Picks a random number from 1 - 100
             # 摸虱目魚有機率獲得 1 flow幣
 
@@ -135,12 +135,6 @@ class FishCog(commands.Cog):
             super().__init__(timeout=None)
             self.add_item(FishCog.TouchFishButton(index, db, fish_adj, author))
 
-    def get_fish_choices():  # 取得所有魚種
-        choices = []
-        for fish in list(fish_data.keys()):
-            choices.append(Choice(name=fish, value=fish))
-        return choices
-
     @commands.Cog.listener()
     async def on_message(self, message: Message):  # 機率放魚
         if message.author.id == self.bot.user.id:
@@ -156,12 +150,19 @@ class FishCog(commands.Cog):
     @app_commands.command(name="releasefish放魚", description="緊急放出一條魚讓人摸")
     @app_commands.rename(fish_type="魚種")
     @app_commands.describe(fish_type="選擇要放出的魚種")
-    @app_commands.choices(fish_type=get_fish_choices())
     @app_commands.checks.has_role("小雪團隊")
     async def release_fish(self, i: Interaction, fish_type: str):
         embed, fish_adj = self.generate_fish_embed(fish_type)
         view = FishCog.TouchFish(fish_type, self.bot.db, fish_adj, i.user)
         await i.response.send_message(embed=embed, view=view)
+
+    @release_fish.autocomplete("fish_type")
+    async def release_fish_autocomplete(self, i: Interaction, current: str):
+        choices = []
+        for fish_name, _ in fish_data.items():
+            if current in fish_name:
+                choices.append(app_commands.Choice(name=fish_name, value=fish_name))
+        return choices[:25]
 
 
 async def setup(bot: commands.Bot) -> None:
