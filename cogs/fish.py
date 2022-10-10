@@ -140,7 +140,7 @@ class FishCog(commands.Cog):
         if message.author.id == self.bot.user.id:
             return
         random_number = randint(1, 100)
-        if random_number == 1 and not isinstance(message.channel, Thread):
+        if random_number == 1 and not isinstance(message.channel, Thread) and message.channel.guild is not None:
             fish = random.choice(list(fish_data.keys()))
             embed, fish_adj = self.generate_fish_embed(fish)
             view = FishCog.TouchFish(fish, self.bot.db, fish_adj, message.author)

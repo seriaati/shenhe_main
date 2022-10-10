@@ -197,6 +197,7 @@ fish_data = {
         "verb": [
             "潑了一臉香菇",
             "扇了一巴掌",
+            "ㄐㄐ了"
         ],
         "image_url": "https://i.imgur.com/7ZZ2dHL.png",
     },
@@ -247,6 +248,6 @@ fish_data = {
         "verb": [
             "扇了一巴掌",
         ],
-        "image_url": "https://i.imgur.com/7COfzFy.jpg",
+        "image_url": "https://i.imgur.com/vZNW7nK.jpg",
     },
 }
