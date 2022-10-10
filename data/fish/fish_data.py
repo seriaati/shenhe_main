@@ -170,25 +170,6 @@ fish_data = {
         ],
         "image_url": "https://i.imgur.com/YZ5sM2S.jpg",
     },
-    "繪名": {
-        "flow": 10,
-        "flow_chance": None,
-        "type_0": False,
-        "cute": True,
-        "verb": [
-            "潑了一臉胡蘿蔔",
-            "扇了一巴掌",
-        ],
-        "image_url": "https://i.imgur.com/YqujYTU.jpg",
-    },
-    "真冬": {
-        "flow": 10,
-        "flow_chance": None,
-        "type_0": False,
-        "cute": True,
-        "verb": ["盯著看", "扇了一巴掌"],
-        "image_url": "https://i.imgur.com/L92zrrc.jpg",
-    },
     "瑞希": {
         "flow": 10,
         "flow_chance": None,
@@ -221,14 +202,6 @@ fish_data = {
             "抓去跳靖妖儺舞了",
         ],
         "image_url": "https://imgur.com/rO57u7J.jpg",
-    },
-    "千鶴": {
-        "flow": 10,
-        "flow_chance": None,
-        "type_0": False,
-        "cute": True,
-        "verb": ["打飛了", "扇了一巴掌", "踢了一腳"],
-        "image_url": "https://i.imgur.com/6eSbhSm.jpg",
     },
     "櫻澤墨": {
         "flow": 10,
