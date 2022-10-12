@@ -98,7 +98,7 @@ class FishCog(commands.Cog):
             # 摸虱目魚有機率獲得 1 flow幣
 
             if fish["type_0"]:
-                if value <= int(fish["flow_chance"]):
+                if value <= 50:
                     await flow_transaction(interaction.user.id, int(flow), self.db)
                     await interaction.followup.send(
                         f"{interaction.user.mention} 摸 **{self.fish_adj}的{self.fish}** 摸到 {flow} flow幣!\n目前 flow 幣: {await get_user_flow(interaction.user.id, self.db)}",
