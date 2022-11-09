@@ -8,7 +8,6 @@ from utility.utils import default_embed
 class Dropdown(Select):
     def __init__(self, bot: commands.Bot):
         options = [
-            SelectOption(label='呼叫相關', description='呼叫群友', emoji='🔉'),
             SelectOption(label='flow系統', description='交易方式, 發布委託等',
                          emoji='🌊'),
             SelectOption(label='其他', description='其他指令', emoji='🙂'),
@@ -21,7 +20,7 @@ class Dropdown(Select):
         self.bot = bot
 
     async def callback(self, interaction: Interaction):
-        cogs = ['call', 'flow', 'other', 'vc', 'music']
+        cogs = ['flow', 'othercmd', 'voice', 'music']
         for index, option in enumerate(self.options):
             if option.value == self.values[0]:
                 selected_option = option
