@@ -28,25 +28,25 @@ class FlowCog(commands.Cog, name="flow"):
         if message.author.bot:
             return
 
-        if "早" in message.content or "午" in message.content or "晚" in message.content:
+        if "早" in message.content or "午" in message.content or "晚" in message.content or "good morning" in message.content or "good afternoon" in message.content.lower() or "good afternoon" in message.content.lower() or "good night" in message.content.lower():
             if "早午晚" in message.content:
                 return await message.add_reaction("<:PaimonSeria:958341967698337854>")
             check = await check_flow_account(user_id, self.bot.db)
             if not check:
                 await register_flow_account(user_id, self.bot.db)
-            if "早" in message.content:
+            if "早" in message.content or "good morning" in message.content.lower():
                 start = time(0, 0, 0)
                 end = time(11, 59, 59)
                 gave = await free_flow(user_id, start, end, "morning", self.bot.db)
                 if gave:
                     await message.add_reaction("<:morning:982608491426508810>")
-            elif "午" in message.content:
+            elif "午" in message.content or "good afternoon" in message.content.lower():
                 start = time(12, 0, 0)
                 end = time(16, 59, 59)
                 gave = await free_flow(user_id, start, end, "noon", self.bot.db)
                 if gave:
                     await message.add_reaction("<:noon:982608493313929246>")
-            elif "晚" in message.content:
+            elif "晚" in message.content or "good afternoon" in message.content.lower():
                 start = time(17, 0, 0)
                 end = time(23, 59, 59)
                 gave = await free_flow(user_id, start, end, "night", self.bot.db)
