@@ -28,7 +28,7 @@ class FlowCog(commands.Cog, name="flow"):
         if message.author.bot:
             return
 
-        if "早" in message.content or "午" in message.content or "晚" in message.content or "good morning" in message.content or "good afternoon" in message.content.lower() or "good afternoon" in message.content.lower() or "good night" in message.content.lower():
+        if "早" in message.content or "午" in message.content or "晚" in message.content or "good morning" in message.content.lower() or "good afternoon" in message.content.lower() or "good night" in message.content.lower():
             if "早午晚" in message.content:
                 return await message.add_reaction("<:PaimonSeria:958341967698337854>")
             check = await check_flow_account(user_id, self.bot.db)
