@@ -31,34 +31,32 @@ class FlowCog(commands.Cog, name="flow"):
         morning_keywords = ["早", "good morning", "gm", "morning"]
         noon_keywords = ["午", "good noon"]
         night_keywords = ["晚", "good night", "good evening", "gn"]
-        all_key_words = morning_keywords + noon_keywords + night_keywords
         
         content = message.content.lower()
 
-        if any(keyword in content for keyword in all_key_words):
-            if "早午晚" in message.content:
-                return await message.add_reaction("<:PaimonSeria:958341967698337854>")
-            check = await check_flow_account(user_id, self.bot.db)
-            if not check:
-                await register_flow_account(user_id, self.bot.db)
-            if any(keyword in content for keyword in morning_keywords):
-                start = time(0, 0, 0)
-                end = time(11, 59, 59)
-                gave = await free_flow(user_id, start, end, "morning", self.bot.db)
-                if gave:
-                    await message.add_reaction("<:morning:982608491426508810>")
-            elif any(keyword in content for keyword in noon_keywords):
-                start = time(12, 0, 0)
-                end = time(16, 59, 59)
-                gave = await free_flow(user_id, start, end, "noon", self.bot.db)
-                if gave:
-                    await message.add_reaction("<:noon:982608493313929246>")
-            elif any(keyword in content for keyword in night_keywords):
-                start = time(17, 0, 0)
-                end = time(23, 59, 59)
-                gave = await free_flow(user_id, start, end, "night", self.bot.db)
-                if gave:
-                    await message.add_reaction("<:night:982608497290125366>")
+        if "早午晚" in message.content:
+            return await message.add_reaction("<:PaimonSeria:958341967698337854>")
+        check = await check_flow_account(user_id, self.bot.db)
+        if not check:
+            await register_flow_account(user_id, self.bot.db)
+        if any(keyword in content for keyword in morning_keywords):
+            start = time(0, 0, 0)
+            end = time(11, 59, 59)
+            gave = await free_flow(user_id, start, end, "morning", self.bot.db)
+            if gave:
+                await message.add_reaction("<:morning:982608491426508810>")
+        elif any(keyword in content for keyword in noon_keywords):
+            start = time(12, 0, 0)
+            end = time(16, 59, 59)
+            gave = await free_flow(user_id, start, end, "noon", self.bot.db)
+            if gave:
+                await message.add_reaction("<:noon:982608493313929246>")
+        elif any(keyword in content for keyword in night_keywords):
+            start = time(17, 0, 0)
+            end = time(23, 59, 59)
+            gave = await free_flow(user_id, start, end, "night", self.bot.db)
+            if gave:
+                await message.add_reaction("<:night:982608497290125366>")
 
     def has_flow_account():
         async def predicate(i: Interaction) -> bool:
