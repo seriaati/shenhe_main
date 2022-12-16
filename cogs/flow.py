@@ -578,7 +578,7 @@ class FlowCog(commands.Cog, name="flow"):
             super().__init__(title="發布委託", timeout=None)
 
         async def on_submit(self, i: Interaction) -> None:
-            if not self.flow.value.isnumeric():
+            if not self.flow.value.isdigit():
                 return await i.response.send_message(
                     embed=error_embed(message="例如 100, 1000, 10000").set_author(
                         name="flow 幣數量: 請輸入數字", icon_url=i.user.display_avatar.url
