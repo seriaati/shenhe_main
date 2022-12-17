@@ -28,9 +28,9 @@ class FlowCog(commands.Cog, name="flow"):
         if message.author.bot:
             return
         
-        morning_keywords = ["早", "good morning", "gm", "morning"]
+        morning_keywords = ["早", "good morning", "gm", "morning", "GM", "Good morning"]
         noon_keywords = ["午", "good noon"]
-        night_keywords = ["晚", "good night", "good evening", "gn"]
+        night_keywords = ["晚", "good night", "good evening", "gn", "GN", "Good Night"]
         
         content = message.content.lower()
 
