@@ -102,7 +102,7 @@ class FishCog(commands.Cog):
                     )
                     # e.g. 摸虱目魚摸到 1 flow幣!
                 else:
-                    await interaction.followup.send(
+                    message = await interaction.followup.send(
                         f"{interaction.user.mention} 單純的摸 **{self.fish_adj}的{self.fish}** 而已, 沒有摸到flow幣 qwq\n目前 flow 幣: {await get_user_flow(interaction.user.id, self.db)}",
                         wait=True,
                     )
@@ -126,7 +126,9 @@ class FishCog(commands.Cog):
 
             await asyncio.sleep(2)
             await interaction.edit_original_response(
-                content=f"**{self.fish_adj}的{self.fish}** 在被 {interaction.user.mention} 摸到後默默的游走了..."
+                content=f"**{self.fish_adj}的{self.fish}** 在被 {interaction.user.mention} 摸到後默默的游走了...",
+                embed=None,
+                view=None
             )
             await asyncio.sleep(2)
             await interaction.delete_original_response()
