@@ -124,13 +124,13 @@ class FishCog(commands.Cog):
                     )
                     # e.g. 抹香鯨 鯨爆了，損失了 20 flow幣 qwq
 
-            await asyncio.sleep(2)
+            await asyncio.sleep(3)
             await interaction.edit_original_response(
                 content=f"**{self.fish_adj}的{self.fish}** 在被 {interaction.user.mention} 摸到後默默的游走了...",
                 embed=None,
                 view=None
             )
-            await asyncio.sleep(2)
+            await asyncio.sleep(3)
             await interaction.delete_original_response()
             if message is not None:
                 await message.delete()
