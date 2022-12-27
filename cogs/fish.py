@@ -92,35 +92,30 @@ class FishCog(commands.Cog):
 
             value = randint(1, 100)  # Picks a random number from 1 - 100
 
-            message = None
             if fish["type_0"]:
                 if value <= 50:
                     await flow_transaction(interaction.user.id, int(flow), self.db)
-                    message = await interaction.followup.send(
+                    await interaction.edit_original_response(
                         f"{interaction.user.mention} 摸 **{self.fish_adj}的{self.fish}** 摸到 {flow} flow幣!\n目前 flow 幣: {await get_user_flow(interaction.user.id, self.db)}",
-                        wait=True,
                     )
                     # e.g. 摸虱目魚摸到 1 flow幣!
                 else:
-                    message = await interaction.followup.send(
+                    await interaction.edit_original_response(
                         f"{interaction.user.mention} 單純的摸 **{self.fish_adj}的{self.fish}** 而已, 沒有摸到flow幣 qwq\n目前 flow 幣: {await get_user_flow(interaction.user.id, self.db)}",
-                        wait=True,
                     )
             else:
                 chance = 50
                 verb = fish["verb"]
                 if value <= chance:  # 50% Chance of increasing flow amount by 20
                     await flow_transaction(interaction.user.id, int(flow), self.db)
-                    message = await interaction.followup.send(
+                    await interaction.edit_original_response(
                         f"{interaction.user.mention} 摸 **{self.fish_adj}的{self.fish}** 摸到 {flow} flow幣!\n目前 flow 幣: {await get_user_flow(interaction.user.id, self.db)}",
-                        wait=True,
                     )
                     # e.g. 摸抹香鯨摸到 20 flow幣!
                 else:  # 50% Chance of decreasing flow amount by 20
                     await flow_transaction(interaction.user.id, -int(flow), self.db)
-                    message = await interaction.followup.send(
+                    await interaction.edit_original_response(
                         f"{interaction.user.mention} 被 **{self.fish_adj}的{self.fish}** {random.choice(verb)}, 損失了 {flow} flow幣 qwq\n目前 flow 幣: {await get_user_flow(interaction.user.id, self.db)}",
-                        wait=True
                     )
                     # e.g. 抹香鯨 鯨爆了，損失了 20 flow幣 qwq
 
@@ -132,8 +127,6 @@ class FishCog(commands.Cog):
             )
             await asyncio.sleep(3)
             await interaction.delete_original_response()
-            if message is not None:
-                await message.delete()
 
     class TouchFish(DefaultView):  # 摸魚view
         def __init__(
