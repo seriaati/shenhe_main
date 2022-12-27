@@ -85,6 +85,8 @@ class FishCog(commands.Cog):
         async def callback(self, interaction: Interaction):
             self.view: FishCog.TouchFish
             self.view.stop()
+            
+            await interaction.response.defer()
 
             fish = fish_data[self.fish]
             flow = fish["flow"]
