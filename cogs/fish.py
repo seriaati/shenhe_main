@@ -1,3 +1,4 @@
+import asyncio
 import random
 from random import randint
 
@@ -14,7 +15,6 @@ from discord import (
     User,
     app_commands,
 )
-from discord.app_commands import Choice
 from discord.ext import commands
 from discord.ui import Button
 from utility.utils import ayaaka_embed
@@ -89,40 +89,49 @@ class FishCog(commands.Cog):
 
             fish = fish_data[self.fish]
             flow = fish["flow"]
-            # await interaction.channel.send(
-            #     f"{interaction.user.mention} 摸到**{self.fish_adj}的{self.fish}**了！"
-            # )
-            # e.g. @綾霞 摸到虱目魚了！
 
             value = randint(1, 100)  # Picks a random number from 1 - 100
-            # 摸虱目魚有機率獲得 1 flow幣
 
+            message = None
             if fish["type_0"]:
                 if value <= 50:
                     await flow_transaction(interaction.user.id, int(flow), self.db)
-                    await interaction.followup.send(
+                    message = await interaction.followup.send(
                         f"{interaction.user.mention} 摸 **{self.fish_adj}的{self.fish}** 摸到 {flow} flow幣!\n目前 flow 幣: {await get_user_flow(interaction.user.id, self.db)}",
+                        wait=True,
                     )
                     # e.g. 摸虱目魚摸到 1 flow幣!
                 else:
                     await interaction.followup.send(
                         f"{interaction.user.mention} 單純的摸 **{self.fish_adj}的{self.fish}** 而已, 沒有摸到flow幣 qwq\n目前 flow 幣: {await get_user_flow(interaction.user.id, self.db)}",
+                        wait=True,
                     )
             else:
                 chance = 50
                 verb = fish["verb"]
                 if value <= chance:  # 50% Chance of increasing flow amount by 20
                     await flow_transaction(interaction.user.id, int(flow), self.db)
-                    await interaction.followup.send(
+                    message = await interaction.followup.send(
                         f"{interaction.user.mention} 摸 **{self.fish_adj}的{self.fish}** 摸到 {flow} flow幣!\n目前 flow 幣: {await get_user_flow(interaction.user.id, self.db)}",
+                        wait=True,
                     )
                     # e.g. 摸抹香鯨摸到 20 flow幣!
                 else:  # 50% Chance of decreasing flow amount by 20
                     await flow_transaction(interaction.user.id, -int(flow), self.db)
-                    await interaction.followup.send(
+                    message = await interaction.followup.send(
                         f"{interaction.user.mention} 被 **{self.fish_adj}的{self.fish}** {random.choice(verb)}, 損失了 {flow} flow幣 qwq\n目前 flow 幣: {await get_user_flow(interaction.user.id, self.db)}",
+                        wait=True
                     )
                     # e.g. 抹香鯨 鯨爆了，損失了 20 flow幣 qwq
+
+            await asyncio.sleep(2)
+            await interaction.edit_original_response(
+                content=f"**{self.fish_adj}的{self.fish}** 在被 {interaction.user.mention} 摸到後默默的游走了..."
+            )
+            await asyncio.sleep(2)
+            await interaction.delete_original_response()
+            if message is not None:
+                await message.delete()
 
     class TouchFish(DefaultView):  # 摸魚view
         def __init__(
@@ -140,7 +149,11 @@ class FishCog(commands.Cog):
         if message.author.id == self.bot.user.id:
             return
         random_number = randint(1, 100)
-        if random_number == 1 and not isinstance(message.channel, Thread) and message.channel.guild is not None:
+        if (
+            random_number == 1
+            and not isinstance(message.channel, Thread)
+            and message.channel.guild is not None
+        ):
             fish = random.choice(list(fish_data.keys()))
             embed, fish_adj = self.generate_fish_embed(fish)
             view = FishCog.TouchFish(fish, self.bot.db, fish_adj, message.author)
