@@ -124,7 +124,7 @@ fish_data = {
         "flow_chance": None,
         "type_0": False,
         "cute": False,
-        "verb": ["調教了", "OO了", "噴了一臉茶", "舔了", "咬了"],
+        "verb": ["調教了", "OO了", "噴了一臉茶", "舔了", "咬了", "噴了一臉水"],
         "image_url": "https://i.imgur.com/VkbCdGs.jpg",
     },
     "安妮亞": {
@@ -140,7 +140,7 @@ fish_data = {
         "flow_chance": None,
         "type_0": False,
         "cute": True,
-        "verb": ["扇了一巴掌"],
+        "verb": ["扇了一巴掌", "使用了神里流"],
         "image_url": "https://i.imgur.com/ayE8RTR.jpg",
     },
     "02": {
@@ -176,9 +176,9 @@ fish_data = {
         "type_0": False,
         "cute": True,
         "verb": [
-            "潑了一臉香菇",
-            "扇了一巴掌",
-            "ㄐㄐ了"
+            "ㄐㄐ了",
+            "用 ㄐㄐ 的方式調教了",
+            "ㄐㄐㄐㄐㄐㄐ了",
         ],
         "image_url": "https://i.imgur.com/7ZZ2dHL.png",
     },
@@ -200,18 +200,9 @@ fish_data = {
         "cute": False,
         "verb": [
             "抓去跳靖妖儺舞了",
+            "抓去跳高高了",
         ],
         "image_url": "https://imgur.com/rO57u7J.jpg",
-    },
-    "櫻澤墨": {
-        "flow": 10,
-        "flow_chance": None,
-        "type_0": False,
-        "cute": True,
-        "verb": [
-            "...了",
-        ],
-        "image_url": "https://i.imgur.com/Uki0etF.png",
     },
     "星街彗星": {
         "flow": 10,
@@ -220,6 +211,7 @@ fish_data = {
         "cute": True,
         "verb": [
             "扇了一巴掌",
+            "拿斧頭砍了",
         ],
         "image_url": "https://i.imgur.com/vZNW7nK.jpg",
     },

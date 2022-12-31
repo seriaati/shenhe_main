@@ -101,7 +101,7 @@ class FishCog(commands.Cog):
 
                     embed = ayaaka_embed(
                         f"✅ {i.user.display_name} 摸到了!!",
-                        f"{i.user.mention} 摸 **{fish_name}** 摸到 __{flow}__ flow幣!",
+                        f"{i.user.mention} 摸 **{fish_name}** 摸到 **__{flow}__** flow幣!",
                     )
                 else:
                     embed = ayaaka_embed(
@@ -115,14 +115,14 @@ class FishCog(commands.Cog):
 
                     embed = ayaaka_embed(
                         f"✅ {i.user.display_name} 摸到了!!",
-                        f"{i.user.mention} 摸 **{fish_name}** 摸到 __{flow}__ flow幣!",
+                        f"{i.user.mention} 摸 **{fish_name}** 摸到 **__{flow}__** flow幣!",
                     )
                 else:
                     await flow_transaction(i.user.id, -int(flow), self.db)
 
                     embed = ayaaka_embed(
                         f"⚔️ {i.user.display_name} 被攻擊了 oAo !!",
-                        f"{i.user.mention} 被 **{fish_name}** {random.choice(verb)}，損失了 __{flow}__ flow幣!",
+                        f"{i.user.mention} 被 **{fish_name}** {random.choice(verb)}，損失了 **__{flow}__** flow幣!",
                     )
 
             embed.add_field(
