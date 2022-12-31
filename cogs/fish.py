@@ -85,7 +85,7 @@ class FishCog(commands.Cog):
         async def callback(self, interaction: Interaction):
             self.view: FishCog.TouchFish
             self.view.stop()
-            
+
             await interaction.response.defer()
 
             fish = fish_data[self.fish]
@@ -96,41 +96,50 @@ class FishCog(commands.Cog):
             if fish["type_0"]:
                 if value <= 50:
                     await flow_transaction(interaction.user.id, int(flow), self.db)
-                    await interaction.edit_original_response(
-                        content=f"{interaction.user.mention} 摸 **{self.fish_adj}的{self.fish}** 摸到 {flow} flow幣!\n目前 flow 幣: {await get_user_flow(interaction.user.id, self.db)}",
-                        view=None,
+
+                    embed = ayaaka_embed(
+                        f"✅ {interaction.user.display_name} 摸到了!!",
+                        f"{interaction.user.mention} 摸 **{self.fish_adj}的{self.fish}** 摸到 __{flow}__ flow幣!",
                     )
-                    # e.g. 摸虱目魚摸到 1 flow幣!
                 else:
-                    await interaction.edit_original_response(
-                        content=f"{interaction.user.mention} 單純的摸 **{self.fish_adj}的{self.fish}** 而已, 沒有摸到flow幣 qwq\n目前 flow 幣: {await get_user_flow(interaction.user.id, self.db)}",
-                        view=None,
+                    embed = ayaaka_embed(
+                        f"⛔ {interaction.user.display_name} 沒摸到...",
+                        f"{interaction.user.mention} 單純的摸 **{self.fish_adj}的{self.fish}** 而已，沒有摸到flow幣!",
                     )
             else:
-                chance = 50
                 verb = fish["verb"]
-                if value <= chance:  # 50% Chance of increasing flow amount by 20
+                if value <= 50:
                     await flow_transaction(interaction.user.id, int(flow), self.db)
-                    await interaction.edit_original_response(
-                        content=f"{interaction.user.mention} 摸 **{self.fish_adj}的{self.fish}** 摸到 {flow} flow幣!\n目前 flow 幣: {await get_user_flow(interaction.user.id, self.db)}",
-                        view=None,
-                    )
-                    # e.g. 摸抹香鯨摸到 20 flow幣!
-                else:  # 50% Chance of decreasing flow amount by 20
-                    await flow_transaction(interaction.user.id, -int(flow), self.db)
-                    await interaction.edit_original_response(
-                        content=f"{interaction.user.mention} 被 **{self.fish_adj}的{self.fish}** {random.choice(verb)}, 損失了 {flow} flow幣 qwq\n目前 flow 幣: {await get_user_flow(interaction.user.id, self.db)}",
-                        view=None,
-                    )
-                    # e.g. 抹香鯨 鯨爆了，損失了 20 flow幣 qwq
 
-            await asyncio.sleep(3)
+                    embed = ayaaka_embed(
+                        f"✅ {interaction.user.display_name} 摸到了!!",
+                        f"{interaction.user.mention} 摸 **{self.fish_adj}的{self.fish}** 摸到 __{flow}__ flow幣!",
+                    )
+                else:
+                    await flow_transaction(interaction.user.id, -int(flow), self.db)
+
+                    embed = ayaaka_embed(
+                        f"⚔️ {interaction.user.display_name} 被攻擊了 oAo !!",
+                        f"{interaction.user.mention} 被 **{self.fish_adj}的{self.fish}** {random.choice(verb)}，損失了 __{flow}__ flow幣!",
+                    )
+
+            embed.add_field(
+                name="目前 flow 幣",
+                value=f"{await get_user_flow(interaction.user.id, self.db)} flow",
+                inline=False,
+            )
+
+            await interaction.edit_original_response(
+                embed=embed,
+                view=None,
+            )
+            await asyncio.sleep(7)
             await interaction.edit_original_response(
                 content=f"**{self.fish_adj}的{self.fish}** 在被 {interaction.user.mention} 摸到後默默的游走了...",
                 embed=None,
                 view=None,
             )
-            await asyncio.sleep(3)
+            await asyncio.sleep(5)
             await interaction.delete_original_response()
 
     class TouchFish(DefaultView):  # 摸魚view

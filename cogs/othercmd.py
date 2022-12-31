@@ -98,7 +98,7 @@ class OtherCMDCog(commands.Cog, name="other"):
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
-        if payload.emoji.name == "QuoteTimeWakuWaku":
+        if payload.emoji.id == 966578081139662939: # QuoteTimeWakuWaku
             if payload.channel_id == 965842415913152522:
                 return await self.bot.get_channel(payload.channel_id).send(
                     embed=error_embed().set_author(name="不可以在色色台語錄唷"), delete_after=3
