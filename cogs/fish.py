@@ -82,65 +82,68 @@ class FishCog(commands.Cog):
             self.author = author
             self.db = db
 
-        async def callback(self, interaction: Interaction):
+        async def callback(self, i: Interaction):
             self.view: FishCog.TouchFish
             self.view.stop()
 
-            await interaction.response.defer()
+            await i.response.defer()
 
             fish = fish_data[self.fish]
             flow = fish["flow"]
+            image_url = fish["image_url"]
+            fish_name = f"{self.fish_adj}的{self.fish}"
 
             value = randint(1, 100)  # Picks a random number from 1 - 100
 
             if fish["type_0"]:
                 if value <= 50:
-                    await flow_transaction(interaction.user.id, int(flow), self.db)
+                    await flow_transaction(i.user.id, int(flow), self.db)
 
                     embed = ayaaka_embed(
-                        f"✅ {interaction.user.display_name} 摸到了!!",
-                        f"{interaction.user.mention} 摸 **{self.fish_adj}的{self.fish}** 摸到 __{flow}__ flow幣!",
+                        f"✅ {i.user.display_name} 摸到了!!",
+                        f"{i.user.mention} 摸 **{fish_name}** 摸到 __{flow}__ flow幣!",
                     )
                 else:
                     embed = ayaaka_embed(
-                        f"⛔ {interaction.user.display_name} 沒摸到...",
-                        f"{interaction.user.mention} 單純的摸 **{self.fish_adj}的{self.fish}** 而已，沒有摸到flow幣!",
+                        f"⛔ {i.user.display_name} 沒摸到...",
+                        f"{i.user.mention} 單純的摸 **{fish_name}** 而已，沒有摸到flow幣!",
                     )
             else:
                 verb = fish["verb"]
                 if value <= 50:
-                    await flow_transaction(interaction.user.id, int(flow), self.db)
+                    await flow_transaction(i.user.id, int(flow), self.db)
 
                     embed = ayaaka_embed(
-                        f"✅ {interaction.user.display_name} 摸到了!!",
-                        f"{interaction.user.mention} 摸 **{self.fish_adj}的{self.fish}** 摸到 __{flow}__ flow幣!",
+                        f"✅ {i.user.display_name} 摸到了!!",
+                        f"{i.user.mention} 摸 **{fish_name}** 摸到 __{flow}__ flow幣!",
                     )
                 else:
-                    await flow_transaction(interaction.user.id, -int(flow), self.db)
+                    await flow_transaction(i.user.id, -int(flow), self.db)
 
                     embed = ayaaka_embed(
-                        f"⚔️ {interaction.user.display_name} 被攻擊了 oAo !!",
-                        f"{interaction.user.mention} 被 **{self.fish_adj}的{self.fish}** {random.choice(verb)}，損失了 __{flow}__ flow幣!",
+                        f"⚔️ {i.user.display_name} 被攻擊了 oAo !!",
+                        f"{i.user.mention} 被 **{fish_name}** {random.choice(verb)}，損失了 __{flow}__ flow幣!",
                     )
 
             embed.add_field(
                 name="目前 flow 幣",
-                value=f"{await get_user_flow(interaction.user.id, self.db)} flow",
+                value=f"{await get_user_flow(i.user.id, self.db)} flow",
                 inline=False,
             )
+            embed.set_thumbnail(url=image_url)
 
-            await interaction.edit_original_response(
+            await i.edit_original_response(
                 embed=embed,
                 view=None,
             )
             await asyncio.sleep(7)
-            await interaction.edit_original_response(
-                content=f"**{self.fish_adj}的{self.fish}** 在被 {interaction.user.mention} 摸到後默默的游走了...",
+            await i.edit_original_response(
+                content=f"**{self.fish_adj}的{self.fish}** 在被 {i.user.mention} 摸到後默默的游走了...",
                 embed=None,
                 view=None,
             )
-            await asyncio.sleep(5)
-            await interaction.delete_original_response()
+            await asyncio.sleep(3)
+            await i.delete_original_response()
 
     class TouchFish(DefaultView):  # 摸魚view
         def __init__(
