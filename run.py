@@ -1,6 +1,6 @@
 # shenhe-bot by seria
 
-import getpass
+import platform
 import os
 import sys
 import traceback
@@ -19,8 +19,7 @@ from debug import DebugView
 from utility.utils import error_embed, log
 
 load_dotenv()
-user_name = getpass.getuser()
-if user_name == "seria":
+if platform.system() == "Windows":
     token = os.getenv('YELAN_TOKEN')
     prefix = ['?']
     application_id = os.getenv('YELAN_APP_ID')
