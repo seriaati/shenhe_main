@@ -1,5 +1,5 @@
 import os
-from datetime import datetime, time
+from datetime import datetime, time, timedelta, timezone
 import discord
 import genshin
 from dotenv import load_dotenv
@@ -43,7 +43,7 @@ def log(is_system: bool, is_error: bool, log_type: str, log_msg: str):
 
 def get_dt_now():
     """Get current time in UTC+8"""
-    return datetime.utcnow() + datetime.timedelta(hours=8)
+    return datetime.now().astimezone(tz=timezone(timedelta(hours=8)))
 
 def getClient():
     cookies = {"ltuid": os.getenv('ltuid'),
