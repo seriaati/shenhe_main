@@ -2,7 +2,7 @@ from datetime import datetime, time, timedelta
 
 import aiosqlite
 from dateutil import parser
-from utility.utils import time_in_range
+from utility.utils import get_dt_now, time_in_range
 
 
 async def check_flow_account(user_id: int, db: aiosqlite.Connection) -> bool:
@@ -30,7 +30,7 @@ async def flow_transaction(user_id: int, amount: int, db: aiosqlite.Connection) 
         await register_flow_account(user_id, db)
     await db.execute(
         "UPDATE flow_accounts SET flow = flow + ?, last_trans = ? WHERE user_id = ?",
-        (amount, datetime.now(), user_id),
+        (amount, get_dt_now(), user_id),
     )
     await db.execute("UPDATE bank SET flow = flow - ?", (amount,))
     await db.commit()
@@ -64,7 +64,7 @@ async def free_flow(
     check = await check_flow_account(user_id, db)
     if not check:
         await register_flow_account(user_id, db)
-    now = datetime.now()
+    now = get_dt_now()
     if time_in_range(start, end, now.time()):
         async with db.execute(
             f"SELECT {time_type} FROM flow_accounts WHERE user_id = ?",

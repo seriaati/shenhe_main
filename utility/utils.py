@@ -26,7 +26,7 @@ def time_in_range(start: time, end: time, x: time) -> bool:
         return start <= x or x <= end
 
 def log(is_system: bool, is_error: bool, log_type: str, log_msg: str):
-    now = datetime.now()
+    now = get_dt_now()
     today = datetime.today()
     current_date = today.strftime('%Y-%m-%d')
     current_time = now.strftime("%H:%M:%S")
@@ -41,6 +41,9 @@ def log(is_system: bool, is_error: bool, log_type: str, log_msg: str):
         f.write(f'{log_str}\n')
     return log_str
 
+def get_dt_now():
+    """Get current time in UTC+8"""
+    return datetime.utcnow() + datetime.timedelta(hours=8)
 
 def getClient():
     cookies = {"ltuid": os.getenv('ltuid'),

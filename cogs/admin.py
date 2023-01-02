@@ -15,7 +15,7 @@ from discord import (
     app_commands,
 )
 from discord.ext import commands
-from utility.utils import default_embed, error_embed, time_in_range
+from utility.utils import default_embed, error_embed, get_dt_now, time_in_range
 import importlib
 import sys
 
@@ -82,7 +82,7 @@ class AdminCog(commands.Cog):
 
     @commands.Cog.listener()
     async def on_raw_message_delete(self, payload: RawMessageDeleteEvent):
-        now = datetime.now()
+        now = get_dt_now()
         if payload.guild_id != 916838066117824553:
             return
         if payload.channel_id == 965842415913152522:
@@ -120,7 +120,7 @@ class AdminCog(commands.Cog):
 
     @commands.Cog.listener()
     async def on_member_join(self, member: Member):
-        now = datetime.now()
+        now = get_dt_now()
         if member.guild.id != 916838066117824553:
             return
         c: TextChannel = (
@@ -137,7 +137,7 @@ class AdminCog(commands.Cog):
 
     @commands.Cog.listener()
     async def on_member_remove(self, member: Member):
-        now = datetime.now()
+        now = get_dt_now()
         if member.guild.id != 916838066117824553:
             return
         c: TextChannel = (
