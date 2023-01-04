@@ -142,7 +142,7 @@ class FishCog(commands.Cog):
                 embed=None,
                 view=None,
             )
-            await asyncio.sleep(3)
+            await asyncio.sleep(5)
             await i.delete_original_response()
 
     class TouchFish(DefaultView):  # 摸魚view
