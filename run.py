@@ -69,10 +69,6 @@ class ShenheBot(commands.Bot):
             self.add_view(WelcomeCog.StartTutorial(self.db))
 
     async def on_ready(self):
-        await self.change_presence(
-            status=Status.online,
-            activity=Game(name=f'/help')
-        )
         print(log(True, False, 'Bot', f'Logged in as {self.user}'))
 
     async def on_message(self, message: Message):
