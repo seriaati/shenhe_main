@@ -45,7 +45,8 @@ class ShenheBot(commands.Bot):
             intents=intents,
             application_id=application_id,
             owner_ids=[289597294075183114,
-                       410036441129943050, 831883841417248778]
+                       410036441129943050, 831883841417248778],
+            chunk_guilds_at_startup=False,
         )
 
     async def setup_hook(self) -> None:
@@ -99,6 +100,12 @@ class ShenheBot(commands.Bot):
 
 
 bot = ShenheBot()
+
+@bot.before_invoke
+async def before_invoke(ctx):
+    if ctx.guild is not None and not ctx.guild.chunked:
+        await ctx.guild.chunk()
+
 tree = bot.tree
 
 
@@ -117,4 +124,10 @@ async def err_handle(i: Interaction, e: app_commands.AppCommandError):
         embed = error_embed(message=f'```py\n{e}\n```').set_author(
             name='未知錯誤', icon_url=i.user.display_avatar.url)
         await i.channel.send(content=f'{seria.mention} 系統已將錯誤回報給小雪, 請耐心等待修復', embed=embed, view=view)
+
+@tree.interaction_check
+async def check(i: Interaction):
+    if i.guild is not None and not i.guild.chunked:
+        await i.guild.chunk()
+
 bot.run(token)
