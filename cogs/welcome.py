@@ -22,9 +22,10 @@ class WelcomeCog(commands.Cog):
         guild = self.bot.get_guild(self.bot.guild_id)
         uid_channel = utils.get(guild.channels, name="uid台")
         if message.channel.id == uid_channel.id:
-            uid = re.findall(r"\d+", str(message.content))
+            uid = re.findall(r"\d+", message.content)
             if len(uid) == 0:
                 return
+            uid = uid[0]
             if len(uid) != 9:
                 return await message.channel.send(
                     content=message.author.mention,
