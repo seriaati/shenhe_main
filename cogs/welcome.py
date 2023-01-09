@@ -128,7 +128,7 @@ class WelcomeCog(commands.Cog):
                     embed=default_embed("你已經做過入群導引啦", "不需要再做囉"), ephemeral=True
                 )
             
-            await i.user.add_roles(roles=traveler)
+            await i.user.add_roles(traveler)
             await i.response.send_message(embed=default_embed("✅ 您已同意上述規則", f"請至 {uid_channel.mention} 輸入你的 UID"), ephemeral=True)
 
     @commands.is_owner()
