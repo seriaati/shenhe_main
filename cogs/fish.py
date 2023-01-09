@@ -160,12 +160,13 @@ class FishCog(commands.Cog):
     async def on_message(self, message: Message):  # 機率放魚
         if message.author.id == self.bot.user.id:
             return
+        if isinstance(message.channel, Thread):
+            return
+        if message.channel.guild is None:
+            return
+
         random_number = randint(1, 100)
-        if (
-            random_number == 1
-            and not isinstance(message.channel, Thread)
-            and message.channel.guild is not None
-        ):
+        if random_number == 1:
             fish = random.choice(list(fish_data.keys()))
             embed, fish_adj = self.generate_fish_embed(fish)
             view = FishCog.TouchFish(fish, self.bot.db, fish_adj, message.author)

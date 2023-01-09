@@ -8,8 +8,7 @@ from pathlib import Path
 
 import aiohttp
 import aiosqlite
-from discord import (Game, Intents, Interaction, Message,
-                     Status, app_commands)
+from discord import (Intents, Interaction, Message, app_commands, Game)
 from discord.ext import commands
 from dotenv import load_dotenv
 
@@ -44,14 +43,14 @@ class ShenheBot(commands.Bot):
             command_prefix=prefix,
             intents=intents,
             application_id=application_id,
-            owner_ids=[289597294075183114,
-                       410036441129943050, 831883841417248778],
             chunk_guilds_at_startup=False,
+            activity=Game(name="私訊來知會管理員")
         )
 
     async def setup_hook(self) -> None:
         self.session = aiohttp.ClientSession()
         self.db = await aiosqlite.connect('main.db')
+        self.guild_id = 1061877505067327528
         self.repeat = False
         self.prev = False
         self.debug_toggle = debug_toggle
@@ -61,12 +60,6 @@ class ShenheBot(commands.Bot):
         for filepath in Path('./cogs').glob('**/*.py'):
             cog_name = Path(filepath).stem
             await self.load_extension(f'cogs.{cog_name}')
-        if not self.debug_toggle:
-            self.add_view(ReactionRoles.WorldLevelView())
-            self.add_view(ReactionRoles.RoleView())
-            self.add_view(ReactionRoles.NationalityChooser([1, 2, 3]))
-            self.add_view(WelcomeCog.AcceptRules(self.db))
-            self.add_view(WelcomeCog.StartTutorial(self.db))
 
     async def on_ready(self):
         print(log(True, False, 'Bot', f'Logged in as {self.user}'))

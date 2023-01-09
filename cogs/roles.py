@@ -24,7 +24,7 @@ class ReactionRoles(commands.Cog):
             self.number = number
 
         async def callback(self, interaction: Interaction):
-            g = interaction.client.get_guild(916838066117824553)
+            g = interaction.client.get_guild(1061875024136503318)
             r = get(g.roles, name=f'W{self.number}')
             if r in interaction.user.roles:
                 await interaction.user.remove_roles(r)
