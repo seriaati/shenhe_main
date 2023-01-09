@@ -56,10 +56,13 @@ class ShenheBot(commands.Bot):
         self.debug_toggle = debug_toggle
         self.gv_role_blacklist = []
         self.gv_role_name = ""
+        
         await self.load_extension('jishaku')
         for filepath in Path('./cogs').glob('**/*.py'):
             cog_name = Path(filepath).stem
             await self.load_extension(f'cogs.{cog_name}')
+            
+        self.add_view(WelcomeCog.AcceptRules())
 
     async def on_ready(self):
         print(log(True, False, 'Bot', f'Logged in as {self.user}'))

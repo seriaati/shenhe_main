@@ -64,9 +64,9 @@ class WelcomeCog(commands.Cog):
             return
         if self.bot.debug_toggle:
             return
-        r = before.guild.get_role(978532779098796042)
-        if r not in before.roles and r in after.roles:
-            log(True, False, "New Traveler", after.id)
+        
+        traveler = utils.get(before.guild.roles, name="旅行者")
+        if traveler not in before.roles and traveler in after.roles:
             await register_flow_account(after.id, self.bot.db)
             public = self.bot.get_channel(916951131022843964)
             view = WelcomeCog.Welcome(after)
