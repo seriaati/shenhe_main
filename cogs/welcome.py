@@ -51,6 +51,8 @@ class WelcomeCog(commands.Cog):
                     name="UID 設置成功", icon_url=message.author.avatar
                 ),
             )
+            traveler = utils.get(guild.roles, name="旅行者")
+            await message.author.add_roles(traveler)
 
     @commands.Cog.listener()
     async def on_member_remove(self, member: Member):
@@ -122,14 +124,14 @@ class WelcomeCog(commands.Cog):
 
         @button(label="同意以上規則", style=ButtonStyle.green, custom_id="accept_rule_button")
         async def accept_rules(self, i: Interaction, button: Button):
-            traveler = utils.get(i.guild.roles, name="旅行者")
+            uid_unlock = utils.get(i.guild.roles, name="uid_unlock")
             uid_channel = utils.get(i.guild.channels, name="uid台")
-            if traveler in i.user.roles:
+            if uid_unlock in i.user.roles:
                 return await i.response.send_message(
                     embed=default_embed("你已經做過入群導引啦", "不需要再做囉"), ephemeral=True
                 )
             
-            await i.user.add_roles(traveler)
+            await i.user.add_roles(uid_unlock)
             await i.response.send_message(embed=default_embed("✅ 您已同意上述規則", f"請至 {uid_channel.mention} 輸入你的 UID"), ephemeral=True)
 
     @commands.is_owner()
