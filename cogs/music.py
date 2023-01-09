@@ -12,7 +12,7 @@ from wavelink.ext import spotify
 load_dotenv()
 
 
-class MusicCog(commands.Cog):
+class MusicCog(commands.Cog, name="music"):
     def __init__(self, bot: commands.Bot):
         super().__init__()
         self.bot = bot
