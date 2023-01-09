@@ -124,7 +124,7 @@ class WelcomeCog(commands.Cog):
 
         @button(label="同意以上規則", style=ButtonStyle.green, custom_id="accept_rule_button")
         async def accept_rules(self, i: Interaction, button: Button):
-            uid_unlock = utils.get(i.guild.roles, name="uid_unlock")
+            uid_unlock = utils.get(i.guild.roles, name="unlock_uid")
             uid_channel = utils.get(i.guild.channels, name="uid台")
             if uid_unlock in i.user.roles:
                 return await i.response.send_message(
