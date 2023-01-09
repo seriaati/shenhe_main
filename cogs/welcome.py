@@ -79,7 +79,7 @@ class WelcomeCog(commands.Cog):
                 "刻晴賽高!",
                 "要好好跟大家相處唷~",
                 "你也是偽裝成萌新的大佬嗎?",
-                "七七喜歡你~",,
+                "七七喜歡你~",
             ]
             welcome_str = random.choice(welcome_strs)
             embed = default_embed(
