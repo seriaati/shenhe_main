@@ -1,12 +1,12 @@
 import random
 import re
 
-from discord import ButtonStyle, Interaction, Member, Message
+from discord import ButtonStyle, Interaction, Member, Message, utils
 from discord.ext import commands
 from discord.ui import Button, button
-from discord import utils
-from debug import DefaultView
+
 from apps.flow import register_flow_account, remove_flow_account
+from debug import DefaultView
 from utility.utils import default_embed, error_embed, log
 
 
@@ -67,7 +67,7 @@ class WelcomeCog(commands.Cog):
             return
         if self.bot.debug_toggle:
             return
-        
+
         traveler = utils.get(before.guild.roles, name="旅行者")
         if traveler not in before.roles and traveler in after.roles:
             await register_flow_account(after.id, self.bot.db)
@@ -128,11 +128,15 @@ class WelcomeCog(commands.Cog):
             uid_channel = utils.get(i.guild.channels, name="uid台")
             if uid_unlock in i.user.roles:
                 return await i.response.send_message(
-                    embed=default_embed("你已經做過入群導引啦", "不需要再做囉"), ephemeral=True
+                    embed=default_embed("您已同意過上述規則了", f"請至 {uid_channel} 輸入 UID"),
+                    ephemeral=True,
                 )
-            
+
             await i.user.add_roles(uid_unlock)
-            await i.response.send_message(embed=default_embed("✅ 您已同意上述規則", f"請至 {uid_channel.mention} 輸入你的 UID"), ephemeral=True)
+            await i.response.send_message(
+                embed=default_embed("✅ 您已同意上述規則", f"請至 {uid_channel.mention} 輸入你的 UID"),
+                ephemeral=True,
+            )
 
     @commands.is_owner()
     @commands.command(name="welcome")
