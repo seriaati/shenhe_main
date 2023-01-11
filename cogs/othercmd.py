@@ -208,7 +208,7 @@ class OtherCMDCog(commands.Cog, name="other"):
             f"{msg.content}\n\n[點我回到該訊息]({msg.jump_url})",
         )
         embed.set_thumbnail(url=str(msg.author.avatar))
-        embed.set_author(name=i.user.display_name)
+        embed.set_author(name=msg.author.display_name)
         await i.response.send_message(
             embed=default_embed().set_author(name="語錄擷取成功", icon_url=i.user.display_avatar.url),
             ephemeral=True,
