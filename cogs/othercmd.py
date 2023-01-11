@@ -213,6 +213,7 @@ class OtherCMDCog(commands.Cog, name="other"):
             embed=default_embed().set_author(name="語錄擷取成功", icon_url=i.user.display_avatar.url),
             ephemeral=True,
         )
+        channel = self.bot.get_channel(1061883645591310427)
         await channel.send(embed=embed)
 
     @app_commands.command(name="rolemembers身份組人數", description="查看一個身份組內的所有成員")
