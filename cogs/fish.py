@@ -164,6 +164,8 @@ class FishCog(commands.Cog):
             return
         if message.channel.guild is None:
             return
+        if message.channel.name in ["心裡諮商", "練舞室"]:
+            return
 
         random_number = randint(1, 100)
         if random_number == 1:

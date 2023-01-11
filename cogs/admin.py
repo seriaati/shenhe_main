@@ -1,8 +1,6 @@
 import asyncio
 import io
-from datetime import datetime
 import aiosqlite
-from pytz import timezone
 
 from discord import (
     File,
@@ -10,8 +8,6 @@ from discord import (
     Member,
     Message,
     NotFound,
-    RawMessageDeleteEvent,
-    TextChannel,
     app_commands,
 )
 from discord.ext import commands
@@ -35,7 +31,7 @@ class AdminCog(commands.Cog):
                 try:
                     importlib.reload(module)
                 except Exception as e:
-                    return await i.followup.send(
+                    return await ctx.send(
                         embed=error_embed(module.__name__, f"```{e}```"),
                         ephemeral=True,
                     )
