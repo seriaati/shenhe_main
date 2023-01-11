@@ -25,9 +25,8 @@ class AdminCog(commands.Cog):
         self.bot: commands.Bot = bot
         self.debug: bool = self.bot.debug_toggle
 
-    @app_commands.command(name="reload", description="重新載入擴充功能")
-    async def reload(self, i: Interaction):
-        await i.response.defer()
+    @commands.command(name="reload")
+    async def reload(self, ctx: commands.Context):
         modules = list(sys.modules.values())
         for module in modules:
             if module is None:
@@ -40,7 +39,7 @@ class AdminCog(commands.Cog):
                         embed=error_embed(module.__name__, f"```{e}```"),
                         ephemeral=True,
                     )
-        await i.followup.send("success", ephemeral=True)
+        await ctx.send("Reloaded")
 
     @commands.Cog.listener()
     async def on_message(self, message: Message):
