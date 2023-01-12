@@ -71,7 +71,7 @@ class WelcomeCog(commands.Cog):
         traveler = utils.get(before.guild.roles, name="旅行者")
         if traveler not in before.roles and traveler in after.roles:
             await register_flow_account(after.id, self.bot.db)
-            public = self.bot.get_channel(916951131022843964)
+            public = utils.get(before.guild.channels, name="聊天台")
             view = WelcomeCog.Welcome(after)
             welcome_strs = [
                 "祝你保底不歪十連雙黃",
