@@ -41,14 +41,10 @@ class AdminCog(commands.Cog):
     async def on_message(self, message: Message):
         if message.author.id == self.bot.user.id:
             return
-        if message.guild.id != 1061875024136503318:
+        if message.guild.id != self.bot.guild_id:
             return
-        sese_channel = (
-            self.bot.get_channel(984792329426714677)
-            if self.debug
-            else self.bot.get_channel(965842415913152522)
-        )
-        if message.channel == sese_channel and len(message.attachments) != 0:
+        
+        if message.channel.id == 1061898394446069852 and len(message.attachments) != 0:
             c: aiosqlite.Cursor = await self.bot.db.cursor()
             await c.execute(
                 "INSERT INTO sese_leaderboard (user_id, sese_count) VALUES (?, ?) ON CONFLICT (user_id) DO UPDATE SET sese_count = sese_count + ? WHERE user_id = ?",
