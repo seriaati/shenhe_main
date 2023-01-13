@@ -9,7 +9,7 @@ class VoteCog(commands.Cog):
         
     class VoteView(ui.View):
         def __init__(self):
-            super().__init__()
+            super().__init__(timeout=None)
             for i in range(5):
                 self.add_item(VoteCog.VoteButton(f"{i + 1}\N{combining enclosing keycap}"))
         
