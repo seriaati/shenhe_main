@@ -21,6 +21,12 @@ class AdminCog(commands.Cog):
         self.bot: commands.Bot = bot
         self.debug: bool = self.bot.debug_toggle
 
+    @commands.is_owner()
+    @commands.command(name="cleanup")
+    async def cleanup(self, ctx: commands.Context, amount: int):
+        await ctx.channel.purge(limit=amount + 1, check=lambda m: m.author == self.bot.user)
+    
+    @commands.is_owner()
     @commands.command(name="reload")
     async def reload(self, ctx: commands.Context):
         modules = list(sys.modules.values())
