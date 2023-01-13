@@ -19,8 +19,16 @@ class VoteCog(commands.Cog):
         def __init__(self, emoji: str):
             super().__init__(emoji=emoji, label="0")
             self.votes = 0
+            self.voted = []
         
         async def callback(self, interaction: Interaction):
+            if interaction.user.id in self.voted:
+                self.votes -= 1
+                self.label = str(self.votes)
+                self.view.voted.remove(interaction.user.id)
+                self.voted.remove(interaction.user.id)
+                return await interaction.response.edit_message(view=self.view)
+            
             if interaction.user.id in self.view.voted:
                 await interaction.response.send_message("你已經投過票了", ephemeral=True)
             else:
