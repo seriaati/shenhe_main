@@ -33,6 +33,7 @@ class VoteCog(commands.Cog):
                 await interaction.response.send_message("你已經投過票了", ephemeral=True)
             else:
                 self.view.voted.append(interaction.user.id)
+                self.voted.append(interaction.user.id)
                 self.votes += 1
                 self.label = str(self.votes)
                 await interaction.response.edit_message(view=self.view)
