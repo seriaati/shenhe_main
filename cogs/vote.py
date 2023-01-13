@@ -1,10 +1,33 @@
 from discord.ext import commands
+from discord import ui, Interaction
 
 from utility.utils import default_embed
 
 class VoteCog(commands.Cog):
     def __init__(self, bot):
         self.bot: commands.Bot = bot
+        
+    class VoteView(ui.View):
+        def __init__(self):
+            super().__init__()
+            for i in range(5):
+                self.add_item(VoteCog.VoteButton(f"{i + 1}\N{combining enclosing keycap}"))
+        
+            self.voted = []
+    
+    class VoteButton(ui.Button):
+        def __init__(self, emoji: str):
+            super().__init__(emoji=emoji, label="0")
+            self.votes = 0
+        
+        async def callback(self, interaction: Interaction):
+            if interaction.user.id in self.view.voted:
+                await interaction.response.send_message("你已經投過票了", ephemeral=True)
+            else:
+                self.view.voted.append(interaction.user.id)
+                self.votes += 1
+                self.label = str(self.votes)
+                await interaction.response.edit_message(view=self.view)
     
     @commands.has_any_role("學生管理員", "猜猜我是誰")
     @commands.command(name="vote")
@@ -29,10 +52,7 @@ class VoteCog(commands.Cog):
             await ctx.send(embed=embed)
         
         embed = default_embed("第二輪投票", "請從上方選擇一個你最喜歡的群組名稱/圖片")
-        message = await ctx.send(embed=embed)
-        for i in range(5):
-            await message.add_reaction(f"{i + 1}\N{combining enclosing keycap}")
-        
+        message = await ctx.send(embed=embed, view=VoteCog.VoteView())
         
 async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(VoteCog(bot))
