@@ -169,31 +169,6 @@ class OtherCMDCog(commands.Cog, name="other"):
         r = choice(v.members)
         await i.response.send_message(f"{r.display_name}#{r.discriminator}")
 
-    @app_commands.command(name="cleanup清理", description="移除此頻道某個使用者發送的最近n個訊息")
-    @app_commands.rename(number="訊息數量", member="使用者")
-    async def cleanup(self, interaction: Interaction, number: int, member: Member):
-        await interaction.response.send_message(
-            embed=default_embed("<a:LOADER:982128111904776242> 刪除中"), ephemeral=True
-        )
-
-        def is_me(m):
-            return m.author == member
-
-        channel = interaction.channel
-        msg_count = 0
-        limit = 0
-        deleted = []
-        while msg_count < number:
-            while len(deleted) == 0:
-                limit += 1
-                deleted = await channel.purge(limit=limit, check=is_me)
-            deleted = []
-            limit = 0
-            msg_count += 1
-        await interaction.edit_original_response(
-            embed=default_embed(f"🗑️ 已移除來自 {member} 的 {number} 個訊息")
-        )
-
     @app_commands.command(name="members總人數", description="查看目前群組總人數")
     async def members(self, i: Interaction):
         g = i.user.guild
