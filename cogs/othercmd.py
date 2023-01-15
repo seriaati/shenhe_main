@@ -45,18 +45,18 @@ class OtherCMDCog(commands.Cog, name="other"):
         await i.client.db.commit()
 
     @app_commands.command(name="haose", description="好色喔")
-    @app_commands.rename(user='使用者', leaderboard='排行榜')
-    @app_commands.choices(leaderboard=[Choice(name='查看排行榜', value=1)])
+    @app_commands.rename(user="使用者", leaderboard="排行榜")
+    @app_commands.choices(leaderboard=[Choice(name="查看排行榜", value=1)])
     async def hao_se_o(self, i: Interaction, user: Member = None, leaderboard: int = 0):
         c = await i.client.db.cursor()
         if leaderboard == 1:
-            await c.execute('SELECT user_id, count FROM hao_se_o ORDER BY count DESC')
+            await c.execute("SELECT user_id, count FROM hao_se_o ORDER BY count DESC")
             data = await c.fetchall()
-            embed =  default_embed('好色喔排行榜前15名')
-            desc = ''
+            embed = default_embed("好色喔排行榜前15名")
+            desc = ""
             for index, tpl in enumerate(data[:15]):
                 user = i.guild.get_member(tpl[0]) or await i.guild.fetch_member(tpl[0])
-                desc += f'{index+1}. {user.mention} - {tpl[1]}次\n'
+                desc += f"{index+1}. {user.mention} - {tpl[1]}次\n"
             embed.description = desc
             await i.response.send_message(embed=embed)
         else:
@@ -101,24 +101,15 @@ class OtherCMDCog(commands.Cog, name="other"):
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
-        if payload.emoji.id == 1062180398077059132: # QuoteTimeWakuWaku
+        if payload.emoji.id == 1062180398077059132:  # QuoteTimeWakuWaku
             log(True, False, "Quote", payload.user_id)
             member = self.bot.get_user(payload.user_id)
             msg = await channel.fetch_message(payload.message_id)
             channel = self.bot.get_channel(payload.channel_id)
             emoji = self.bot.get_emoji(payload.emoji.id)
             await msg.remove_reaction(emoji, member)
-            await channel.send(
-                f"✅ 語錄擷取成功", delete_after=3
-            )
-            embed = default_embed(
-                f"語錄",
-                f"{msg.content}\n\n[點我回到該訊息]({msg.jump_url})",
-            )
-            embed.set_thumbnail(url=str(msg.author.avatar))
-            embed.set_author(name=member.display_name)
-            channel = self.bot.get_channel(1061883645591310427)
-            await channel.send(embed=embed)
+            await channel.send(f"✅ 語錄擷取成功", delete_after=3)
+            await self.send_quote_embed(member, msg)
 
     @app_commands.command(name="ping延遲", description="查看機器人目前延遲")
     async def ping(self, interaction: Interaction):
@@ -153,15 +144,7 @@ class OtherCMDCog(commands.Cog, name="other"):
         log(True, False, "Quote", ctx.author.id)
         await ctx.message.delete()
         msg = await ctx.channel.fetch_message(ctx.message.reference.message_id)
-        embed = default_embed(
-            f"語錄",
-            f"{msg.content}\n\n[點我回到該訊息]({msg.jump_url})",
-        )
-        embed.set_thumbnail(url=str(msg.author.avatar))
-        embed.set_author(name=ctx.author.display_name)
-        channel = self.bot.get_channel(966549110540877875)
-        await ctx.send("✅ 語錄擷取成功", delete_after=3)
-        await channel.send(embed=embed)
+        await self.send_quote_embed(ctx.author, msg)
 
     @app_commands.command(name="pickrandom")
     async def pickrandom(self, i: Interaction):
@@ -178,18 +161,13 @@ class OtherCMDCog(commands.Cog, name="other"):
 
     async def quote_context_menu(self, i: Interaction, msg: Message) -> None:
         log(True, False, "Quote", i.user.id)
-        embed = default_embed(
-            f"語錄",
-            f"{msg.content}\n\n[點我回到該訊息]({msg.jump_url})",
-        )
-        embed.set_thumbnail(url=str(msg.author.avatar))
-        embed.set_author(name=msg.author.display_name)
         await i.response.send_message(
-            embed=default_embed().set_author(name="語錄擷取成功", icon_url=i.user.display_avatar.url),
+            embed=default_embed().set_author(
+                name="語錄擷取成功", icon_url=i.user.display_avatar.url
+            ),
             ephemeral=True,
         )
-        channel = self.bot.get_channel(1061883645591310427)
-        await channel.send(embed=embed)
+        await self.send_quote_embed(i.user, msg)
 
     @app_commands.command(name="rolemembers身份組人數", description="查看一個身份組內的所有成員")
     @app_commands.rename(role="身份組")
@@ -212,6 +190,26 @@ class OtherCMDCog(commands.Cog, name="other"):
         view.add_item(Button(label="下載頭像", url=member.avatar.url))
         embed.set_image(url=member.avatar)
         await i.response.send_message(embed=embed, view=view)
+
+    async def send_quote_embed(self, member: Member, msg: Message):
+        embed = default_embed(
+            message=msg.content,
+        )
+        embed.add_field(name="原訊息", value=f"[點我]({msg.jump_url})")
+        embed.set_author(name=member.display_name, icon_url=member.display_avatar.url)
+        embed.set_footer(text=msg.created_at.strftime("%Y-%m-%d %H:%M:%S"))
+        
+        if msg.attachments:
+            embed.set_image(url=msg.attachments[0].url)
+        
+        if msg.reference:
+            ref = await msg.channel.fetch_message(msg.reference.message_id)
+            embed.add_field(name="回覆給...", value=f"[{ref.author}]({ref.jump_url})")
+        
+        channel = self.bot.get_channel(1061883645591310427)
+        message = await channel.send(embed=embed)
+        emoji = self.bot.get_emoji(1062180398077059132)
+        await message.add_reaction(emoji)
 
 
 async def setup(bot: commands.Bot) -> None:
