@@ -99,18 +99,6 @@ class OtherCMDCog(commands.Cog, name="other"):
             )
             await self.bot.db.commit()
 
-    @commands.Cog.listener()
-    async def on_raw_reaction_add(self, payload):
-        if payload.emoji.id == 1062180398077059132:  # QuoteTimeWakuWaku
-            log(True, False, "Quote", payload.user_id)
-            member = self.bot.get_user(payload.user_id)
-            msg = await channel.fetch_message(payload.message_id)
-            channel = self.bot.get_channel(payload.channel_id)
-            emoji = self.bot.get_emoji(payload.emoji.id)
-            await msg.remove_reaction(emoji, member)
-            await channel.send(f"✅ 語錄擷取成功", delete_after=3)
-            await self.send_quote_embed(member, msg)
-
     @app_commands.command(name="ping延遲", description="查看機器人目前延遲")
     async def ping(self, interaction: Interaction):
         await interaction.response.send_message(
