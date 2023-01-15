@@ -195,17 +195,19 @@ class OtherCMDCog(commands.Cog, name="other"):
         embed = default_embed(
             message=msg.content,
         )
-        embed.add_field(name="原訊息", value=f"[點我]({msg.jump_url})")
+        embed.add_field(name="原訊息", value=f"[點我]({msg.jump_url})", inline=False)
         embed.set_author(name=member.display_name, icon_url=member.display_avatar.url)
         embed.set_footer(text=msg.created_at.strftime("%Y-%m-%d %H:%M:%S"))
-        
+
         if msg.attachments:
             embed.set_image(url=msg.attachments[0].url)
-        
+
         if msg.reference:
             ref = await msg.channel.fetch_message(msg.reference.message_id)
-            embed.add_field(name="回覆給...", value=f"[{ref.author}]({ref.jump_url})")
-        
+            embed.add_field(
+                name="回覆給...", value=f"[{ref.author}]({ref.jump_url})", inline=False
+            )
+
         channel = self.bot.get_channel(1061883645591310427)
         message = await channel.send(embed=embed)
         emoji = self.bot.get_emoji(1062180398077059132)
