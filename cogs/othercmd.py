@@ -128,11 +128,11 @@ class OtherCMDCog(commands.Cog, name="other"):
         await interaction.response.send_message(f"{person_one} ❤ {person_two}")
 
     @commands.command(aliases=["q"])
-    async def quote(self, ctx):
+    async def quote(self, ctx: commands.Context):
         log(True, False, "Quote", ctx.author.id)
         await ctx.message.delete()
         msg = await ctx.channel.fetch_message(ctx.message.reference.message_id)
-        await self.send_quote_embed(ctx.author, msg)
+        await self.send_quote_embed(msg.author, msg)
 
     @app_commands.command(name="pickrandom")
     async def pickrandom(self, i: Interaction):
@@ -155,7 +155,7 @@ class OtherCMDCog(commands.Cog, name="other"):
             ),
             ephemeral=True,
         )
-        await self.send_quote_embed(i.user, msg)
+        await self.send_quote_embed(msg.author, msg)
 
     @app_commands.command(name="rolemembers身份組人數", description="查看一個身份組內的所有成員")
     @app_commands.rename(role="身份組")
