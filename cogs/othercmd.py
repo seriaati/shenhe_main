@@ -197,9 +197,7 @@ class OtherCMDCog(commands.Cog, name="other"):
             )
 
         channel = self.bot.get_channel(1061883645591310427)
-        message = await channel.send(embed=embed)
-        emoji = self.bot.get_emoji(1062180398077059132)
-        await message.add_reaction(emoji)
+        await channel.send(embed=embed)
 
 
 async def setup(bot: commands.Bot) -> None:
