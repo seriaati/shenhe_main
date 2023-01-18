@@ -148,7 +148,7 @@ class VoiceCog(commands.GroupCog, name="vc"):
     @app_commands.command(name="transfer", description="移交房主權")
     @app_commands.rename(new="新房主")
     @app_commands.describe(new="新的房主")
-    async def vc_unlock(self, i: Interaction, new: Member):
+    async def vc_transfer(self, i: Interaction, new: Member):
         current_vc = i.user.voice.channel
         owner, err_msg = await self.check_owner(current_vc.id, i.user.id)
         if not owner:
