@@ -15,21 +15,18 @@ from utility.utils import default_embed, error_embed
 
 
 def check_in_vc():
-    def predicate(i: Interaction):
-        return i.user.voice is not None
+    async def predicate(i: Interaction):
+        result = i.user.voice is not None
+        if not result:
+            await i.response.send_message(
+                embed=error_embed().set_author(
+                    name="你必須在語音台裡才能用這個指令", icon_url=i.user.display_avatar.url
+                ),
+                ephemeral=True,
+            )
+        return result
 
     return app_commands.check(predicate)
-
-
-@check_in_vc.error
-async def check_in_vc_error(i: Interaction, error):
-    if isinstance(error, app_commands.CheckFailure):
-        await i.response.send_message(
-            embed=error_embed().set_author(
-                name="你必須在語音台裡才能用這個指令", icon_url=i.user.display_avatar.url
-            ),
-            ephemeral=True,
-        )
 
 
 class VoiceCog(commands.GroupCog, name="vc"):
