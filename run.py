@@ -103,19 +103,14 @@ tree = bot.tree
 
 @tree.error
 async def err_handle(i: Interaction, e: app_commands.AppCommandError):
-    if isinstance(e, app_commands.errors.MissingRole):
-        embed = error_embed(message='你不是小雪團隊的一員').set_author(
-            name='權限不足', icon_url=i.user.display_avatar.url)
-        if i.response._responded:
-            await i.edit_original_response(embed=embed)
-        else:
-            await i.response.send_message(embed=embed, ephemeral=True)
-    else:
-        seria = i.client.get_user(410036441129943050)
-        view = DebugView(traceback.format_exc())
-        embed = error_embed(message=f'```py\n{e}\n```').set_author(
-            name='未知錯誤', icon_url=i.user.display_avatar.url)
-        await i.channel.send(content=f'{seria.mention} 系統已將錯誤回報給小雪, 請耐心等待修復', embed=embed, view=view)
+    if isinstance(e, app_commands.errors.CheckFailure):
+        return
+    
+    seria = i.client.get_user(410036441129943050)
+    view = DebugView(traceback.format_exc())
+    embed = error_embed(message=f'```py\n{e}\n```').set_author(
+        name='未知錯誤', icon_url=i.user.display_avatar.url)
+    await i.channel.send(content=f'{seria.mention} 系統已將錯誤回報給小雪, 請耐心等待修復', embed=embed, view=view)
 
 @tree.interaction_check
 async def check(i: Interaction):
