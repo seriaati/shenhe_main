@@ -1,7 +1,7 @@
 import asyncio
 import random
 from random import randint
-from typing import List
+from typing import Any, Dict, List
 
 import aiosqlite
 from discord import ButtonStyle, Interaction, Message, Thread
@@ -59,11 +59,12 @@ class FishCog(commands.Cog):
         return result, fish_adj
 
     class OneFish(Button):  # 摸魚按鈕
-        def __init__(self, db: aiosqlite.Connection, fish_name: str):
+        def __init__(self, db: aiosqlite.Connection, fish_name: str, fish: Dict[str, Any]):
             super().__init__(style=ButtonStyle.blurple, label=f"撫摸{fish_name}")
 
             self.fish_name = fish_name
             self.db = db
+            self.fish = fish
 
         async def callback(self, i: Interaction):
             self.view: FishCog.TouchFish
@@ -71,7 +72,7 @@ class FishCog(commands.Cog):
 
             await i.response.defer()
 
-            fish = fish_data[self.fish_name]
+            fish = self.fish
             flow = fish["flow"]
             image_url = fish["image_url"]
 
@@ -157,6 +158,7 @@ class FishCog(commands.Cog):
             db: aiosqlite.Connection,
             fish_name: str,
             group: bool,
+            fish: Dict[str, Any],
         ):
             super().__init__(timeout=60.0)
             self.group = group
@@ -165,7 +167,7 @@ class FishCog(commands.Cog):
             if group:
                 self.add_item(FishCog.FishGroup(db, fish_name))
             else:
-                self.add_item(FishCog.OneFish(db, fish_name))
+                self.add_item(FishCog.OneFish(db, fish_name, fish))
 
         async def on_timeout(self) -> None:
             if self.group:
@@ -218,7 +220,7 @@ class FishCog(commands.Cog):
     async def summon_fish(self, message, rand_int):
         fish = random.choice(list(fish_data.keys()))
         embed, fish_adj = self.generate_fish_embed(fish, rand_int <= 50)
-        view = FishCog.TouchFishView(self.bot.db, f"{fish_adj}的{fish}", rand_int <= 50)
+        view = FishCog.TouchFishView(self.bot.db, f"{fish_adj}的{fish}", rand_int <= 50, fish_data[fish])
         view.message = await message.channel.send(embed=embed, view=view)
 
 
