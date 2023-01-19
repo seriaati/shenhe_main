@@ -159,6 +159,7 @@ class FishCog(commands.Cog):
         ):
             super().__init__(timeout=5.0)
             self.group = group
+            self.fish_name = fish_name
 
             if group:
                 self.add_item(FishCog.FishGroup(db, fish_name))
@@ -177,7 +178,7 @@ class FishCog(commands.Cog):
                         winners.append(random.choice(button.touched))
 
                 embed = self.message.embeds[0]
-                embed.title = f"一群 **{self.fish_name}** 被 {len(button.touched)} 個人摸到了!!"
+                embed.title = f"一群**{self.fish_name}**被 {len(button.touched)} 個人摸到了!!"
                 embed.fields = []
                 embed.add_field(
                     name="獲得 5 flow幣的人",
