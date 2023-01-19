@@ -180,6 +180,7 @@ class FishCog(commands.Cog):
 
                 embed = self.message.embeds[0]
                 embed.title = f"一群**{self.fish_name}**被 {len(button.touched)} 個人摸到了!!"
+                embed.description = ""
                 embed.clear_fields()
                 embed.add_field(
                     name="獲得 5 flow幣的人",
