@@ -39,19 +39,20 @@ class FishCog(commands.Cog):
 
         group_str = "一群" if group else ""
         fish_adj = "十分可愛" if fish_data[fish]["cute"] else random.choice(adj_list)
+        fish_name = f"**{fish_adj}的{fish}**"
         if group or fish_data[fish]["type_0"]:
             result = ayaaka_embed(
-                group_str+fish,
-                f"是{group_str}**{fish_adj}的{fish}**! 要摸摸看嗎?\n"
-                f"摸{group_str}**{fish_adj}的{fish}**有機率獲得 {flow} flow幣",
+                group_str+fish_name,
+                f"是{group_str}{fish_name}! 要摸摸看嗎?\n"
+                f"摸{group_str}{fish_name}有機率獲得 {flow} flow幣",
             )
             # e.g. 是(一群)可愛的鮭魚！要摸摸看嗎?
             # 摸鮭魚有機率獲得 2 flow幣
         else:
             result = ayaaka_embed(
-                group_str+fish,
-                f"是**{fish_adj}的{fish}**! 要摸摸看嗎?\n"
-                f"摸**{fish_adj}的{fish}**有機率獲得或損失 {flow} flow幣",
+                group_str+fish_name,
+                f"是{fish_name}! 要摸摸看嗎?\n"
+                f"摸{fish_name}有機率獲得或損失 {flow} flow幣",
             )
             # e.g. 是野生的達達利鴨！要摸摸看嗎?
             # 摸達達利鴨有機率獲得或損失 20 flow幣
@@ -179,7 +180,7 @@ class FishCog(commands.Cog):
 
                 embed = self.message.embeds[0]
                 embed.title = f"一群**{self.fish_name}**被 {len(button.touched)} 個人摸到了!!"
-                embed.fields = []
+                embed.clear_fields()
                 embed.add_field(
                     name="獲得 5 flow幣的人",
                     value="\n".join([f"<@{winner}>" for winner in winners]),
