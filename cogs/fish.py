@@ -158,7 +158,7 @@ class FishCog(commands.Cog):
             fish_name: str,
             group: bool,
         ):
-            super().__init__(timeout=5.0)
+            super().__init__(timeout=60.0)
             self.group = group
             self.fish_name = fish_name
 
