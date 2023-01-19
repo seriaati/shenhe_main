@@ -44,7 +44,7 @@ class FishCog(commands.Cog):
             result = ayaaka_embed(
                 group_str + fish_name,
                 f"是{group_str}{fish_name}! 要摸摸看嗎?\n"
-                f"摸{group_str}{fish_name}有機率獲得 {flow} flow幣",
+                f"摸{group_str}{fish_name}有機率獲得 {'5' if group else flow} flow幣",
             )
             # e.g. 是(一群)可愛的鮭魚！要摸摸看嗎?
             # 摸鮭魚有機率獲得 2 flow幣
