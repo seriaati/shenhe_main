@@ -204,7 +204,8 @@ class FishCog(commands.Cog):
     @commands.is_owner()
     @commands.command(name="fish")
     async def fish(self, ctx: commands.Context, rand_int: int):
-        await self.summon_fish(ctx.message, rand_int)
+        message = await ctx.send("ok")
+        await self.summon_fish(message, rand_int)
 
 
 async def setup(bot: commands.Bot) -> None:
