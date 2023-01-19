@@ -41,17 +41,17 @@ class FishCog(commands.Cog):
         fish_adj = "十分可愛" if fish_data[fish]["cute"] else random.choice(adj_list)
         if group or fish_data[fish]["type_0"]:
             result = ayaaka_embed(
-                fish,
-                f"是{group_str} **{fish_adj}的{fish}** ! 要摸摸看嗎?\n"
-                f"摸{group_str} **{fish_adj}的{fish}** 有機率獲得 {flow} flow幣",
+                group_str+fish,
+                f"是{group_str}**{fish_adj}的{fish}**! 要摸摸看嗎?\n"
+                f"摸{group_str}**{fish_adj}的{fish}**有機率獲得 {flow} flow幣",
             )
             # e.g. 是(一群)可愛的鮭魚！要摸摸看嗎?
             # 摸鮭魚有機率獲得 2 flow幣
         else:
             result = ayaaka_embed(
-                fish,
-                f"是 **{fish_adj}的{fish}** ! 要摸摸看嗎?\n"
-                f"摸 **{fish_adj}的{fish}** 有機率獲得或損失 {flow} flow幣",
+                group_str+fish,
+                f"是**{fish_adj}的{fish}**! 要摸摸看嗎?\n"
+                f"摸**{fish_adj}的{fish}**有機率獲得或損失 {flow} flow幣",
             )
             # e.g. 是野生的達達利鴨！要摸摸看嗎?
             # 摸達達利鴨有機率獲得或損失 20 flow幣
