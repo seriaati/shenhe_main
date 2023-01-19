@@ -42,7 +42,7 @@ class FishCog(commands.Cog):
         fish_name = f"**{fish_adj}的{fish}**"
         if group or fish_data[fish]["type_0"]:
             result = ayaaka_embed(
-                group_str+fish_name,
+                group_str + fish_name,
                 f"是{group_str}{fish_name}! 要摸摸看嗎?\n"
                 f"摸{group_str}{fish_name}有機率獲得 {flow} flow幣",
             )
@@ -50,9 +50,8 @@ class FishCog(commands.Cog):
             # 摸鮭魚有機率獲得 2 flow幣
         else:
             result = ayaaka_embed(
-                group_str+fish_name,
-                f"是{fish_name}! 要摸摸看嗎?\n"
-                f"摸{fish_name}有機率獲得或損失 {flow} flow幣",
+                group_str + fish_name,
+                f"是{fish_name}! 要摸摸看嗎?\n" f"摸{fish_name}有機率獲得或損失 {flow} flow幣",
             )
             # e.g. 是野生的達達利鴨！要摸摸看嗎?
             # 摸達達利鴨有機率獲得或損失 20 flow幣
@@ -141,10 +140,12 @@ class FishCog(commands.Cog):
 
             if i.user.id not in self.touched:
                 self.touched.append(i.user.id)
-                if not embed.fields:
-                    embed.add_field(name="摸到的人", value=i.user.mention, inline=False)
-                else:
-                    embed.fields[0].value += f"\n{i.user.mention}"
+                embed.clear_fields()
+                embed.add_field(
+                    name="摸到的人",
+                    value=" ".join(f"<@{i}>" for i in self.touched),
+                    inline=False,
+                )
 
                 await i.response.edit_message(embed=embed)
             else:
