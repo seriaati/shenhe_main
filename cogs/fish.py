@@ -157,7 +157,7 @@ class FishCog(commands.Cog):
             fish_name: str,
             group: bool,
         ):
-            super().__init__(timeout=60.0)
+            super().__init__(timeout=5.0)
             self.group = group
 
             if group:
@@ -175,7 +175,6 @@ class FishCog(commands.Cog):
                 else:
                     for _ in range(len(button.touched) // 5):
                         winners.append(random.choice(button.touched))
-                await self.message.delete()
 
                 embed = self.message.embeds[0]
                 embed.title = f"一群 **{self.fish_name}** 被 {len(button.touched)} 個人摸到了!!"
@@ -185,6 +184,7 @@ class FishCog(commands.Cog):
                     value="\n".join([f"<@{winner}>" for winner in winners]),
                     inline=False,
                 )
+                await self.message.delete()
                 message = await self.message.channel.send(embed=embed)
                 for winner in winners:
                     await flow_transaction(winner, 5, button.db)
