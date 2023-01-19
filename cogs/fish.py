@@ -194,18 +194,18 @@ class FishCog(commands.Cog):
         rand_int = randint(1, 100)
         if rand_int == 1:
             await self.summon_fish(message, rand_int)
-
-    async def summon_fish(self, message, rand_int):
-        fish = random.choice(list(fish_data.keys()))
-        embed, fish_adj = self.generate_fish_embed(fish, rand_int <= 50)
-        view = FishCog.TouchFishView(self.bot.db, f"{fish_adj}的{fish}")
-        view.message = await message.channel.send(embed=embed, view=view)
     
     @commands.is_owner()
     @commands.command(name="fish")
     async def fish(self, ctx: commands.Context, rand_int: int):
         message = await ctx.send("ok")
         await self.summon_fish(message, rand_int)
+        
+    async def summon_fish(self, message, rand_int):
+        fish = random.choice(list(fish_data.keys()))
+        embed, fish_adj = self.generate_fish_embed(fish, rand_int <= 50)
+        view = FishCog.TouchFishView(self.bot.db, f"{fish_adj}的{fish}", rand_int <= 50)
+        view.message = await message.channel.send(embed=embed, view=view)
 
 
 async def setup(bot: commands.Bot) -> None:
