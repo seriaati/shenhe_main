@@ -1,22 +1,17 @@
 import asyncio
 import random
 from random import randint
+from typing import List
 
 import aiosqlite
+from discord import (ButtonStyle, Interaction, Message, TextChannel, Thread,
+                     app_commands)
+from discord.ext import commands
+from discord.ui import Button
+
 from apps.flow import flow_transaction, get_user_flow
 from data.fish.fish_data import fish_data
 from debug import DefaultView
-from discord import (
-    ButtonStyle,
-    Interaction,
-    Member,
-    Message,
-    Thread,
-    User,
-    app_commands,
-)
-from discord.ext import commands
-from discord.ui import Button
 from utility.utils import ayaaka_embed
 
 
@@ -25,61 +20,50 @@ class FishCog(commands.Cog):
         self.bot: commands.Bot = bot
         self.debug_toggle = self.bot.debug_toggle
 
-    global adj_list
-
-    adj_list = [
-        "可愛",
-        "奇怪",
-        "神奇",
-        "變態",
-        "色色",
-        "野生",
-        "開心",
-        "傷心",
-        "生氣",
-        "長長",
-        "短短",
-        "大大",
-        "小小",
-    ]
-
-    # fish_type = 1 扣幣
-    # fish_type = 0 不扣幣
-
-    def generate_fish_embed(self, fish: str):  # 製造摸魚embed
+    def generate_fish_embed(self, fish: str, group: bool):  # 製造摸魚embed
         flow = fish_data[fish]["flow"]
-        fish_adj = random.choice(adj_list) if not fish_data[fish]["cute"] else "十分可愛"
-        if fish_data[fish]["type_0"]:
+        adj_list = [
+            "可愛",
+            "奇怪",
+            "神奇",
+            "變態",
+            "色色",
+            "野生",
+            "開心",
+            "傷心",
+            "生氣",
+            "長長",
+            "短短",
+            "大大",
+            "小小",
+        ]
+
+        group_str = "一群" if group else ""
+        fish_adj = "十分可愛" if fish_data[fish]["cute"] else random.choice(adj_list)
+        if group or fish_data[fish]["type_0"]:
             result = ayaaka_embed(
                 fish,
-                f"是**{fish_adj}的{fish}**！要摸摸看嗎?\n"
-                f"摸**{fish_adj}的{fish}**有機率獲得 {flow} flow幣",
+                f"是{group_str} **{fish_adj}的{fish}** ! 要摸摸看嗎?\n"
+                f"摸{group_str} **{fish_adj}的{fish}** 有機率獲得 {flow} flow幣",
             )
-            # e.g. 是可愛的鮭魚！要摸摸看嗎?
+            # e.g. 是(一群)可愛的鮭魚！要摸摸看嗎?
             # 摸鮭魚有機率獲得 2 flow幣
         else:
             result = ayaaka_embed(
                 fish,
-                f"是**{fish_adj}的{fish}**！要摸摸看嗎?\n"
-                f"摸**{fish_adj}的{fish}**有機率獲得或損失 {flow} flow幣",
+                f"是 **{fish_adj}的{fish}** ! 要摸摸看嗎?\n"
+                f"摸 **{fish_adj}的{fish}** 有機率獲得或損失 {flow} flow幣",
             )
             # e.g. 是野生的達達利鴨！要摸摸看嗎?
             # 摸達達利鴨有機率獲得或損失 20 flow幣
         result.set_thumbnail(url=fish_data[fish]["image_url"])
         return result, fish_adj
 
-    class TouchFishButton(Button):  # 摸魚按鈕
-        def __init__(
-            self,
-            fish: str,
-            db: aiosqlite.Connection,
-            fish_adj: str,
-            author: User | Member,
-        ):
-            super().__init__(style=ButtonStyle.blurple, label=f"撫摸{fish_adj}的{fish}")
-            self.fish = fish
-            self.fish_adj = fish_adj
-            self.author = author
+    class OneFish(Button):  # 摸魚按鈕
+        def __init__(self, db: aiosqlite.Connection, fish_name: str):
+            super().__init__(style=ButtonStyle.blurple, label=f"撫摸{fish_name}")
+
+            self.fish_name = fish_name
             self.db = db
 
         async def callback(self, i: Interaction):
@@ -88,10 +72,9 @@ class FishCog(commands.Cog):
 
             await i.response.defer()
 
-            fish = fish_data[self.fish]
+            fish = fish_data[self.fish_name]
             flow = fish["flow"]
             image_url = fish["image_url"]
-            fish_name = f"{self.fish_adj}的{self.fish}"
 
             value = randint(1, 100)  # Picks a random number from 1 - 100
 
@@ -101,12 +84,12 @@ class FishCog(commands.Cog):
 
                     embed = ayaaka_embed(
                         f"✅ {i.user.display_name} 摸到了!!",
-                        f"{i.user.mention} 摸 **{fish_name}** 摸到 **__{flow}__** flow幣!",
+                        f"{i.user.mention} 摸 **{self.fish_name}** 摸到 **__{flow}__** flow幣!",
                     )
                 else:
                     embed = ayaaka_embed(
                         f"⛔ {i.user.display_name} 沒摸到...",
-                        f"{i.user.mention} 單純的摸 **{fish_name}** 而已，沒有摸到flow幣!",
+                        f"{i.user.mention} 單純的摸 **{self.fish_name}** 而已，沒有摸到flow幣!",
                     )
             else:
                 verb = fish["verb"]
@@ -115,14 +98,14 @@ class FishCog(commands.Cog):
 
                     embed = ayaaka_embed(
                         f"✅ {i.user.display_name} 摸到了!!",
-                        f"{i.user.mention} 摸 **{fish_name}** 摸到 **__{flow}__** flow幣!",
+                        f"{i.user.mention} 摸 **{self.fish_name}** 摸到 **__{flow}__** flow幣!",
                     )
                 else:
                     await flow_transaction(i.user.id, -int(flow), self.db)
 
                     embed = ayaaka_embed(
                         f"⚔️ {i.user.display_name} 被攻擊了 oAo !!",
-                        f"{i.user.mention} 被 **{fish_name}** {random.choice(verb)}，損失了 **__{flow}__** flow幣!",
+                        f"{i.user.mention} 被 **{self.fish_name}** {random.choice(verb)}，損失了 **__{flow}__** flow幣!",
                     )
 
             embed.add_field(
@@ -138,23 +121,64 @@ class FishCog(commands.Cog):
             )
             await asyncio.sleep(7)
             await i.edit_original_response(
-                content=f"**{self.fish_adj}的{self.fish}** 在被 {i.user.mention} 摸到後默默的游走了...",
+                content=f"**{self.fish_name}** 在被 {i.user.mention} 摸到後默默的游走了...",
                 embed=None,
                 view=None,
             )
             await asyncio.sleep(5)
             await i.delete_original_response()
 
-    class TouchFish(DefaultView):  # 摸魚view
+    class FishGroup(Button):
+        def __init__(self, db: aiosqlite.Connection, fish_name: str):
+            super().__init__(style=ButtonStyle.blurple, label=f"撫摸一群{fish_name}")
+
+            self.db = db
+            self.fish_name = fish_name
+            self.touched: List[int] = []
+
+        async def callback(self, i: Interaction):
+            embed = i.message.embeds[0]
+
+            if i.user.id not in self.touched:
+                self.touched.append(i.user.id)
+                if not embed.fields:
+                    embed.add_field(name="摸到的人", value=i.user.mention, inline=False)
+                else:
+                    field = embed.fields[0]
+                    field.value += f", {i.user.mention}"
+                
+                await i.response.edit_message(embed=embed)
+            else:
+                await i.response.defer()
+
+    class TouchFishView(DefaultView):  # 摸魚view
         def __init__(
             self,
-            index: str,
             db: aiosqlite.Connection,
-            fish_adj: str,
-            author: User | Member,
+            fish_name: str,
+            group: bool,
         ):
-            super().__init__(timeout=None)
-            self.add_item(FishCog.TouchFishButton(index, db, fish_adj, author))
+            super().__init__(timeout=60.0)
+            self.group = group
+
+            if group:
+                self.add_item(FishCog.FishGroup(db, fish_name))
+            else:
+                self.add_item(FishCog.OneFish(db, fish_name))
+
+        async def on_timeout(self) -> None:
+            if self.group:
+                self.message: Message
+                button: FishCog.FishGroup = self.children[0]
+                winners: List[int] = []
+                for _ in range(len(button.touched)//5):
+                    winners.append(random.choice(button.touched))
+                await self.message.delete()
+                
+                embed = ayaaka_embed(f"一群{button.fish_name}游向了...", "".join([f"<@{winner}>\n" for winner in winners]))
+                await self.message.channel.send(embed=embed)
+                for winner in winners:
+                    await flow_transaction(winner, 5, button.db)
 
     @commands.Cog.listener()
     async def on_message(self, message: Message):  # 機率放魚
@@ -167,32 +191,21 @@ class FishCog(commands.Cog):
         if message.channel.name in ["心裡諮商", "練舞室"]:
             return
 
-        random_number = randint(1, 100)
-        if random_number == 1:
-            fish = random.choice(list(fish_data.keys()))
-            embed, fish_adj = self.generate_fish_embed(fish)
-            view = FishCog.TouchFish(fish, self.bot.db, fish_adj, message.author)
-            await message.channel.send(embed=embed, view=view)
+        rand_int = randint(1, 100)
+        if rand_int == 1:
+            await self.summon_fish(message, rand_int)
 
-    # /releasefish
-    @app_commands.command(name="releasefish放魚", description="緊急放出一條魚讓人摸")
-    @app_commands.rename(fish_type="魚種")
-    @app_commands.describe(fish_type="選擇要放出的魚種")
-    @app_commands.checks.has_role("小雪團隊")
-    async def release_fish(self, i: Interaction, fish_type: str):
-        embed, fish_adj = self.generate_fish_embed(fish_type)
-        view = FishCog.TouchFish(fish_type, self.bot.db, fish_adj, i.user)
-        await i.response.send_message(embed=embed, view=view)
-
-    @release_fish.autocomplete("fish_type")
-    async def release_fish_autocomplete(self, i: Interaction, current: str):
-        choices = []
-        for fish_name, _ in fish_data.items():
-            if current in fish_name:
-                choices.append(app_commands.Choice(name=fish_name, value=fish_name))
-        return choices[:25]
+    async def summon_fish(self, message, rand_int):
+        fish = random.choice(list(fish_data.keys()))
+        embed, fish_adj = self.generate_fish_embed(fish, rand_int <= 50)
+        view = FishCog.TouchFishView(self.bot.db, f"{fish_adj}的{fish}")
+        view.message = await message.channel.send(embed=embed, view=view)
+    
+    @commands.is_owner()
+    @commands.command(name="fish")
+    async def fish(self, ctx: commands.Context, rand_int: int):
+        await self.summon_fish(ctx.message, rand_int)
 
 
 async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(FishCog(bot))
-    #

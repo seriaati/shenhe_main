@@ -152,3 +152,4 @@ cython_debug/
 #.idea/
 main.db
 log.txt
+.vscode/settings.json
