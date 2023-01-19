@@ -4,8 +4,7 @@ from random import randint
 from typing import List
 
 import aiosqlite
-from discord import (ButtonStyle, Interaction, Message, TextChannel, Thread,
-                     app_commands)
+from discord import ButtonStyle, Interaction, Message, Thread
 from discord.ext import commands
 from discord.ui import Button
 
@@ -146,7 +145,7 @@ class FishCog(commands.Cog):
                 else:
                     field = embed.fields[0]
                     field.value += f"\n{i.user.mention}"
-                
+
                 await i.response.edit_message(embed=embed)
             else:
                 await i.response.defer()
@@ -171,14 +170,26 @@ class FishCog(commands.Cog):
                 self.message: Message
                 button: FishCog.FishGroup = self.children[0]
                 winners: List[int] = []
-                for _ in range(len(button.touched)//5):
+                if len(button.touched) < 5:
                     winners.append(random.choice(button.touched))
+                else:
+                    for _ in range(len(button.touched) // 5):
+                        winners.append(random.choice(button.touched))
                 await self.message.delete()
-                
-                embed = ayaaka_embed(f"一群{button.fish_name}游向了...", "".join([f"<@{winner}>\n" for winner in winners]))
-                await self.message.channel.send(embed=embed)
+
+                embed = self.message.embeds[0]
+                embed.title = f"一群 **{self.fish_name}** 被 {len(button.touched)} 個人摸到了!!"
+                embed.fields = []
+                embed.add_field(
+                    name="獲得 5 flow幣的人",
+                    value="\n".join([f"<@{winner}>" for winner in winners]),
+                    inline=False,
+                )
+                message = await self.message.channel.send(embed=embed)
                 for winner in winners:
                     await flow_transaction(winner, 5, button.db)
+                await asyncio.sleep(7)
+                await message.delete()
 
     @commands.Cog.listener()
     async def on_message(self, message: Message):  # 機率放魚
@@ -194,13 +205,13 @@ class FishCog(commands.Cog):
         rand_int = randint(1, 100)
         if rand_int == 1:
             await self.summon_fish(message, rand_int)
-    
+
     @commands.is_owner()
     @commands.command(name="fish")
     async def fish(self, ctx: commands.Context, rand_int: int):
         message = await ctx.send("ok")
         await self.summon_fish(message, rand_int)
-        
+
     async def summon_fish(self, message, rand_int):
         fish = random.choice(list(fish_data.keys()))
         embed, fish_adj = self.generate_fish_embed(fish, rand_int <= 50)
