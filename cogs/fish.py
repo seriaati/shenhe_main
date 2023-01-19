@@ -144,8 +144,7 @@ class FishCog(commands.Cog):
                 if not embed.fields:
                     embed.add_field(name="摸到的人", value=i.user.mention, inline=False)
                 else:
-                    field = embed.fields[0]
-                    field.value += f"\n{i.user.mention}"
+                    embed.fields[0].value += f"\n{i.user.mention}"
 
                 await i.response.edit_message(embed=embed)
             else:
