@@ -68,9 +68,9 @@ class FlowCog(commands.Cog, name="flow"):
         return app_commands.check(predicate)
 
     @has_flow_account()
-    @app_commands.command(name="acc", description="查看 flow 帳號")
+    @app_commands.command(name="acc", description="查看暴幣帳號")
     @app_commands.rename(member="使用者")
-    @app_commands.describe(member="查看其他使用者的flow帳號")
+    @app_commands.describe(member="查看其他使用者的暴幣帳號")
     async def acc(self, i: Interaction, member: Member = None):
         member = member or i.user
         async with i.client.db.execute(
@@ -91,7 +91,7 @@ class FlowCog(commands.Cog, name="flow"):
             value += f"{emojis[index]} {formated_time}\n"
         embed = default_embed()
         embed.add_field(name=f"{flow} flow", value=value)
-        embed.set_author(name=f"flow 帳號", icon_url=member.avatar)
+        embed.set_author(name=f"暴幣帳號", icon_url=member.avatar)
         await i.response.send_message(embed=embed)
 
     @has_flow_account()
@@ -169,7 +169,7 @@ class FlowCog(commands.Cog, name="flow"):
             await cursor.execute("SELECT SUM(flow) FROM flow_accounts")
             flow_sum = (await cursor.fetchone())[0]
         embed = default_embed(
-            f"目前共 {user_count} 個 flow 帳號",
+            f"目前共 {user_count} 個 暴幣帳號",
             f"用戶 {flow_sum} + 銀行 {bank} = {flow_sum+bank} 枚 暴幣",
         )
         await i.response.send_message(embed=embed)

@@ -86,7 +86,7 @@ class WelcomeCog(commands.Cog):
             ]
             welcome_str = random.choice(welcome_strs)
             embed = default_embed(
-                f"歡迎 {after.name} !", f"歡迎來到緣神有你(๑•̀ω•́)ノ\n {welcome_str}"
+                f"歡迎 {after.name} !", f"歡迎來到往生堂專業團隊(๑•̀ω•́)ノ\n {welcome_str}"
             )
             embed.set_thumbnail(url=after.avatar)
             await public.send(content=after.mention, embed=embed, view=view)
@@ -141,7 +141,7 @@ class WelcomeCog(commands.Cog):
     @commands.is_owner()
     @commands.command(name="welcome")
     async def welcome(self, ctx: commands.Context):
-        content = "旅行者們，歡迎來到「緣神有你」。\n在這裡你能收到提瓦特的二手消息, 還能找到志同道合的旅行者結伴同行。\n準備好踏上旅途了嗎? 出發前請先閱讀下方的「旅行者須知」。\n"
+        content = "旅行者們，歡迎來到「往生堂專業團隊」。\n在這裡你能收到提瓦特的二手消息, 還能找到志同道合的旅行者結伴同行。\n準備好踏上旅途了嗎? 出發前請先閱讀下方的「旅行者須知」。\n"
         rules = default_embed(
             "🔖 旅行者須知",
             """
