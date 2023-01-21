@@ -88,7 +88,7 @@ class RollCog(commands.Cog):
         async def callback(self, i: Interaction):
             user_flow = await get_user_flow(i.user.id, i.client.db)
             if user_flow < banner['one_pull_price']:
-                return await i.response.send_message(embed=error_embed(message=f"**祈願 x1** 需花費 **{banner['one_pull_price']}** flow 幣\n目前: {user_flow}").set_author(name='flow 幣不足', icon_url=i.user.display_avatar.url), ephemeral=True)
+                return await i.response.send_message(embed=error_embed(message=f"**祈願 x1** 需花費 **{banner['one_pull_price']}** 暴幣\n目前: {user_flow}").set_author(name='暴幣不足', icon_url=i.user.display_avatar.url), ephemeral=True)
             self.view.clear_items()
             self.view.add_item(RollCog.ConfirmRoll(False))
             self.view.add_item(RollCog.CancelRoll())
@@ -101,7 +101,7 @@ class RollCog(commands.Cog):
         async def callback(self, i: Interaction):
             user_flow = await get_user_flow(i.user.id, i.client.db)
             if user_flow < 10*banner['one_pull_price']:
-                return await i.response.send_message(embed=error_embed(message=f"**祈願 x10** 需花費 **{10*banner['one_pull_price']}** flow 幣\n目前: {user_flow}").set_author(name='flow 幣不足', icon_url=i.user.display_avatar.url), ephemeral=True)
+                return await i.response.send_message(embed=error_embed(message=f"**祈願 x10** 需花費 **{10*banner['one_pull_price']}** 暴幣\n目前: {user_flow}").set_author(name='暴幣不足', icon_url=i.user.display_avatar.url), ephemeral=True)
             self.view.clear_items()
             self.view.add_item(RollCog.ConfirmRoll(True))
             self.view.add_item(RollCog.CancelRoll())
@@ -132,7 +132,7 @@ class RollCog(commands.Cog):
             self.view.add_item(RollCog.RollTen(True))
             await i.response.edit_message(embed=embed, view=self.view)
             await asyncio.sleep(sleep_time)
-            embed = default_embed('抽卡結果', result+f'\n目前 flow 幣: {await get_user_flow(i.user.id, i.client.db)}')
+            embed = default_embed('抽卡結果', result+f'\n目前 暴幣: {await get_user_flow(i.user.id, i.client.db)}')
             await i.followup.send(embed=embed, ephemeral=True)
             embed = default_embed(banner['name']).set_image(url=banner['icon'])
             self.view.clear_items()
@@ -154,7 +154,7 @@ class RollCog(commands.Cog):
             self.view.add_item(RollCog.RollTen(True))
             await i.response.edit_message(view=self.view)
 
-    @app_commands.command(name='roll祈願', description='flow幣祈願系統')
+    @app_commands.command(name='roll祈願', description='暴幣祈願系統')
     async def roll(self, i: Interaction):
         check = await check_flow_account(i.user.id, i.client.db)
         if not check:

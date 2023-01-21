@@ -95,21 +95,21 @@ class FlowCog(commands.Cog, name="flow"):
         await i.response.send_message(embed=embed)
 
     @has_flow_account()
-    @app_commands.command(name="give", description="給其他人flow幣")
-    @app_commands.rename(member="使用者", flow="要給予的flow幣數量")
+    @app_commands.command(name="give", description="給其他人暴幣")
+    @app_commands.rename(member="使用者", flow="要給予的暴幣數量")
     async def give(self, i: Interaction, member: Member, flow: int):
         if flow < 0:
             return await i.response.send_message(
                 embed=error_embed(
                     message="<:PaimonSeria:958341967698337854> 還想學土司跟ceye洗錢啊!"
-                ).set_author(name="不可以給負數 flow 幣", icon_url=i.user.display_avatar.url),
+                ).set_author(name="不可以給負數 暴幣", icon_url=i.user.display_avatar.url),
                 ephemeral=True,
             )
         user_flow = await get_user_flow(i.user.id, i.client.db)
         if user_flow < flow:
             return await i.response.send_message(
                 embed=error_embed(f"需要至少: {flow} flow").set_author(
-                    name="flow 幣不足", icon_url=i.user.display_avatar.url
+                    name="暴幣不足", icon_url=i.user.display_avatar.url
                 ),
                 ephemeral=True,
             )
@@ -123,8 +123,8 @@ class FlowCog(commands.Cog, name="flow"):
             content=f"{i.user.mention} {member.mention}", embed=embed
         )
 
-    @app_commands.command(name="take", description="將一個使用者的 flow 幣轉回銀行")
-    @app_commands.rename(member="使用者", flow="要拿取的flow幣數量", private="私人訊息")
+    @app_commands.command(name="take", description="將一個使用者的 暴幣轉回銀行")
+    @app_commands.rename(member="使用者", flow="要拿取的暴幣數量", private="私人訊息")
     @app_commands.choices(
         private=[Choice(name="是", value=1), Choice(name="否", value=0)]
     )
@@ -136,13 +136,13 @@ class FlowCog(commands.Cog, name="flow"):
         await flow_transaction(member.id, -flow, i.client.db)
         embed = default_embed(
             "已成功施展「反」摩拉克斯的力量",
-            f"{i.user.mention} 從 {member.mention} 的帳戶裡拿走了 {flow} 枚 flow 幣",
+            f"{i.user.mention} 從 {member.mention} 的帳戶裡拿走了 {flow} 枚 暴幣",
         )
         ephemeral = True if private == 1 else False
         await i.response.send_message(embed=embed, ephemeral=ephemeral)
 
-    @app_commands.command(name="make", description="從銀行轉出flow幣給某位使用者")
-    @app_commands.rename(member="使用者", flow="要給予的flow幣數量", private="私人訊息")
+    @app_commands.command(name="make", description="從銀行轉出暴幣給某位使用者")
+    @app_commands.rename(member="使用者", flow="要給予的暴幣數量", private="私人訊息")
     @app_commands.choices(
         private=[Choice(name="是", value=1), Choice(name="否", value=0)]
     )
@@ -154,12 +154,12 @@ class FlowCog(commands.Cog, name="flow"):
         await flow_transaction(member.id, flow, i.client.db)
         embed = default_embed(
             "已成功施展摩拉克斯的力量",
-            f"{i.user.mention} 給了 {member.mention} {flow} 枚 flow 幣",
+            f"{i.user.mention} 給了 {member.mention} {flow} 枚 暴幣",
         )
         ephemeral = True if private == 1 else False
         await i.response.send_message(embed=embed, ephemeral=ephemeral)
 
-    @app_commands.command(name="total", description="查看目前群組帳號及銀行 flow 幣分配情況")
+    @app_commands.command(name="total", description="查看目前群組帳號及銀行 暴幣分配情況")
     async def total(self, i: Interaction):
         bank = await get_blank_flow(i.client.db)
         async with i.client.db.execute(
@@ -170,11 +170,11 @@ class FlowCog(commands.Cog, name="flow"):
             flow_sum = (await cursor.fetchone())[0]
         embed = default_embed(
             f"目前共 {user_count} 個 flow 帳號",
-            f"用戶 {flow_sum} + 銀行 {bank} = {flow_sum+bank} 枚 flow 幣",
+            f"用戶 {flow_sum} + 銀行 {bank} = {flow_sum+bank} 枚 暴幣",
         )
         await i.response.send_message(embed=embed)
 
-    @app_commands.command(name="flow_leaderboard", description="查看 flow 幣排行榜")
+    @app_commands.command(name="flow_leaderboard", description="查看 暴幣排行榜")
     async def flow_leaderboard(self, i: Interaction):
         async with i.client.db.execute(
             "SELECT user_id, flow FROM flow_accounts ORDER BY flow DESC"
@@ -184,7 +184,7 @@ class FlowCog(commands.Cog, name="flow"):
         data = list(divide_chunks(data, 10))
         rank = 1
         for page_number, page in enumerate(data):
-            embed = default_embed(f"flow 幣排行榜 (第 {page_number+1} 頁)")
+            embed = default_embed(f"暴幣排行榜 (第 {page_number+1} 頁)")
             for _, user in enumerate(page):
                 discord_user = i.client.get_user(user[0])
                 if discord_user is None:
@@ -251,7 +251,7 @@ class FlowCog(commands.Cog, name="flow"):
                 if user_flow < flow:
                     return await i.response.send_message(
                         embed=error_embed().set_author(
-                            name="你的flow幣不足夠購買這項商品", icon_url=i.user.display_avatar.url
+                            name="你的暴幣不足夠購買這項商品", icon_url=i.user.display_avatar.url
                         ),
                         ephemeral=True,
                     )
@@ -350,10 +350,10 @@ class FlowCog(commands.Cog, name="flow"):
         if user_flow < 0 and flow >= 0:
             return True, None
         if flow < 0:
-            result = error_embed("發布失敗, 請輸入大於 0 的flow幣")
+            result = error_embed("發布失敗, 請輸入大於 0 的暴幣")
             return False, result
         elif user_flow < int(flow):
-            result = error_embed("發布失敗, 請勿輸入大於自己擁有數量的flow幣")
+            result = error_embed("發布失敗, 請勿輸入大於自己擁有數量的暴幣")
             return False, result
         else:
             return True, None
@@ -422,14 +422,14 @@ class FlowCog(commands.Cog, name="flow"):
                     )
             if type == 4:
                 embedDM = default_embed(
-                    message=f"當{confirmer.mention}完成幫忙的內容時, 請按OK來結算flow幣\n"
-                    f"按下後, 你的flow幣將會 **-{flow}**\n"
+                    message=f"當{confirmer.mention}完成幫忙的內容時, 請按OK來結算暴幣\n"
+                    f"按下後, 你的暴幣將會 **-{flow}**\n"
                     f"對方則會 **+{flow}**"
                 )
             else:
                 embedDM = default_embed(
-                    message=f"當{confirmer.mention}完成委託的內容時, 請按OK來結算flow幣\n"
-                    f"按下後, 你的flow幣將會 **-{flow}**\n"
+                    message=f"當{confirmer.mention}完成委託的內容時, 請按OK來結算暴幣\n"
+                    f"按下後, 你的暴幣將會 **-{flow}**\n"
                     f"對方則會 **+{flow}**"
                 )
             embedDM.set_author(name="結算單", icon_url=author.avatar)
@@ -497,15 +497,15 @@ class FlowCog(commands.Cog, name="flow"):
                         "UPDATE flow_accounts SET find_free_trial = ? WHERE user_id = ?",
                         (confirmer_free_trial + 1, confirmer_id),
                     )
-                    str = f"({confirmer.mention}受到 10 flow幣贊助)\n"
+                    str = f"({confirmer.mention}受到 10 暴幣贊助)\n"
                     f"已使用 {confirmer_free_trial+1}/10 次贊助機會"
                 await flow_transaction(author_id, flow, i.client.db)
                 await flow_transaction(confirmer_id, -new_flow, i.client.db)
                 embed = default_embed(
                     "🆗 結算成功",
                     f"幫忙名稱: {title}\n"
-                    f"幫助人: {author.mention} **+{flow}** flow幣\n"
-                    f"被幫助人: {confirmer.mention} **-{new_flow}** flow幣\n{str}",
+                    f"幫助人: {author.mention} **+{flow}** 暴幣\n"
+                    f"被幫助人: {confirmer.mention} **-{new_flow}** 暴幣\n{str}",
                 )
             else:
                 new_flow = flow
@@ -515,15 +515,15 @@ class FlowCog(commands.Cog, name="flow"):
                         "UPDATE flow_accounts SET find_free_trial = ? WHERE user_id = ?",
                         (author_free_trial + 1, author_id),
                     )
-                    str = f"({author.mention}受到 10 flow幣贊助)\n"
+                    str = f"({author.mention}受到 10 暴幣贊助)\n"
                     f"已使用 {author_free_trial+1}/10 次贊助機會"
                 await flow_transaction(author_id, -new_flow, i.client.db)
                 await flow_transaction(confirmer_id, flow, i.client.db)
                 embed = default_embed(
                     "🆗 結算成功",
                     f"委託名稱: {title}\n"
-                    f"委託人: {author.mention} **-{new_flow}** flow幣\n"
-                    f"接收人: {confirmer.mention} **+{flow}** flow幣\n{str}",
+                    f"委託人: {author.mention} **-{new_flow}** 暴幣\n"
+                    f"接收人: {confirmer.mention} **+{flow}** 暴幣\n{str}",
                 )
             await i.followup.send(embed=embed)
             t = i.guild.get_thread(i.channel.id)
@@ -572,7 +572,7 @@ class FlowCog(commands.Cog, name="flow"):
         description = TextInput(
             label="敘述", placeholder="打周本 x5", style=TextStyle.long, required=False
         )
-        flow = TextInput(label="flow 幣數量", placeholder="100")
+        flow = TextInput(label="暴幣數量", placeholder="100")
 
         def __init__(self) -> None:
             super().__init__(title="發布委託", timeout=None)
@@ -581,7 +581,7 @@ class FlowCog(commands.Cog, name="flow"):
             if not self.flow.value.isdigit():
                 return await i.response.send_message(
                     embed=error_embed(message="例如 100, 1000, 10000").set_author(
-                        name="flow 幣數量: 請輸入數字", icon_url=i.user.display_avatar.url
+                        name="暴幣數量: 請輸入數字", icon_url=i.user.display_avatar.url
                     ),
                     ephemeral=True,
                 )
@@ -653,7 +653,7 @@ class FlowCog(commands.Cog, name="flow"):
             embed.add_field(
                 name="資訊",
                 value=f"發布者: {i.user.mention}\n"
-                f"flow幣: {flow}\n"
+                f"暴幣: {flow}\n"
                 f"世界等級: {role_str}\n"
                 f"發布者 UID: {uid}",
             )
@@ -662,21 +662,21 @@ class FlowCog(commands.Cog, name="flow"):
             embed.add_field(
                 name="資訊",
                 value=f"發布者: {i.user.mention}\n"
-                f"flow幣: {flow}\n"
+                f"暴幣: {flow}\n"
                 f"世界等級: {role_str}\n"
                 f"發布者 UID: {uid}",
             )
         elif type == 3:
             embed.set_author(name="3 類委託 - 其他")
             embed.add_field(
-                name="資訊", value=f"發布者: {i.user.mention}\n" f"flow幣: {flow}"
+                name="資訊", value=f"發布者: {i.user.mention}\n" f"暴幣: {flow}"
             )
         elif type == 4:
             embed.set_author(name="1 類委託 - 可以幫助")
             embed.add_field(
                 name="資訊",
                 value=f"發布者: {i.user.mention}\n"
-                f"flow幣: {flow}\n"
+                f"暴幣: {flow}\n"
                 f"世界等級: {role_name}\n"
                 f"發布者 UID: {uid}",
             )

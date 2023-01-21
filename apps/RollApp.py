@@ -15,7 +15,7 @@ class RollApp:
         for prize in prizes:
             if prize == big_prize:
                 return cutscenes['gold']['url'], cutscenes['gold']['sleep']
-            elif prize == '100 flow幣':
+            elif prize == '100 暴幣':
                 return cutscenes['purple']['url'], cutscenes['purple']['sleep']
             else:
                 result = cutscenes['blue']['url'], cutscenes['blue']['sleep']
@@ -54,9 +54,9 @@ class RollApp:
 
     async def give_money(self, user_id: int, prizes: list[str]):
         for prize in prizes:
-            if prize == '10 flow 幣':
+            if prize == '10 暴幣':
                 await flow_transaction(user_id, 10, self.db)
-            elif prize == '100 flow 幣':
+            elif prize == '100 暴幣':
                 await flow_transaction(user_id, 100, self.db)
 
     async def gu_system(self, user_id: int, is_ten_pull: bool):

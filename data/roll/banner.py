@@ -6,8 +6,8 @@ banner = {
         'chance': 0.8
     },
     'other_prizes': {
-        '10 flow 幣': 10,
-        '100 flow 幣': 1
+        '10 暴幣': 10,
+        '100 暴幣': 1
     },
     'big_prize_guarantee': [
         {

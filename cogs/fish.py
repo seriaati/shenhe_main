@@ -44,17 +44,17 @@ class FishCog(commands.Cog):
             result = ayaaka_embed(
                 group_str + fish_name,
                 f"是{group_str}{fish_name}! 要摸摸看嗎?\n"
-                f"摸{group_str}{fish_name}有機率獲得 {'5' if group else flow} flow幣",
+                f"摸{group_str}{fish_name}有機率獲得 {'5' if group else flow} 暴幣",
             )
             # e.g. 是(一群)可愛的鮭魚！要摸摸看嗎?
-            # 摸鮭魚有機率獲得 2 flow幣
+            # 摸鮭魚有機率獲得 2 暴幣
         else:
             result = ayaaka_embed(
                 group_str + fish_name,
-                f"是{fish_name}! 要摸摸看嗎?\n" f"摸{fish_name}有機率獲得或損失 {flow} flow幣",
+                f"是{fish_name}! 要摸摸看嗎?\n" f"摸{fish_name}有機率獲得或損失 {flow} 暴幣",
             )
             # e.g. 是野生的達達利鴨！要摸摸看嗎?
-            # 摸達達利鴨有機率獲得或損失 20 flow幣
+            # 摸達達利鴨有機率獲得或損失 20 暴幣
         result.set_thumbnail(url=fish_data[fish]["image_url"])
         return result, fish_adj
 
@@ -84,12 +84,12 @@ class FishCog(commands.Cog):
 
                     embed = ayaaka_embed(
                         f"✅ {i.user.display_name} 摸到了!!",
-                        f"{i.user.mention} 摸 **{self.fish_name}** 摸到 **__{flow}__** flow幣!",
+                        f"{i.user.mention} 摸 **{self.fish_name}** 摸到 **__{flow}__** 暴幣!",
                     )
                 else:
                     embed = ayaaka_embed(
                         f"⛔ {i.user.display_name} 沒摸到...",
-                        f"{i.user.mention} 單純的摸 **{self.fish_name}** 而已，沒有摸到flow幣!",
+                        f"{i.user.mention} 單純的摸 **{self.fish_name}** 而已，沒有摸到暴幣!",
                     )
             else:
                 verb = fish["verb"]
@@ -98,18 +98,18 @@ class FishCog(commands.Cog):
 
                     embed = ayaaka_embed(
                         f"✅ {i.user.display_name} 摸到了!!",
-                        f"{i.user.mention} 摸 **{self.fish_name}** 摸到 **__{flow}__** flow幣!",
+                        f"{i.user.mention} 摸 **{self.fish_name}** 摸到 **__{flow}__** 暴幣!",
                     )
                 else:
                     await flow_transaction(i.user.id, -int(flow), self.db)
 
                     embed = ayaaka_embed(
                         f"⚔️ {i.user.display_name} 被攻擊了 oAo !!",
-                        f"{i.user.mention} 被 **{self.fish_name}** {random.choice(verb)}，損失了 **__{flow}__** flow幣!",
+                        f"{i.user.mention} 被 **{self.fish_name}** {random.choice(verb)}，損失了 **__{flow}__** 暴幣!",
                     )
 
             embed.add_field(
-                name="目前 flow 幣",
+                name="目前 暴幣",
                 value=f"{await get_user_flow(i.user.id, self.db)} flow",
                 inline=False,
             )
@@ -185,7 +185,7 @@ class FishCog(commands.Cog):
                 embed.description = ""
                 embed.clear_fields()
                 embed.add_field(
-                    name="獲得 5 flow幣的人",
+                    name="獲得 5 暴幣的人",
                     value="\n".join([f"<@{winner}>" for winner in winners]),
                     inline=False,
                 )
