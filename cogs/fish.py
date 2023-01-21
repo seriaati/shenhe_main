@@ -209,7 +209,7 @@ class FishCog(commands.Cog):
 
         rand_int = randint(1, 100)
         if rand_int == 1:
-            await self.summon_fish(message, rand_int)
+            await self.summon_fish(message, randint(1, 100))
 
     @commands.is_owner()
     @commands.command(name="fish")
