@@ -128,7 +128,7 @@ class FlowCog(commands.Cog, name="flow"):
     @app_commands.choices(
         private=[Choice(name="是", value=1), Choice(name="否", value=0)]
     )
-    @app_commands.checks.has_role("小雪團隊")
+    @app_commands.checks.has_role("猜猜我是誰")
     async def take(self, i: Interaction, member: Member, flow: int, private: int = 1):
         check = await check_flow_account(member.id, i.client.db)
         if not check:
@@ -146,7 +146,7 @@ class FlowCog(commands.Cog, name="flow"):
     @app_commands.choices(
         private=[Choice(name="是", value=1), Choice(name="否", value=0)]
     )
-    @app_commands.checks.has_role("小雪團隊")
+    @app_commands.checks.has_role("猜猜我是誰")
     async def make(self, i: Interaction, member: Member, flow: int, private: int = 1):
         check = await check_flow_account(member.id, i.client.db)
         if not check:
@@ -313,7 +313,7 @@ class FlowCog(commands.Cog, name="flow"):
 
     @app_commands.command(name="additem", description="新增商品")
     @app_commands.rename(item="商品名稱", flow="價格", max="最大購買次數")
-    @app_commands.checks.has_role("小雪團隊")
+    @app_commands.checks.has_role("猜猜我是誰")
     async def additem(self, i: Interaction, item: str, flow: int, max: int):
         async with i.client.db.execute(
             "INSERT INTO flow_shop (name) VALUES (?)", (item,)
@@ -326,7 +326,7 @@ class FlowCog(commands.Cog, name="flow"):
         await i.response.send_message(f"商品 **{item}** 新增成功", ephemeral=True)
 
     @app_commands.command(name="removeitem", description="刪除商品")
-    @app_commands.checks.has_role("小雪團隊")
+    @app_commands.checks.has_role("猜猜我是誰")
     async def removeitem(self, i: Interaction):
         async with i.client.db.execute("SELECT name FROM flow_shop") as cursor:
             data = await cursor.fetchall()
