@@ -90,7 +90,7 @@ class FlowCog(commands.Cog, name="flow"):
             formated_time = datetime_obj.strftime("%Y-%m-%d %H:%M:%S")
             value += f"{emojis[index]} {formated_time}\n"
         embed = default_embed()
-        embed.add_field(name=f"{flow} flow", value=value)
+        embed.add_field(name=f"{flow} 暴幣", value=value)
         embed.set_author(name=f"暴幣帳號", icon_url=member.avatar)
         await i.response.send_message(embed=embed)
 
@@ -108,7 +108,7 @@ class FlowCog(commands.Cog, name="flow"):
         user_flow = await get_user_flow(i.user.id, i.client.db)
         if user_flow < flow:
             return await i.response.send_message(
-                embed=error_embed(f"需要至少: {flow} flow").set_author(
+                embed=error_embed(f"需要至少: {flow} 暴幣").set_author(
                     name="暴幣不足", icon_url=i.user.display_avatar.url
                 ),
                 ephemeral=True,
@@ -116,8 +116,8 @@ class FlowCog(commands.Cog, name="flow"):
         await flow_transaction(i.user.id, -flow, i.client.db)
         await flow_transaction(member.id, flow, i.client.db)
         embed = default_embed(
-            message=f"{i.user.mention} | -{flow} flow\n"
-            f"{member.mention} | +{flow} flow"
+            message=f"{i.user.mention} | -{flow} 暴幣\n"
+            f"{member.mention} | +{flow} 暴幣"
         ).set_author(name="交易成功", icon_url=i.user.display_avatar.url)
         await i.response.send_message(
             content=f"{i.user.mention} {member.mention}", embed=embed
