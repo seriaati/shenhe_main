@@ -207,8 +207,8 @@ class FishCog(commands.Cog):
         if message.channel.name in ["心裡諮商", "練舞室"]:
             return
 
-        rand_int = randint(1, 100)
-        if rand_int == 1:
+        rand_int = randint(1, 1000)
+        if rand_int <= 5:
             await self.summon_fish(message, randint(1, 100))
 
     @commands.is_owner()
