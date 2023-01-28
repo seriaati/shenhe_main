@@ -106,14 +106,15 @@ class GuessNumCog(commands.Cog):
             answer = player_two_num
         elif message.author.id == player_two:
             answer = player_one_num
-            
-        a,b = return_a_b(answer, message.content)
-        await message.reply(f"{a}A{b}B")
         
-        if a == 4:
-            await message.reply("恭喜答對")
-            await db.execute("DELETE FROM guess_num WHERE player_one = ? AND player_two = ?", (player_one, player_two))
-            await db.commit()
+        if answer:
+            a,b = return_a_b(answer, message.content)
+            await message.reply(f"{a}A{b}B")
+        
+            if a == 4:
+                await message.reply("恭喜答對")
+                await db.execute("DELETE FROM guess_num WHERE player_one = ? AND player_two = ?", (player_one, player_two))
+                await db.commit()
             
     @app_commands.command(name="guess-num", description="猜數字遊戲")
     async def guess_num(self, i: discord.Interaction):
