@@ -133,9 +133,9 @@ class GuessNumCog(commands.Cog):
 
         answer = None
         if message.author.id == player_one:
-            answer = player_two_num
+            answer = str(player_two_num)
         elif message.author.id == player_two:
-            answer = player_one_num
+            answer = str(player_one_num)
 
         if answer:
             a, b = return_a_b(answer, message.content)
