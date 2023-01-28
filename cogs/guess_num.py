@@ -51,6 +51,11 @@ class GuessNumModal(ui.Modal):
 
         await i.response.defer(ephemeral=True)
         
+        if self.player_one and i.user.id != self.guess_num_view.author.id:
+            return await i.followup.send("你不是玩家一, 發起挑戰者為玩家一", ephemeral=True)
+        elif not self.player_one and i.user.id == self.guess_num_view.author.id:
+            return await i.followup.send("你不是玩家二, 發起挑戰者為玩家一", ephemeral=True)
+        
         db: aiosqlite.Connection = i.client.db
         query = "player_one" if self.player_one else "player_two"
         await db.execute(
@@ -60,10 +65,16 @@ class GuessNumModal(ui.Modal):
         await db.commit()
 
         if self.player_one:
+            player_one_button = utils.get(
+                self.guess_num_view.children, custom_id="player_one"
+            )
+            player_one_button.disabled = True
+            
             player_two_button = utils.get(
                 self.guess_num_view.children, custom_id="player_two"
             )
             player_two_button.disabled = False
+            
             await self.guess_num_view.message.edit(view=self.guess_num_view)
         
         await i.followup.send(f"設定成功, 你的數字為 {self.number.value}", ephemeral=True)
