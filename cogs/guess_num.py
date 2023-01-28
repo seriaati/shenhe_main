@@ -49,6 +49,8 @@ class GuessNumModal(ui.Modal):
         if "0" in self.number.value:
             return await i.response.send_message("數字不可包含0", ephemeral=True)
 
+        await i.response.defer(ephemeral=True)
+        
         db: aiosqlite.Connection = i.client.db
         query = "player_one" if self.player_one else "player_two"
         await db.execute(
@@ -63,6 +65,8 @@ class GuessNumModal(ui.Modal):
             )
             player_two_button.disabled = False
             await self.guess_num_view.message.edit(view=self.guess_num_view)
+        
+        await i.followup.send(f"設定成功, 你的數字為 {self.number.value}", ephemeral=True)
 
 def return_a_b(answer: str, guess: str):
     a = 0
