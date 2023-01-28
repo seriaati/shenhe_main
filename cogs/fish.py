@@ -109,8 +109,8 @@ class FishCog(commands.Cog):
                     )
 
             embed.add_field(
-                name="目前 暴幣",
-                value=f"{await get_user_flow(i.user.id, self.db)} flow",
+                name="目前暴幣",
+                value=f"{await get_user_flow(i.user.id, self.db)} 暴幣",
                 inline=False,
             )
             embed.set_thumbnail(url=image_url)
