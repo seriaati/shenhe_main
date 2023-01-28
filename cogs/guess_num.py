@@ -22,7 +22,7 @@ class GuessNumView(ui.View):
 
     @ui.button(label="玩家一", style=discord.ButtonStyle.primary, custom_id="player_one")
     async def player_one(self, i: discord.Interaction, /):
-        modal = GuessNumModal()
+        modal = GuessNumModal(True, self)
         await i.response.send_modal(modal)
 
     @ui.button(
@@ -32,7 +32,7 @@ class GuessNumView(ui.View):
         disabled=True,
     )
     async def player_two(self, i: discord.Interaction, /):
-        modal = GuessNumModal()
+        modal = GuessNumModal(False, self)
         await i.response.send_modal(modal)
 
 
