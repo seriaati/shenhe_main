@@ -126,6 +126,7 @@ class GuessNumCog(commands.Cog):
         await db.execute(
             "CREATE TABLE IF NOT EXISTS guess_num (player_one INTEGER, player_one_number INTEGER, player_two INTEGER, player_two_number INTEGER)"
         )
+        await db.execute("DELETE FROM guess_num")
         await db.commit()
 
         view = GuessNumView(i.user)
