@@ -50,34 +50,48 @@ class GuessNumModal(ui.Modal):
             return await i.response.send_message("數字不可包含0", ephemeral=True)
 
         await i.response.defer(ephemeral=True)
-        
+
         if self.player_one and i.user.id != self.guess_num_view.author.id:
             return await i.followup.send("你不是玩家一, 發起挑戰者為玩家一", ephemeral=True)
         elif not self.player_one and i.user.id == self.guess_num_view.author.id:
             return await i.followup.send("你不是玩家二, 發起挑戰者為玩家一", ephemeral=True)
-        
+
         db: aiosqlite.Connection = i.client.db
-        query = "player_one" if self.player_one else "player_two"
-        await db.execute(
-            f"INSERT INTO guess_num ({query}, {query}_number) VALUES (?, ?)",
-            (i.user.id, int(self.number.value)),
-        )
+        if self.player_one:
+            await db.execute(
+                "INSERT INTO guess_num (player_one, player_one_number) VALUES (?, ?)",
+                (i.user.id, int(self.number.value)),
+            )
+        else:
+            await db.execute(
+                "UPDATE guess_num SET player_two = ?, player_two_number = ? WHERE player_one = ?",
+                (i.user.id, int(self.number.value), self.guess_num_view.author.id),
+            )
         await db.commit()
 
-        if self.player_one:
-            player_one_button = utils.get(
-                self.guess_num_view.children, custom_id="player_one"
-            )
-            player_one_button.disabled = True
-            
-            player_two_button = utils.get(
-                self.guess_num_view.children, custom_id="player_two"
-            )
-            player_two_button.disabled = False
-            
-            await self.guess_num_view.message.edit(view=self.guess_num_view)
+        player_one_button: ui.Button = utils.get(
+            self.guess_num_view.children, custom_id="player_one"
+        )
+        player_two_button: ui.Button = utils.get(
+            self.guess_num_view.children, custom_id="player_two"
+        )
         
+        assert player_one_button and player_two_button
+
+        if self.player_one:
+            player_one_button.disabled = True
+            player_two_button.disabled = False
+
+        else:
+            player_two_button.disabled = True
+
+        await self.guess_num_view.message.edit(view=self.guess_num_view)
+
         await i.followup.send(f"設定成功, 你的數字為 {self.number.value}", ephemeral=True)
+        
+        if player_one_button.disabled and player_two_button.disabled:
+            await i.followup.send("玩家一和玩家二都已設定數字, 開始遊戲")
+
 
 def return_a_b(answer: str, guess: str):
     a = 0
@@ -90,47 +104,51 @@ def return_a_b(answer: str, guess: str):
                 b += 1
     return a, b
 
+
 class GuessNumCog(commands.Cog):
     def __init__(self, bot):
         self.bot: commands.Bot = bot
-    
+
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
         if message.author.bot:
             return
-        
+
         if not message.content.isdigit():
             return
 
         if message.channel.id != 1063136363190419476:
             return
-        
+
         db: aiosqlite.Connection = self.bot.db
         async with db.execute("SELECT * FROM guess_num") as cursor:
             row = await cursor.fetchone()
             if not row:
                 return
-        
+
         player_one = row[0]
         player_one_num = row[1]
         player_two = row[2]
         player_two_num = row[3]
-        
+
         answer = None
         if message.author.id == player_one:
             answer = player_two_num
         elif message.author.id == player_two:
             answer = player_one_num
-        
+
         if answer:
-            a,b = return_a_b(answer, message.content)
+            a, b = return_a_b(answer, message.content)
             await message.reply(f"{a}A{b}B")
-        
+
             if a == 4:
                 await message.reply("恭喜答對")
-                await db.execute("DELETE FROM guess_num WHERE player_one = ? AND player_two = ?", (player_one, player_two))
+                await db.execute(
+                    "DELETE FROM guess_num WHERE player_one = ? AND player_two = ?",
+                    (player_one, player_two),
+                )
                 await db.commit()
-            
+
     @app_commands.command(name="guess-num", description="猜數字遊戲")
     async def guess_num(self, i: discord.Interaction):
         db: aiosqlite.Connection = i.client.db
