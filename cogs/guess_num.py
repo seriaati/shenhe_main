@@ -75,7 +75,7 @@ class GuessNumModal(ui.Modal):
         player_two_button: ui.Button = utils.get(
             self.guess_num_view.children, custom_id="player_two"
         )
-        
+
         assert player_one_button and player_two_button
 
         if self.player_one:
@@ -88,7 +88,7 @@ class GuessNumModal(ui.Modal):
         await self.guess_num_view.message.edit(view=self.guess_num_view)
 
         await i.followup.send(f"設定成功, 你的數字為 {self.number.value}", ephemeral=True)
-        
+
         if player_one_button.disabled and player_two_button.disabled:
             await i.followup.send("玩家一和玩家二都已設定數字, 開始遊戲")
 
@@ -132,17 +132,32 @@ class GuessNumCog(commands.Cog):
         player_two_num = row[3]
 
         answer = None
+        is_p_one = False
         if message.author.id == player_one:
             answer = str(player_two_num)
+            is_p_one = True
         elif message.author.id == player_two:
             answer = str(player_one_num)
 
         if answer:
+            query = "player_one" if is_p_one else "player_two"
+            async with db.execute(
+                f"UPDATE guess_num SET {query}_guess = {query}_guess + 1 WHERE player_one = ? AND player_two = ?",
+                (player_one, player_two),
+            ) as c:
+                await db.commit()
+                await c.execute(
+                    f"SELECT {query}_guess FROM guess_num WHERE player_one = ? AND player_two = ?",
+                    (player_one, player_two),
+                )
+                guess = await c.fetchone()
             a, b = return_a_b(answer, message.content)
-            await message.reply(f"{a}A{b}B")
+            await message.reply(f"{a}A{b}B | 第{guess[0]}次猜測")
 
             if a == 4:
-                await message.reply("恭喜答對")
+                await message.reply(
+                    f"恭喜答對, 遊戲結束, 資料已刪除\n 玩家一: {player_one_num}\n 玩家二: {player_two_num}"
+                )
                 await db.execute(
                     "DELETE FROM guess_num WHERE player_one = ? AND player_two = ?",
                     (player_one, player_two),
@@ -153,7 +168,7 @@ class GuessNumCog(commands.Cog):
     async def guess_num(self, i: discord.Interaction):
         db: aiosqlite.Connection = i.client.db
         await db.execute(
-            "CREATE TABLE IF NOT EXISTS guess_num (player_one INTEGER, player_one_number INTEGER, player_two INTEGER, player_two_number INTEGER)"
+            "CREATE TABLE IF NOT EXISTS guess_num (player_one INTEGER, player_one_number INTEGER, player_two INTEGER, player_two_number INTEGER, player_one_guess INTEGER DEFAULT 0, player_two_guess INTEGER DEFAULT 0)"
         )
         await db.execute("DELETE FROM guess_num")
         await db.commit()
