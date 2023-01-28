@@ -53,7 +53,7 @@ class GuessNumModal(ui.Modal):
         query = "player_one" if self.player_one else "player_two"
         await db.execute(
             f"INSERT INTO guess_num ({query}, {query}_number) VALUES (?, ?)",
-            (i.user.id, self.number.value),
+            (i.user.id, int(self.number.value)),
         )
         await db.commit()
 
@@ -126,7 +126,7 @@ class GuessNumCog(commands.Cog):
 
         view = GuessNumView(i.user)
         await i.response.send_message("請設定雙方數字", view=view)
-        view.message = i.message
+        view.message = await i.original_response()
 
 
 async def setup(bot: commands.Bot) -> None:
