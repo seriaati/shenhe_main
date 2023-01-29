@@ -200,6 +200,8 @@ class FishCog(commands.Cog):
     async def on_message(self, message: Message):  # 機率放魚
         if message.author.id == self.bot.user.id:
             return
+        if message.guild.id != 1061877505067327528:
+            return
         if isinstance(message.channel, Thread):
             return
         if message.channel.guild is None:

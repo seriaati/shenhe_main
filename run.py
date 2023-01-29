@@ -12,7 +12,6 @@ from discord import (Intents, Interaction, Message, app_commands, Game)
 from discord.ext import commands
 from dotenv import load_dotenv
 
-from cogs.roles import ReactionRoles
 from cogs.welcome import WelcomeCog
 from debug import DebugView
 from utility.utils import error_embed, log
