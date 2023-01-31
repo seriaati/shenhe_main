@@ -112,7 +112,7 @@ class WelcomeCog(commands.Cog):
             ]
             image_url = random.choice(image_urls)
             embed = default_embed(
-                f"{self.member.name} 歡迎歡迎~", "<:penguin_hug:978250194779000892>"
+                f"{self.member.name} 歡迎歡迎~", "<:Penguin_hug:1062081072449466498>"
             )
             embed.set_thumbnail(url=image_url)
             embed.set_author(name=i.user.name, icon_url=i.user.display_avatar.url)

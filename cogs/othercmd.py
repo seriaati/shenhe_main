@@ -78,18 +78,18 @@ class OtherCMDCog(commands.Cog, name="other"):
                 )
 
     @commands.Cog.listener()
-    async def on_message(self, message):
+    async def on_message(self, message: Message):
         if message.author == self.bot.user:
             return
         if "機率" in message.content:
             value = randint(1, 100)
-            await message.channel.send(f"{value}%")
+            await message.reply(f"{value}%")
         if "好色喔" in message.content:
             c = await self.bot.db.cursor()
             emojis = [
-                "<:word_hao:1021424223199187025>",
-                "<:word_se:1021424220976193646>",
-                "<:word_o:1021424218337984545>",
+                "<:__1:1062180387922645082>",
+                "<:__2:1062180392246980638>",
+                "<:__3:1062180394906177678>",
             ]
             for e in emojis:
                 await message.add_reaction(e)
