@@ -1,11 +1,12 @@
-from random import choice, randint
+import random
 
 from debug import DefaultView
-from discord import Interaction, Member, Message, Role, app_commands
+from discord import Interaction, Member, Message, Role, app_commands, File
 from discord.app_commands import Choice
 from discord.ext import commands
 from discord.ui import Button
 from utility.utils import default_embed, error_embed, log
+import utility.draw as draw
 
 
 class OtherCMDCog(commands.Cog, name="other"):
@@ -82,7 +83,7 @@ class OtherCMDCog(commands.Cog, name="other"):
         if message.author == self.bot.user:
             return
         if "機率" in message.content:
-            value = randint(1, 100)
+            value = random.randint(1, 100)
             await message.reply(f"{value}%")
         if "好色喔" in message.content:
             c = await self.bot.db.cursor()
@@ -99,7 +100,7 @@ class OtherCMDCog(commands.Cog, name="other"):
             )
             await self.bot.db.commit()
 
-    @app_commands.command(name="ping延遲", description="查看機器人目前延遲")
+    @app_commands.command(name="ping", description="查看機器人目前延遲")
     async def ping(self, interaction: Interaction):
         await interaction.response.send_message(
             "🏓 Pong! {0}s".format(round(self.bot.latency, 1))
@@ -116,13 +117,13 @@ class OtherCMDCog(commands.Cog, name="other"):
             "https://media.discordapp.net/attachments/823440627127287839/960177992942891038/IMG_9555.jpg"
         )
 
-    @app_commands.command(name="randomnumber隨機數", description="讓申鶴從兩個數字間挑一個隨機的給你")
+    @app_commands.command(name="randomnumber", description="讓申鶴從兩個數字間挑一個隨機的給你")
     @app_commands.rename(num_one="數字一", num_two="數字二")
     async def number(self, interaction: Interaction, num_one: int, num_two: int):
-        value = randint(int(num_one), int(num_two))
+        value = random.randint(int(num_one), int(num_two))
         await interaction.response.send_message(str(value))
 
-    @app_commands.command(name="marry結婚", description="結婚 💞")
+    @app_commands.command(name="marry", description="結婚 💞")
     @app_commands.rename(person_one="攻", person_two="受")
     async def marry(self, interaction: Interaction, person_one: str, person_two: str):
         await interaction.response.send_message(f"{person_one} ❤ {person_two}")
@@ -134,13 +135,13 @@ class OtherCMDCog(commands.Cog, name="other"):
         msg = await ctx.channel.fetch_message(ctx.message.reference.message_id)
         await self.send_quote_embed(msg.author, msg)
 
-    @app_commands.command(name="pickrandom")
+    @app_commands.command(name="pickrandom", description="從指令使用者所在的語音台中隨機挑選一個人")
     async def pickrandom(self, i: Interaction):
         v = i.user.voice.channel
-        r = choice(v.members)
-        await i.response.send_message(f"{r.display_name}#{r.discriminator}")
+        r = random.choice(v.members)
+        await i.response.send_message(r.mention)
 
-    @app_commands.command(name="members總人數", description="查看目前群組總人數")
+    @app_commands.command(name="total-members", description="查看目前群組總人數")
     async def members(self, i: Interaction):
         g = i.user.guild
         await i.response.send_message(
@@ -157,7 +158,7 @@ class OtherCMDCog(commands.Cog, name="other"):
         )
         await self.send_quote_embed(msg.author, msg)
 
-    @app_commands.command(name="rolemembers身份組人數", description="查看一個身份組內的所有成員")
+    @app_commands.command(name="rolemembers", description="查看一個身份組內的所有成員")
     @app_commands.rename(role="身份組")
     @app_commands.describe(role="請選擇要查看的身份組")
     async def role_members(self, i: Interaction, role: Role):
@@ -170,7 +171,7 @@ class OtherCMDCog(commands.Cog, name="other"):
             embed=default_embed(f"{role.name} ({len(role.members)})", memberStr)
         )
 
-    @app_commands.command(name="avatar頭像", description="查看一個用戶的頭像(並且偷偷下載)")
+    @app_commands.command(name="avatar", description="查看一個用戶的頭像(並且偷偷下載)")
     @app_commands.rename(member="使用者")
     async def avatar(self, i: Interaction, member: Member):
         embed = default_embed(member)
@@ -178,6 +179,29 @@ class OtherCMDCog(commands.Cog, name="other"):
         view.add_item(Button(label="下載頭像", url=member.avatar.url))
         embed.set_image(url=member.avatar)
         await i.response.send_message(embed=embed, view=view)
+        
+    @app_commands.command(name="cp", description="湊CP, 並查看兩人契合度")
+    @app_commands.rename(person_one="攻", person_two="受", random_type="契合度計算方式")
+    @app_commands.choices(random_type=[Choice(name="天命既定", value="seed"), Choice(name="隨機", value="random")])
+    async def slash_cp(self, i: Interaction, person_one: Member, person_two: Member, random_type: str):
+        await i.response.defer()
+        
+        if random_type == "seed":
+            random.seed(person_two.id-person_one.id)
+        num = random.randint(0, 100)
+        
+        fp = await draw.draw_ship_image(person_one.display_avatar.url, person_two.display_avatar.url, num, self.bot.session)
+        fp.seek(0)
+        
+        cp_name = f"{person_one.display_name[:len(person_one.display_name)//2]}{person_two.display_name[len(person_two.display_name)//2:]}"
+        embed = default_embed(cp_name, f"契合度: {num}%")
+        embed.set_image(url="attachment://ship.jpeg")
+        
+        await i.followup.send(
+            content=f"{person_one.mention} ❤ {person_two.mention}",
+            embed=embed,
+            file=File(fp, filename="ship.jpeg")
+        )
 
     async def send_quote_embed(self, member: Member, msg: Message):
         embed = default_embed(
