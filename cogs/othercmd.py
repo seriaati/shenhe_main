@@ -194,7 +194,7 @@ class OtherCMDCog(commands.Cog, name="other"):
         fp.seek(0)
         
         cp_name = f"{person_one.display_name[:len(person_one.display_name)//2]}{person_two.display_name[len(person_two.display_name)//2:]}"
-        embed = default_embed(cp_name, f"契合度: {num}%")
+        embed = default_embed(cp_name, f"{'天命既定' if random_type == 'seed' else '隨機'}契合度: {num}%")
         embed.set_image(url="attachment://ship.jpeg")
         
         await i.followup.send(
