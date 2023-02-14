@@ -9,21 +9,25 @@ class ReactionRole(ui.View):
     def __init__(self, roles: List[discord.Role]):
         super().__init__(timeout=None)
         
-        for role in roles:
-            self.add_item(RoleButton(role))
+        for index, role in enumerate(roles):
+            self.add_item(RoleButton(role, index // 3))
 
 
 class RoleButton(ui.Button[ReactionRole]):
-    def __init__(self, role: discord.Role):
+    def __init__(self, role: discord.Role, row:int):
         self.role = role
         super().__init__(
             label=f"{role.name} ({len(role.members)})",
             style=discord.ButtonStyle.blurple,
             custom_id=f"role_{role.id}",
+            row=row,
         )
 
     async def callback(self, i: discord.Interaction):
-        await i.user.add_roles(self.role)
+        if self.role in i.user.roles:
+            await i.user.remove_roles(self.role)
+        else:
+            await i.user.add_roles(self.role)
         self.label = f"{self.role.name} ({len(self.role.members)})"
         await i.response.edit_message(view=self.view)
 
@@ -46,8 +50,8 @@ class ReactionRoles(commands.Cog):
     @commands.command()
     @commands.is_owner()
     async def reaction_roles(self, ctx: commands.Context):
-        embed = default_embed("獲取想要的通知身份組", "點擊下方按鈕來獲取身份組")
-        embed.add_field(name="目前可選的通知身份組", value=" ".join([f"<@&{id}>" for id in self.role_ids]))
+        embed = default_embed("獲取想要的通知身份組", "點擊下方的按鈕來獲取身份組")
+        embed.add_field(name="目前可選的通知身份組", value="\n".join([f"<@&{id}>" for id in self.role_ids]))
         await ctx.send(embed=embed, view=self.view)
 
 async def setup(bot: commands.Bot) -> None:
