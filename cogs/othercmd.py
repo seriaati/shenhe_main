@@ -187,7 +187,7 @@ class OtherCMDCog(commands.Cog, name="other"):
         await i.response.defer()
         
         if random_type == "seed":
-            random.seed(person_two.id-person_one.id)
+            random.seed(str(person_one.id) + str(person_two.id))
         num = random.randint(0, 100)
         
         fp = await draw.draw_ship_image(person_one.display_avatar.url, person_two.display_avatar.url, num, self.bot.session)
