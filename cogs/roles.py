@@ -19,6 +19,7 @@ class RoleButton(ui.Button[ReactionRole]):
         super().__init__(
             label=f"{role.name} ({len(role.members)})",
             style=discord.ButtonStyle.blurple,
+            custom_id=f"role_{role.id}",
         )
 
     async def callback(self, i: discord.Interaction):
