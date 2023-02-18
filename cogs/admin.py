@@ -45,7 +45,7 @@ class AdminCog(commands.Cog):
         if message.guild.id != self.bot.guild_id:
             return
 
-        if message.channel.id == 1061898394446069852 and message.attachments:
+        if message.channel.id == 1061898394446069852 and any(not a.is_spoiler() for a in message.attachments):
             files: List[discord.File] = []
             await message.delete()
 
@@ -57,6 +57,8 @@ class AdminCog(commands.Cog):
                             bytes_obj, filename=attachment.filename, spoiler=True
                         )
                         files.append(file)
+                else:
+                    files.append(await attachment.to_file())
 
             await message.channel.send(
                 content=f"由 <@{message.author.id}> 寄出", files=files
