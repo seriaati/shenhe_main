@@ -17,7 +17,7 @@ async def register_flow_account(user_id: int, db: aiosqlite.Connection) -> None:
     """Register a user's flow account."""
     default_time = datetime.utcnow() - timedelta(days=1)
     await db.execute(
-        "INSERT INTO flow_accounts (user_id, flow, morning, noon, night) VALUES (?, ?, ?, ?, ?)",
+        "INSERT INTO flow_accounts (user_id, flow, morning, noon, night) VALUES (?, ?, ?, ?, ?) ON CONFLICT DO NOTHING",
         (user_id, 0, default_time, default_time, default_time),
     )
     await db.commit()
