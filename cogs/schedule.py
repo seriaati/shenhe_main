@@ -15,7 +15,6 @@ class Schedule(commands.Cog):
     @tasks.loop(hours=1)
     async def notif_task(self):
         notif_channel = self.bot.get_channel(1075025670981296211)
-
         now = datetime.datetime.now()
 
         # every week's monday
@@ -44,7 +43,10 @@ class Schedule(commands.Cog):
                     content="<@&1075027124454440992>",
                     embed=default_embed("🎉 今天是月初，記得去兌換粉球哦！"),
                 )
-
+    
+    @notif_task.before_loop
+    async def before_notif_task(self):
+        await self.bot.wait_until_ready()
 
 async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(Schedule(bot))

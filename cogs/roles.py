@@ -1,3 +1,4 @@
+import asyncio
 from typing import List
 import discord
 from discord import ui
@@ -35,16 +36,21 @@ class RoleButton(ui.Button[ReactionRole]):
 class ReactionRoles(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
-        
-        self.role_ids: List[int] = [
+    
+    async def cog_load(self):
+        await asyncio.create_task(self.add_view_task())
+
+    async def add_view_task(self):
+        await self.bot.wait_until_ready()
+        role_ids = (
             1075026929448652860,
             1075027016132345916,
             1075027069832015943,
             1075027095786365009,
             1075027124454440992,
-        ]
+        )
         guild = self.bot.get_guild(1061877505067327528)
-        self.view = ReactionRole([guild.get_role(id) for id in self.role_ids])
+        self.view = ReactionRole([guild.get_role(id) for id in role_ids])
         self.bot.add_view(self.view)
 
     @commands.command()
