@@ -38,7 +38,7 @@ class ReactionRoles(commands.Cog):
         self.bot = bot
     
     async def cog_load(self):
-        await self.bot.loop.create_task(self.add_view_task())
+        self.bot.loop.create_task(self.add_view_task())
 
     async def add_view_task(self):
         await self.bot.wait_until_ready()
