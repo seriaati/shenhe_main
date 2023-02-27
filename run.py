@@ -57,9 +57,9 @@ class ShenheBot(commands.Bot):
         self.gv_role_name = ""
         
         await self.load_extension('jishaku')
-        # for filepath in Path('./cogs').glob('**/*.py'):
-        #     cog_name = Path(filepath).stem
-        #     await self.load_extension(f'cogs.{cog_name}')
+        for filepath in Path('./cogs').glob('**/*.py'):
+            cog_name = Path(filepath).stem
+            await self.load_extension(f'cogs.{cog_name}')
             
         self.add_view(WelcomeCog.AcceptRules())
 
