@@ -38,7 +38,7 @@ class ReactionRoles(commands.Cog):
         self.bot = bot
     
     async def cog_load(self):
-        await asyncio.create_task(self.add_view_task())
+        await self.bot.loop.create_task(self.add_view_task())
 
     async def add_view_task(self):
         await self.bot.wait_until_ready()
@@ -50,8 +50,8 @@ class ReactionRoles(commands.Cog):
             1075027124454440992,
         )
         guild = self.bot.get_guild(1061877505067327528)
-        self.view = ReactionRole([guild.get_role(id) for id in role_ids])
-        self.bot.add_view(self.view)
+        view = ReactionRole([guild.get_role(id) for id in role_ids])
+        self.bot.add_view(view)
 
     @commands.command()
     @commands.is_owner()
