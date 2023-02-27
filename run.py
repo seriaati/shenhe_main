@@ -1,14 +1,14 @@
 # shenhe-bot by seria
 
-import platform
 import os
+import platform
 import sys
 import traceback
 from pathlib import Path
 
 import aiohttp
 import aiosqlite
-from discord import (Intents, Interaction, Message, app_commands, Game)
+from discord import Intents, Interaction, Message, app_commands
 from discord.ext import commands
 from dotenv import load_dotenv
 
@@ -42,8 +42,6 @@ class ShenheBot(commands.Bot):
             command_prefix=prefix,
             intents=intents,
             application_id=application_id,
-            chunk_guilds_at_startup=False,
-            activity=Game(name="私訊來知會管理員")
         )
 
     async def setup_hook(self) -> None:
@@ -110,10 +108,5 @@ async def err_handle(i: Interaction, e: app_commands.AppCommandError):
     embed = error_embed(message=f'```py\n{e}\n```').set_author(
         name='未知錯誤', icon_url=i.user.display_avatar.url)
     await i.channel.send(content=f'{seria.mention} 系統已將錯誤回報給小雪, 請耐心等待修復', embed=embed, view=view)
-
-@tree.interaction_check
-async def check(i: Interaction):
-    if i.guild is not None and not i.guild.chunked:
-        await i.guild.chunk()
 
 bot.run(token)
