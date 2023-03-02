@@ -1,12 +1,13 @@
 import random
 
-from debug import DefaultView
-from discord import Interaction, Member, Message, Role, app_commands, File
+from discord import File, Interaction, Member, Message, Role, app_commands
 from discord.app_commands import Choice
 from discord.ext import commands
 from discord.ui import Button
-from utility.utils import default_embed, error_embed, log
+
 import utility.draw as draw
+from debug import DefaultView
+from utility.utils import default_embed, error_embed, log
 
 
 class OtherCMDCog(commands.Cog, name="other"):
@@ -18,8 +19,12 @@ class OtherCMDCog(commands.Cog, name="other"):
         self.hao_se_o_ctx_menu = app_commands.ContextMenu(
             name="好色喔", callback=self.hao_se_o_context_menu
         )
+        self.mark_fbi_ctx_menu = app_commands.ContextMenu(
+            name="標記危險訊息", callback=self.mark_fbi_message
+        )
         self.bot.tree.add_command(self.quote_ctx_menu)
         self.bot.tree.add_command(self.hao_se_o_ctx_menu)
+        self.bot.tree.add_command(self.mark_fbi_ctx_menu)
 
     async def cog_unload(self) -> None:
         self.bot.tree.remove_command(
@@ -27,6 +32,9 @@ class OtherCMDCog(commands.Cog, name="other"):
         )
         self.bot.tree.remove_command(
             self.hao_se_o_ctx_menu.name, type=self.hao_se_o_ctx_menu.type
+        )
+        self.bot.tree.remove_command(
+            self.mark_fbi_ctx_menu.name, type=self.mark_fbi_ctx_menu.type
         )
 
     async def hao_se_o_context_menu(self, i: Interaction, message: Message):
@@ -44,6 +52,10 @@ class OtherCMDCog(commands.Cog, name="other"):
             (message.author.id, 1, message.author.id),
         )
         await i.client.db.commit()
+
+    async def mark_fbi_message(self, i: Interaction, message: Message):
+        await i.response.send_message("標記成功", ephemeral=True)
+        await message.reply(f"⚠️ {i.user.mention} 已將此訊息標記為危險訊息，將自動通報至 FBI")
 
     @app_commands.command(name="haose", description="好色喔")
     @app_commands.rename(user="使用者", leaderboard="排行榜")
@@ -179,28 +191,42 @@ class OtherCMDCog(commands.Cog, name="other"):
         view.add_item(Button(label="下載頭像", url=member.avatar.url))
         embed.set_image(url=member.avatar)
         await i.response.send_message(embed=embed, view=view)
-        
+
     @app_commands.command(name="cp", description="湊CP, 並查看兩人契合度")
     @app_commands.rename(person_one="攻", person_two="受", random_type="契合度計算方式")
-    @app_commands.choices(random_type=[Choice(name="天命既定", value="seed"), Choice(name="隨機", value="random")])
-    async def slash_cp(self, i: Interaction, person_one: Member, person_two: Member, random_type: str):
+    @app_commands.choices(
+        random_type=[
+            Choice(name="天命既定", value="seed"),
+            Choice(name="隨機", value="random"),
+        ]
+    )
+    async def slash_cp(
+        self, i: Interaction, person_one: Member, person_two: Member, random_type: str
+    ):
         await i.response.defer()
-        
+
         if random_type == "seed":
             random.seed(str(person_one.id) + str(person_two.id))
         num = random.randint(0, 100)
-        
-        fp = await draw.draw_ship_image(person_one.display_avatar.url, person_two.display_avatar.url, num, self.bot.session)
+
+        fp = await draw.draw_ship_image(
+            person_one.display_avatar.url,
+            person_two.display_avatar.url,
+            num,
+            self.bot.session,
+        )
         fp.seek(0)
-        
+
         cp_name = f"{person_one.display_name[:len(person_one.display_name)//2]}{person_two.display_name[len(person_two.display_name)//2:]}"
-        embed = default_embed(cp_name, f"{'天命既定' if random_type == 'seed' else '隨機'}契合度: {num}%")
+        embed = default_embed(
+            cp_name, f"{'天命既定' if random_type == 'seed' else '隨機'}契合度: {num}%"
+        )
         embed.set_image(url="attachment://ship.jpeg")
-        
+
         await i.followup.send(
             content=f"{person_one.mention} ❤ {person_two.mention}",
             embed=embed,
-            file=File(fp, filename="ship.jpeg")
+            file=File(fp, filename="ship.jpeg"),
         )
 
     async def send_quote_embed(self, member: Member, msg: Message):
