@@ -13,6 +13,13 @@ class AdminCog(commands.Cog):
     def __init__(self, bot):
         self.bot: commands.Bot = bot
         self.debug: bool = self.bot.debug_toggle
+    
+    @commands.command(name="mark")
+    async def mark(self, ctx: commands.Context):
+        if not ctx.message.reference:
+            return
+        else:
+            await ctx.send("⚠️ 已將此訊息標記為危險訊息，將自動通報至 FBI", reference=ctx.message.reference)
 
     @commands.is_owner()
     @commands.command(name="cleanup")
