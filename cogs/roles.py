@@ -9,13 +9,13 @@ from utility.utils import default_embed
 class ReactionRole(ui.View):
     def __init__(self, roles: List[discord.Role]):
         super().__init__(timeout=None)
-        
+
         for index, role in enumerate(roles):
             self.add_item(RoleButton(role, index // 3))
 
 
 class RoleButton(ui.Button[ReactionRole]):
-    def __init__(self, role: discord.Role, row:int):
+    def __init__(self, role: discord.Role, row: int):
         self.role = role
         super().__init__(
             label=f"{role.name} ({len(role.members)})",
@@ -36,29 +36,46 @@ class RoleButton(ui.Button[ReactionRole]):
 class ReactionRoles(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
-    
+
     async def cog_load(self):
         self.bot.loop.create_task(self.add_view_task())
 
     async def add_view_task(self):
         await self.bot.wait_until_ready()
-        role_ids = (
+        guild = self.bot.get_guild(1061877505067327528)
+
+        self.role_ids = (
             1075026929448652860,
             1075027016132345916,
             1075027069832015943,
             1075027095786365009,
             1075027124454440992,
         )
-        guild = self.bot.get_guild(1061877505067327528)
-        view = ReactionRole([guild.get_role(id) for id in role_ids])
-        self.bot.add_view(view)
+        self.notif_view = ReactionRole([guild.get_role(id) for id in self.role_ids])
+        self.bot.add_view(self.notif_view)
 
-    @commands.command()
+        self.game_role_ids = (1083175433052372992, 1083175539369582663)
+        self.game_view = ReactionRole([guild.get_role(id) for id in self.game_role_ids])
+        self.bot.add_view(self.game_view)
+
+    @commands.command(name="reacton_roles", aliases=["rr"])
     @commands.is_owner()
-    async def reaction_roles(self, ctx: commands.Context):
-        embed = default_embed("獲取想要的通知身份組", "點擊下方的按鈕來獲取身份組")
-        embed.add_field(name="目前可選的通知身份組", value="\n".join([f"<@&{id}>" for id in self.role_ids]))
-        await ctx.send(embed=embed, view=self.view)
+    async def reacton_roles(self, ctx: commands.Context, id_type: str):
+        if id_type == "notif":
+            embed = default_embed("獲取想要的通知身份組", "點擊下方的按鈕來獲取身份組")
+            embed.add_field(
+                name="目前可選的通知身份組",
+                value="\n".join([f"<@&{id}>" for id in self.role_ids]),
+            )
+            await ctx.send(embed=embed, view=self.view)
+        elif id_type == "game":
+            embed = default_embed("獲取想要的遊戲身份組", "點擊下方的按鈕來獲取身份組")
+            embed.add_field(
+                name="目前可選的遊戲身份組",
+                value="\n".join([f"<@&{id}>" for id in self.game_role_ids]),
+            )
+            await ctx.send(embed=embed, view=self.game_view)
+
 
 async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(ReactionRoles(bot))
