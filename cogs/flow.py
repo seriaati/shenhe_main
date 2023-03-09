@@ -101,7 +101,7 @@ class FlowCog(commands.Cog, name="flow"):
         if flow < 0:
             return await i.response.send_message(
                 embed=error_embed(
-                    message="<:PaimonSeria:958341967698337854> 還想學土司跟ceye洗錢啊!"
+                    message="<:PaimonSeria:958341967698337854> 還想學 <:Yeastken_ttosdog:1059516840210083880> 跟ceye洗錢啊!"
                 ).set_author(name="不可以給負數 暴幣", icon_url=i.user.display_avatar.url),
                 ephemeral=True,
             )
@@ -296,7 +296,7 @@ class FlowCog(commands.Cog, name="flow"):
                 await thread.send(embed=embed)
 
     @has_flow_account()
-    @app_commands.command(name="shop", description="flow 商店")
+    @app_commands.command(name="shop", description="暴幣商店")
     async def show(self, i: Interaction):
         async with i.client.db.execute(
             "SELECT name, flow, current, max FROM flow_shop"
@@ -306,8 +306,8 @@ class FlowCog(commands.Cog, name="flow"):
         item_names = []
         for _, tpl in enumerate(data):
             item_names.append(tpl[0])
-            item_str += f"• {tpl[0]} - **{tpl[1]}** flow ({tpl[2]}/{tpl[3]})\n\n"
-        embed = default_embed("🛒 flow商店", item_str)
+            item_str += f"• {tpl[0]} - **{tpl[1]}** 暴幣 ({tpl[2]}/{tpl[3]})\n\n"
+        embed = default_embed("🛒 暴幣商店", item_str)
         view = FlowCog.ShopItemView(item_names, "buy", i.client.db, i.user)
         await i.response.send_message(embed=embed, view=view)
 
