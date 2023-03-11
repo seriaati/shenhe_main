@@ -33,10 +33,10 @@ class DanceCog(commands.GroupCog, name="dance"):
         channel = await special_category.create_text_channel(
             name=f"練舞頻道-{str(uuid.uuid4())[2]}"
         )
-        await channel.set_permissions(i.guild.default_role, read_messages=False)
+        await channel.set_permissions(i.guild.default_role, send_messages=False)
         traveler = utils.get(i.guild.roles, name="旅行者")
-        await channel.set_permissions(traveler, read_messages=False)
-        await channel.set_permissions(i.user, read_messages=True)
+        await channel.set_permissions(traveler, send_messages=False)
+        await channel.set_permissions(i.user, send_messages=True)
 
         warn_embed = default_embed(
             "⚠️ 本練舞頻道內可以互相指罵，但不可以對對方造成威脅、恐嚇。\n如情況失控可以找管理員", "請就事論事，冷靜討論"
@@ -50,7 +50,7 @@ class DanceCog(commands.GroupCog, name="dance"):
     @app_commands.command(name="invite", description="邀請其他人加入練舞頻道")
     async def dance_invite(self, i: discord.Interaction, member: discord.Member):
         channel = i.channel
-        await channel.set_permissions(member, read_messages=True)
+        await channel.set_permissions(member, send_messages=True)
         embed = default_embed(f"已將 {member} 加入練舞頻道")
         await i.response.send_message(embed=embed, ephemeral=True)
 
@@ -66,7 +66,7 @@ class DanceCog(commands.GroupCog, name="dance"):
     @app_commands.command(name="leave", description="離開練舞頻道")
     async def dance_leave(self, i: discord.Interaction):
         channel = i.channel
-        await channel.set_permissions(i.user, read_messages=False)
+        await channel.set_permissions(i.user, send_messages=False)
         await i.response.send_message("掰掰", ephemeral=True)
 
 
