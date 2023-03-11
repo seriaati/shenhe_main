@@ -52,7 +52,7 @@ class DanceCog(commands.GroupCog, name="dance"):
         channel = i.channel
         await channel.set_permissions(member, send_messages=True)
         embed = default_embed(f"已將 {member} 加入練舞頻道")
-        await i.response.send_message(embed=embed, ephemeral=True)
+        await i.response.send_message(embed=embed, content=member.mention)
 
     @dance_check()
     @app_commands.command(name="delete", description="刪除練舞頻道")
