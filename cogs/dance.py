@@ -65,9 +65,9 @@ class DanceCog(commands.GroupCog, name="dance"):
     @dance_check()
     @app_commands.command(name="leave", description="離開練舞頻道")
     async def dance_leave(self, i: discord.Interaction):
-        await i.response.defer(ephemeral=True)
         channel = i.channel
         await channel.set_permissions(i.user, read_messages=False)
+        await i.response.send_message("掰掰", ephemeral=True)
 
 
 async def setup(bot: commands.Bot) -> None:
