@@ -51,7 +51,7 @@ class DanceCog(commands.GroupCog, name="dance"):
     async def dance_invite(self, i: discord.Interaction, member: discord.Member):
         channel = i.channel
         await channel.set_permissions(member, read_messages=True)
-        embed = default_embed(f"已將 {member.mention} 加入練舞頻道")
+        embed = default_embed(f"已將 {member} 加入練舞頻道")
         await i.response.send_message(embed=embed, ephemeral=True)
 
     @dance_check()
