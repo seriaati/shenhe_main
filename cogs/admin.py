@@ -13,13 +13,15 @@ class AdminCog(commands.Cog):
     def __init__(self, bot):
         self.bot: commands.Bot = bot
         self.debug: bool = self.bot.debug_toggle
-    
+
     @commands.command(name="mark")
     async def mark(self, ctx: commands.Context):
         if not ctx.message.reference:
             return
         else:
-            await ctx.send("⚠️ 已將此訊息標記為危險訊息，將自動通報至 FBI", reference=ctx.message.reference)
+            await ctx.send(
+                "⚠️ 已將此訊息標記為危險訊息，將自動通報至 FBI", reference=ctx.message.reference
+            )
 
     @commands.is_owner()
     @commands.command(name="cleanup")
@@ -45,6 +47,13 @@ class AdminCog(commands.Cog):
                     )
         await ctx.send("Reloaded")
 
+    @commands.is_owner()
+    @commands.command(name="sync")
+    async def sync(self, ctx: commands.Context):
+        await ctx.send("Syncing...")
+        await self.bot.tree.sync()
+        await ctx.send("Synced")
+
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
         if message.author.id == self.bot.user.id:
@@ -52,7 +61,9 @@ class AdminCog(commands.Cog):
         if message.guild.id != self.bot.guild_id:
             return
 
-        if message.channel.id == 1061898394446069852 and any(not a.is_spoiler() for a in message.attachments):
+        if message.channel.id == 1061898394446069852 and any(
+            not a.is_spoiler() for a in message.attachments
+        ):
             files: List[discord.File] = []
             await message.delete()
 
@@ -60,10 +71,10 @@ class AdminCog(commands.Cog):
                 if not attachment.is_spoiler():
                     async with self.bot.session.get(attachment.proxy_url) as resp:
                         bytes_obj = io.BytesIO(await resp.read())
-                        file = discord.File(
+                        file_ = discord.File(
                             bytes_obj, filename=attachment.filename, spoiler=True
                         )
-                        files.append(file)
+                        files.append(file_)
                 else:
                     files.append(await attachment.to_file())
 
