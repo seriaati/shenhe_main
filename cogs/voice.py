@@ -9,7 +9,7 @@ from discord import (
     app_commands,
 )
 from discord.ext import commands
-from discord.utils import find, get
+from discord import utils
 
 from utility.utils import default_embed, error_embed
 
@@ -38,8 +38,8 @@ class VoiceCog(commands.GroupCog, name="vc"):
     async def on_voice_state_update(
         self, member: Member, before: VoiceState, after: VoiceState
     ):
-        vc: VoiceChannel = find(lambda c: c.name == "創建語音台", member.guild.channels)
-        vc_role = find(lambda r: r.name == "正在使用語音台", member.guild.roles)
+        make_vc = utils.get(member.guild.channels, name="創建語音台")
+        vc_role = utils.get(member.guild.roles, name="正在使用語音台")
         old_channel: VoiceChannel = before.channel
         new_channel: VoiceChannel = after.channel
         c: aiosqlite.Cursor = await self.bot.db.cursor()
@@ -49,15 +49,15 @@ class VoiceCog(commands.GroupCog, name="vc"):
             and len(old_channel.members) == 1
             and old_channel.members[0].id == self.bot.user.id
         ):
-            vc: wavelink.Player = member.guild.voice_client
-            vc.queue.clear()
-            await vc.stop()
-            await vc.disconnect()
+            make_vc: wavelink.Player = member.guild.voice_client
+            make_vc.queue.clear()
+            await make_vc.stop()
+            await make_vc.disconnect()
         if new_channel is not None:
             await member.add_roles(vc_role)
-        if new_channel == vc:
+        if new_channel == make_vc:
             member_vc = await member.guild.create_voice_channel(
-                name=f"{member.display_name}的語音台", category=vc.category
+                name=f"{member.display_name}的語音台", category=make_vc.category
             )
             await member.move_to(member_vc)
             await member.add_roles(vc_role)
@@ -79,7 +79,7 @@ class VoiceCog(commands.GroupCog, name="vc"):
                 )
         if (
             old_channel is not None
-            and old_channel != vc
+            and old_channel != make_vc
             and len(old_channel.members) == 0
         ):
             try:
@@ -129,7 +129,7 @@ class VoiceCog(commands.GroupCog, name="vc"):
             return await i.response.send_message(embed=err_msg, ephemeral=True)
         for member in current_vc.members:
             await current_vc.set_permissions(member, connect=True)
-        traveler = get(i.guild.roles, name="旅行者")
+        traveler = utils.get(i.guild.roles, name="旅行者")
         await current_vc.set_permissions(traveler, connect=False)
         await i.response.send_message(embed=default_embed(f"{current_vc.name}被鎖上了"))
 
@@ -140,7 +140,7 @@ class VoiceCog(commands.GroupCog, name="vc"):
         owner, err_msg = await self.check_owner(current_vc.id, i.user.id)
         if not owner:
             return await i.response.send_message(embed=err_msg, ephemeral=True)
-        traveler = get(i.guild.roles, name="旅行者")
+        traveler = utils.get(i.guild.roles, name="旅行者")
         await current_vc.set_permissions(traveler, connect=True)
         await i.response.send_message(embed=default_embed(f"{current_vc.name}的封印被解除了"))
 
@@ -162,7 +162,7 @@ class VoiceCog(commands.GroupCog, name="vc"):
         await i.response.send_message(
             content=f"{i.user.mention} {new.mention}",
             embed=default_embed(
-                f"房主換人啦",
+                "房主換人啦",
                 f" {i.user.mention} 將 {current_vc.name} 的房主權移交給了 {new.mention}",
             ),
         )
