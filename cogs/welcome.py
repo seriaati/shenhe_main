@@ -71,7 +71,7 @@ class WelcomeCog(commands.Cog):
         traveler = utils.get(before.guild.roles, name="旅行者")
         if traveler not in before.roles and traveler in after.roles:
             await register_flow_account(after.id, self.bot.db)
-            public = utils.get(before.guild.channels, name="聊天台")
+            public = before.guild.get_channel(1061881312790720602)
             view = WelcomeCog.Welcome(after)
             welcome_strs = [
                 "祝你保底不歪十連雙黃",
@@ -152,7 +152,7 @@ class WelcomeCog(commands.Cog):
             3. 張貼侵權網址或載點
             4. 在 <#1061898394446069852> 以外發表色情或大尺度內容
             5. 假冒他人身份 
-            """
+            """,
         )
         view = WelcomeCog.AcceptRules()
         await ctx.send(content=content, embed=rules, view=view)
