@@ -24,6 +24,11 @@ class DanceCog(commands.GroupCog, name="dance"):
 
     @app_commands.command(name="new", description="生成練舞頻道")
     async def dance_new(self, i: discord.Interaction):
+        if i.channel.name.startswith("練舞頻道"):
+            embed = default_embed("你已經在練舞頻道裡了")
+            await i.response.send_message(embed=embed, ephemeral=True)
+            return
+
         special_category = utils.get(i.guild.categories, name="特殊頻道")
         channel = await special_category.create_text_channel(
             name=f"練舞頻道-{str(uuid.uuid4())[2]}"
