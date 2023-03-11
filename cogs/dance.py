@@ -33,7 +33,9 @@ class DanceCog(commands.GroupCog, name="dance"):
         await channel.set_permissions(traveler, read_messages=False)
         await channel.set_permissions(i.user, read_messages=True)
 
-        warn_embed = default_embed("⚠️ 可以辱罵，但不可以死亡威脅、恐嚇等等，情況失控可以找管理員", "請就事論事，冷靜討論")
+        warn_embed = default_embed(
+            "⚠️ 本練舞頻道內可以互相指罵，但不可以對對方造成威脅、恐嚇。\n如情況失控可以找管理員", "請就事論事，冷靜討論"
+        )
         await channel.send(embed=warn_embed)
 
         embed = default_embed("練舞頻道已生成", f"[點我前往]({channel.jump_url})")
