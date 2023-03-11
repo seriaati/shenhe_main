@@ -6,17 +6,21 @@ import uuid
 from utility.utils import default_embed
 
 
+def dance_check():
+    async def the_check(i: discord.Interaction):
+        result = i.channel.name.startswith("練舞頻道")
+        if not result:
+            embed = default_embed("你必須在練舞頻道裡才能用這個指令")
+            await i.response.send_message(embed=embed, ephemeral=True)
+        return result
+
+    return app_commands.check(the_check)
+
+
 class DanceCog(commands.GroupCog, name="dance"):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
         super().__init__()
-
-    def dance_check(self, i: discord.Interaction):
-        result = i.channel.name.startswith("練舞頻道")
-        if not result:
-            embed = default_embed("你必須在練舞頻道裡才能用這個指令")
-            i.response.send_message(embed=embed, ephemeral=True)
-        return result
 
     @app_commands.command(name="new", description="生成練舞頻道")
     async def dance_new(self, i: discord.Interaction):
@@ -31,7 +35,7 @@ class DanceCog(commands.GroupCog, name="dance"):
         embed = default_embed("練舞頻道已生成", f"[點我前往]({channel.jump_url})")
         await i.response.send_message(embed=embed, ephemeral=True)
 
-    @app_commands.check(dance_check)
+    @dance_check()
     @app_commands.command(name="invite", description="邀請其他人加入練舞頻道")
     async def dance_invite(self, i: discord.Interaction, member: discord.Member):
         channel = i.channel
@@ -39,7 +43,7 @@ class DanceCog(commands.GroupCog, name="dance"):
         embed = default_embed(f"已將 {member.mention} 加入練舞頻道")
         await i.response.send_message(embed=embed, ephemeral=True)
 
-    @app_commands.check(dance_check)
+    @dance_check()
     @app_commands.command(name="delete", description="刪除練舞頻道")
     async def dance_delete(self, i: discord.Interaction):
         channel = i.channel
@@ -47,7 +51,7 @@ class DanceCog(commands.GroupCog, name="dance"):
         embed = default_embed("練舞頻道已刪除")
         await i.response.send_message(embed=embed, ephemeral=True)
 
-    @app_commands.check(dance_check)
+    @dance_check()
     @app_commands.command(name="leave", description="離開練舞頻道")
     async def dance_leave(self, i: discord.Interaction):
         await i.response.defer(ephemeral=True)
