@@ -84,25 +84,6 @@ class ReactionRoles(commands.Cog):
         self.game_view = ReactionRole([guild.get_role(id) for id in self.game_role_ids])
         self.bot.add_view(self.game_view)
 
-        self.city_role_ids = (
-            1082902939779223663,
-            1082903068477231104,
-            1082903324338171904,
-            1082903383272325160,
-        )
-        self.city_emojis = (
-            1071728354178379827,
-            1071728358095863881,
-            1071728361514213377,
-            1071728366077616169,
-        )
-        self.city_view = ReactionRole(
-            [guild.get_role(id) for id in self.city_role_ids],
-            [self.bot.get_emoji(id) for id in self.city_emojis],
-            style=discord.ButtonStyle.gray,
-        )
-        self.bot.add_view(self.city_view)
-
         self.element_ids = (
             1084739406897889322,
             1084739562468810763,
@@ -142,9 +123,6 @@ class ReactionRoles(commands.Cog):
         elif id_type == "game":
             embed_title = "⛳ 遊戲身份組"
             view = self.game_view
-        elif id_type == "city":
-            embed_title = "🛖 城市身份組"
-            view = self.city_view
         elif id_type == "element":
             embed_title = "🪄 元素身份組"
             view = self.element_view
