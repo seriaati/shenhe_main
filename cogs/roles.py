@@ -9,25 +9,34 @@ from utility.utils import default_embed
 
 class ReactionRole(ui.View):
     def __init__(
-        self, roles: List[discord.Role], emojis: Optional[List[discord.Emoji]] = None
+        self,
+        roles: List[discord.Role],
+        emojis: Optional[List[discord.Emoji]] = None,
+        style: discord.ButtonStyle = discord.ButtonStyle.blurple,
     ):
         super().__init__(timeout=None)
 
         for index, role in enumerate(roles):
             self.add_item(
-                RoleButton(role, index // 3, emojis[index] if emojis else None)
+                RoleButton(role, index // 3, style, emojis[index] if emojis else None)
             )
 
 
 class RoleButton(ui.Button[ReactionRole]):
-    def __init__(self, role: discord.Role, row: int, emoji: Optional[Emoji] = None):
+    def __init__(
+        self,
+        role: discord.Role,
+        row: int,
+        style: discord.ButtonStyle,
+        emoji: Optional[Emoji] = None,
+    ):
         self.role = role
         super().__init__(
             label=f"{role.name} ({len(role.members)})",
-            style=discord.ButtonStyle.blurple,
             custom_id=f"role_{role.id}",
             row=row,
             emoji=emoji,
+            style=style,
         )
 
     async def callback(self, i: discord.Interaction):
@@ -82,6 +91,7 @@ class ReactionRoles(commands.Cog):
         self.city_view = ReactionRole(
             [guild.get_role(id) for id in self.city_role_ids],
             [self.bot.get_emoji(id) for id in self.city_emojis],
+            style=discord.ButtonStyle.gray,
         )
         self.bot.add_view(self.city_view)
 
@@ -106,6 +116,7 @@ class ReactionRoles(commands.Cog):
         self.element_view = ReactionRole(
             [guild.get_role(id) for id in self.element_ids],
             [self.bot.get_emoji(id) for id in self.element_emojis],
+            style=discord.ButtonStyle.gray,
         )
         self.bot.add_view(self.element_view)
 
@@ -130,7 +141,7 @@ class ReactionRoles(commands.Cog):
             embed_title = "🪄 元素身份組"
             view = self.element_view
 
-        embed = default_embed(embed_title, embed_description)
+        embed = default_embed(message=embed_description).set_author(name=embed_title)
         await ctx.send(embed=embed, view=view)
 
 
