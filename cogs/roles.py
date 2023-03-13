@@ -1,27 +1,33 @@
-import asyncio
-from typing import List
+from typing import List, Optional
+
 import discord
-from discord import ui
+from discord import Emoji, ui
 from discord.ext import commands
+
 from utility.utils import default_embed
 
 
 class ReactionRole(ui.View):
-    def __init__(self, roles: List[discord.Role]):
+    def __init__(
+        self, roles: List[discord.Role], emojis: Optional[List[discord.Emoji]] = None
+    ):
         super().__init__(timeout=None)
 
         for index, role in enumerate(roles):
-            self.add_item(RoleButton(role, index // 3))
+            self.add_item(
+                RoleButton(role, index // 3, emojis[index] if emojis else None)
+            )
 
 
 class RoleButton(ui.Button[ReactionRole]):
-    def __init__(self, role: discord.Role, row: int):
+    def __init__(self, role: discord.Role, row: int, emoji: Optional[Emoji] = None):
         self.role = role
         super().__init__(
             label=f"{role.name} ({len(role.members)})",
             style=discord.ButtonStyle.blurple,
             custom_id=f"role_{role.id}",
             row=row,
+            emoji=emoji,
         )
 
     async def callback(self, i: discord.Interaction):
@@ -58,56 +64,65 @@ class ReactionRoles(commands.Cog):
         self.game_view = ReactionRole([guild.get_role(id) for id in self.game_role_ids])
         self.bot.add_view(self.game_view)
 
+        self.city_role_ids = (
+            1082902939779223663,
+            1082903068477231104,
+            1082903324338171904,
+            1082903383272325160,
+        )
+        self.city_emojis = (
+            1071728354178379827,
+            1071728358095863881,
+            1071728361514213377,
+            1071728366077616169,
+        )
+        self.city_view = ReactionRole(
+            [guild.get_role(id) for id in self.city_role_ids],
+            [guild.get_emoji(id) for id in self.city_emojis],
+        )
+        self.bot.add_view(self.city_view)
+
+        self.element_ids = (
+            1084739406897889322,
+            1084739562468810763,
+            1084739636200472696,
+            1084739703137378375,
+            1084739772687319130,
+            1084739855558385755,
+            1084739910721871902,
+        )
+        self.element_emojis = (
+            1063524352466894919,
+            1063524354761179157,
+            1063524366832373780,
+            1063524361434304512,
+            1063524370162651178,
+            1063524363351101510,
+            1063524358070468628,
+        )
+
     @commands.command(name="reacton_roles", aliases=["rr"])
     @commands.is_owner()
     async def reacton_roles(self, ctx: commands.Context, id_type: str):
+        await ctx.message.delete()
+
+        embed_description = "點擊下方的按鈕來獲取身份組"
         if id_type == "notif":
-            embed = default_embed("獲取想要的通知身份組", "點擊下方的按鈕來獲取身份組")
-            embed.add_field(
-                name="目前可選的通知身份組",
-                value="\n".join([f"<@&{id}>" for id in self.role_ids]),
-            )
-            await ctx.send(embed=embed, view=self.view)
+            embed_title = "🔔 通知身份組"
+            view = self.view
         elif id_type == "game":
-            embed = default_embed("獲取想要的遊戲身份組", "點擊下方的按鈕來獲取身份組")
-            embed.add_field(
-                name="目前可選的遊戲身份組",
-                value="\n".join([f"<@&{id}>" for id in self.game_role_ids]),
-            )
-            await ctx.send(embed=embed, view=self.game_view)
+            embed_title = "⛳ 遊戲身份組"
+            view = self.game_view
+        elif id_type == "city":
+            embed_title = "🛖 城市身份組"
+            view = self.city_view
+        elif id_type == "element":
+            embed_title = "🪄 元素身份組"
+            view = self.element_view
+
+        embed = default_embed(embed_title, embed_description)
+        await ctx.send(embed=embed, view=view)
 
 
 async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(ReactionRoles(bot))
-
-
-# memories
-# embed.add_field(
-#     name=':dango: 兔兔島',
-#     value='在一片迷霧之中 隱藏了一座世外桃源的島嶼\n'
-#     '可愛活潑的兔島主會在聊天台和語音中歡迎你的到來\n\n'
-#     '熱情的的兔兔島民們非常歡迎每位新朋友來到這個脫離現實的美好世界\n'
-#     '島民都親如家人 和睦相處 相信你也會很快融入並成為其中的一份子\n\n'
-#     '兔兔島除了有帶你跑圖鋤地賺取摩拉的人外\n'
-#     '偶然也會舉辦小小的抽獎回饋各位島民的支持和陪伴\n'
-#     '還不出發到這座溫馨小島嗎?兔兔島萬歲!!',
-#     inline=False
-# )
-# embed.add_field(
-#     name=':snowflake: 小雪國',
-#     value='在遠方的冰天雪地 有一個國度 可愛與純真並重的小雪女皇：小雪國\n'
-#     '這是一個來自充滿雪花、由小雪女皇統治的一個大型群組，而且是一個群內知名的大國\n'
-#     '而小雪女皇是一個純真、可愛的女孩，這裡的申鶴機器人就是又她一手研發的\n'
-#     '但小雪國不只是知名於這些地方，小雪女皇不時也會發放國民福利，小雪國民是享有最多福利的群眾，很吸引人吧！\n'
-#     '快加入！你不會後悔的，\n'
-#     '「小雪國萬歲喵！」',
-#     inline=False
-# )
-# embed.add_field(
-#     name=':two_hearts: 羽嶼',
-#     value='一個寧靜平凡、與世無爭的小島\n'
-#     '島民的性格都跟這條介紹一樣懶散隨和\n'
-#     '是一個如同蒙德一樣自由的小漁村\n'
-#     '來羽嶼釣魚賞櫻吧～',
-#     inline=False
-# )
