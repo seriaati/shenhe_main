@@ -41,10 +41,18 @@ class RoleButton(ui.Button[ReactionRole]):
 
     async def callback(self, i: discord.Interaction):
         member: discord.Member = i.user  # type: ignore
+
         if self.role in member.roles:
             await member.remove_roles(self.role)
+        elif (
+            self.label
+            and "神之眼" in self.label
+            and any("神之眼" in role.name for role in member.roles)
+        ):
+            await i.response.send_message("你已經擁有神之眼了", ephemeral=True)
         else:
             await member.add_roles(self.role)
+
         self.label = f"{self.role.name} ({len(self.role.members)})"
         await i.response.edit_message(view=self.view)
 
