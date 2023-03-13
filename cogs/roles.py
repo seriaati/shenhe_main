@@ -31,10 +31,11 @@ class RoleButton(ui.Button[ReactionRole]):
         )
 
     async def callback(self, i: discord.Interaction):
-        if self.role in i.user.roles:
-            await i.user.remove_roles(self.role)
+        member: discord.Member = i.user  # type: ignore
+        if self.role in member.roles:
+            await member.remove_roles(self.role)
         else:
-            await i.user.add_roles(self.role)
+            await member.add_roles(self.role)
         self.label = f"{self.role.name} ({len(self.role.members)})"
         await i.response.edit_message(view=self.view)
 
@@ -80,7 +81,7 @@ class ReactionRoles(commands.Cog):
         )
         self.city_view = ReactionRole(
             [guild.get_role(id) for id in self.city_role_ids],
-            [guild.get_emoji(id) for id in self.city_emojis],
+            [self.bot.get_emoji(id) for id in self.city_emojis],
         )
         self.bot.add_view(self.city_view)
 
@@ -102,13 +103,20 @@ class ReactionRoles(commands.Cog):
             1063524363351101510,
             1063524358070468628,
         )
+        self.element_view = ReactionRole(
+            [guild.get_role(id) for id in self.element_ids],
+            [self.bot.get_emoji(id) for id in self.element_emojis],
+        )
+        self.bot.add_view(self.element_view)
 
     @commands.command(name="reacton_roles", aliases=["rr"])
     @commands.is_owner()
     async def reacton_roles(self, ctx: commands.Context, id_type: str):
         await ctx.message.delete()
-
+        view = None
+        embed_title = ""
         embed_description = "點擊下方的按鈕來獲取身份組"
+
         if id_type == "notif":
             embed_title = "🔔 通知身份組"
             view = self.notif_view
