@@ -50,14 +50,16 @@ class ReactionRoles(commands.Cog):
         await self.bot.wait_until_ready()
         guild = self.bot.get_guild(1061877505067327528)
 
-        self.role_ids = (
+        self.notif_role_ids = (
             1075026929448652860,
             1075027016132345916,
             1075027069832015943,
             1075027095786365009,
             1075027124454440992,
         )
-        self.notif_view = ReactionRole([guild.get_role(id) for id in self.role_ids])
+        self.notif_view = ReactionRole(
+            [guild.get_role(id) for id in self.notif_role_ids]
+        )
         self.bot.add_view(self.notif_view)
 
         self.game_role_ids = (1083175433052372992, 1083175539369582663)
@@ -109,7 +111,7 @@ class ReactionRoles(commands.Cog):
         embed_description = "點擊下方的按鈕來獲取身份組"
         if id_type == "notif":
             embed_title = "🔔 通知身份組"
-            view = self.view
+            view = self.notif_view
         elif id_type == "game":
             embed_title = "⛳ 遊戲身份組"
             view = self.game_view
