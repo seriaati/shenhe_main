@@ -80,7 +80,11 @@ class ReactionRoles(commands.Cog):
         )
         self.bot.add_view(self.notif_view)
 
-        self.game_role_ids = (1083175433052372992, 1083175539369582663)
+        self.game_role_ids = (
+            1083175433052372992,
+            1083175539369582663,
+            1085146432622821408,
+        )
         self.game_view = ReactionRole([guild.get_role(id) for id in self.game_role_ids])
         self.bot.add_view(self.game_view)
 

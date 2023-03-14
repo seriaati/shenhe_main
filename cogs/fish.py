@@ -51,7 +51,7 @@ class FishCog(commands.Cog):
         else:
             result = ayaaka_embed(
                 group_str + fish_name,
-                f"是{fish_name}! 要摸摸看嗎?\n" f"摸{fish_name}有機率獲得或損失 {flow} 暴幣",
+                f"是{fish_name}! 要摸摸看嗎?\n摸{fish_name}有機率獲得或損失 {flow} 暴幣",
             )
             # e.g. 是野生的達達利鴨！要摸摸看嗎?
             # 摸達達利鴨有機率獲得或損失 20 暴幣
@@ -59,7 +59,9 @@ class FishCog(commands.Cog):
         return result, fish_adj
 
     class OneFish(Button):  # 摸魚按鈕
-        def __init__(self, db: aiosqlite.Connection, fish_name: str, fish: Dict[str, Any]):
+        def __init__(
+            self, db: aiosqlite.Connection, fish_name: str, fish: Dict[str, Any]
+        ):
             super().__init__(style=ButtonStyle.blurple, label=f"撫摸{fish_name}")
 
             self.fish_name = fish_name
@@ -222,7 +224,9 @@ class FishCog(commands.Cog):
     async def summon_fish(self, message, rand_int):
         fish = random.choice(list(fish_data.keys()))
         embed, fish_adj = self.generate_fish_embed(fish, rand_int <= 50)
-        view = FishCog.TouchFishView(self.bot.db, f"{fish_adj}的{fish}", rand_int <= 50, fish_data[fish])
+        view = FishCog.TouchFishView(
+            self.bot.db, f"{fish_adj}的{fish}", rand_int <= 50, fish_data[fish]
+        )
         view.message = await message.channel.send(embed=embed, view=view)
 
 
