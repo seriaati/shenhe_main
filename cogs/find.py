@@ -4,7 +4,7 @@ import discord
 from discord import app_commands, ui
 from discord.ext import commands
 
-import assets.constants as constants
+import data.constants as constants
 from utility.utils import default_embed
 
 
