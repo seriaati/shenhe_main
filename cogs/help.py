@@ -9,21 +9,23 @@ from utility.utils import default_embed
 class Dropdown(Select):
     def __init__(self, bot: commands.Bot):
         options = [
-            SelectOption(label="flow系統", description="交易方式, 發布委託等", emoji="🌊"),
-            SelectOption(label="其他", description="其他指令", emoji="🙂"),
-            SelectOption(label="語音台", description="語音台相關指令", emoji="🎙️"),
-            SelectOption(label="音樂系統", description="音樂系統相關指令", emoji="🎵"),
+            SelectOption(label="暴幣系統", emoji="🪙"),
+            SelectOption(label="語音台", emoji="🎙️"),
+            SelectOption(label="音樂系統", emoji="🎵"),
+            SelectOption(label="商店系統", emoji="🛒"),
+            SelectOption(label="尋找系統", emoji="🔍"),
+            SelectOption(label="其他", emoji="🙂"),
         ]
         super().__init__(placeholder="你想要什麼樣的幫助呢?", options=options)
         self.bot = bot
 
     async def callback(self, i: Interaction):
         index = 0
-        cogs = ["flow", "other", "vc", "music"]
-        for index, option in enumerate(self.options):
+        cogs = ["flow", "other", "vc", "music", "shop", "find"]
+        for i_, option in enumerate(self.options):
             if option.value == self.values[0]:
                 selected_option = option
-                index = index
+                index = i_
                 break
         command_cog = self.bot.get_cog(cogs[index])
         if command_cog is None:
