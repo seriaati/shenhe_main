@@ -57,12 +57,11 @@ class FindCog(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
-    @app_commands.command(name="find")
+    @app_commands.command(name="find", description="尋找其他玩家")
     @app_commands.rename(game="遊戲", room_num="房號", extra_info="其他資訊")
     @app_commands.describe(
         game="要尋找的遊戲", room_num="房號 (選填)", extra_info="如時間等其他資訊 (選填)"
     )
-    @app_commands.description("尋找其他玩家")
     @app_commands.choices(
         game=[
             app_commands.Choice(name=game, value=game_id)
