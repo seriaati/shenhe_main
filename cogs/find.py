@@ -1,9 +1,10 @@
-import discord
 import typing
+
+import discord
 from discord import app_commands, ui
 from discord.ext import commands
-from cogs.roles import game_role_ids
 
+import assets.constants as constants
 from utility.utils import default_embed
 
 
@@ -69,7 +70,8 @@ class FindCog(commands.Cog):
         room_num: typing.Optional[app_commands.Range[int, 0, 99999]] = None,
     ):
         games = {
-            str(role_id): i.guild.get_role(role_id).name for role_id in game_role_ids
+            str(role_id): i.guild.get_role(role_id).name
+            for role_id in constants.game_role_ids
         }
         if game not in games:
             return await i.response.send_message("該遊戲尚未支援", ephemeral=True)
@@ -90,7 +92,8 @@ class FindCog(commands.Cog):
     @find.autocomplete("game")
     async def find_game(self, i: discord.Interaction, current: str):
         games = {
-            str(role_id): i.guild.get_role(role_id).name for role_id in game_role_ids
+            str(role_id): i.guild.get_role(role_id).name
+            for role_id in constants.game_role_ids
         }
         return [
             app_commands.Choice(name=game_name, value=game_id)

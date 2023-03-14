@@ -3,16 +3,9 @@ from typing import List, Optional
 import discord
 from discord import Emoji, ui
 from discord.ext import commands
+import assets.constants as constants
 
 from utility.utils import default_embed
-
-game_role_ids = (
-    1085188783198187681,
-    1085188641803997245,
-    1085188645872472135,
-    1085192699533074503,
-    1085188654537920633,
-)
 
 
 class ReactionRole(ui.View):
@@ -88,7 +81,7 @@ class ReactionRoles(commands.Cog):
         )
         self.bot.add_view(self.notif_view)
 
-        self.game_role_ids = game_role_ids
+        self.game_role_ids = constants.game_role_ids
         self.game_role_emojis = (
             1085188783198187681,
             1085188641803997245,
