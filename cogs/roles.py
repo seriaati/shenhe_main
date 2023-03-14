@@ -6,6 +6,14 @@ from discord.ext import commands
 
 from utility.utils import default_embed
 
+game_role_ids = (
+    1085188783198187681,
+    1085188641803997245,
+    1085188645872472135,
+    1085192699533074503,
+    1085188654537920633,
+)
+
 
 class ReactionRole(ui.View):
     def __init__(
@@ -80,12 +88,19 @@ class ReactionRoles(commands.Cog):
         )
         self.bot.add_view(self.notif_view)
 
-        self.game_role_ids = (
-            1083175433052372992,
-            1083175539369582663,
-            1085146432622821408,
+        self.game_role_ids = game_role_ids
+        self.game_role_emojis = (
+            1085188783198187681,
+            1085188641803997245,
+            1085188645872472135,
+            1085192699533074503,
+            1085188654537920633,
         )
-        self.game_view = ReactionRole([guild.get_role(id) for id in self.game_role_ids])
+        self.game_view = ReactionRole(
+            [guild.get_role(id) for id in self.game_role_ids],
+            [self.bot.get_emoji(id) for id in self.game_role_emojis],
+            style=discord.ButtonStyle.gray,
+        )
         self.bot.add_view(self.game_view)
 
         self.element_ids = (

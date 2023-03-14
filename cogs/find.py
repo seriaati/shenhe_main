@@ -2,14 +2,9 @@ import discord
 import typing
 from discord import app_commands, ui
 from discord.ext import commands
+from cogs.roles import game_role_ids
 
 from utility.utils import default_embed
-
-games = {
-    "1083175433052372992": "傳說 AoV",
-    "1083175539369582663": "瓦羅蘭 VALORANT",
-    "1085146432622821408": "原神 Genshin Impact",
-}
 
 
 class FindView(ui.View):
@@ -73,6 +68,9 @@ class FindCog(commands.Cog):
         extra_info: typing.Optional[str] = None,
         room_num: typing.Optional[app_commands.Range[int, 0, 99999]] = None,
     ):
+        games = {
+            str(role_id): i.guild.get_role(role_id).name for role_id in game_role_ids
+        }
         if game not in games:
             return await i.response.send_message("該遊戲尚未支援", ephemeral=True)
 
@@ -91,6 +89,9 @@ class FindCog(commands.Cog):
 
     @find.autocomplete("game")
     async def find_game(self, i: discord.Interaction, current: str):
+        games = {
+            str(role_id): i.guild.get_role(role_id).name for role_id in game_role_ids
+        }
         return [
             app_commands.Choice(name=game_name, value=game_id)
             for game_id, game_name in games.items()
