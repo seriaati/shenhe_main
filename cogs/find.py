@@ -90,4 +90,4 @@ class FindCog(commands.Cog):
 
 
 async def setup(bot: commands.Bot) -> None:
-    bot.add_cog(FindCog(bot))
+    await bot.add_cog(FindCog(bot))
