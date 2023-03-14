@@ -1,7 +1,7 @@
 from datetime import time
 
 import discord
-import apps.flow as flow
+import apps.flow as flow_app
 from dateutil import parser
 import discord
 from discord import app_commands
@@ -12,9 +12,9 @@ from utility.utils import default_embed, divide_chunks, error_embed
 
 def has_flow_account():
     async def predicate(i: discord.Interaction) -> bool:
-        check = await flow.check_flow_account(i.user.id, i.client.db)
+        check = await flow_app.check_flow_account(i.user.id, i.client.db)
         if not check:
-            await flow.register_flow_account(i.user.id, i.client.db)
+            await flow_app.register_flow_account(i.user.id, i.client.db)
         return True
 
     return discord.app_commands.check(predicate)
@@ -39,25 +39,25 @@ class FlowCog(commands.Cog, name="flow"):
 
         if "早午晚" in message.content:
             return await message.add_reaction("<:PaimonSeria:958341967698337854>")
-        check = await flow.check_flow_account(user_id, self.bot.db)
+        check = await flow_app.check_flow_account(user_id, self.bot.db)
         if not check:
-            await flow.register_flow_account(user_id, self.bot.db)
+            await flow_app.register_flow_account(user_id, self.bot.db)
         if any(keyword in content for keyword in morning_keywords):
             start = time(0, 0, 0)
             end = time(11, 59, 59)
-            gave = await flow.free_flow(user_id, start, end, "morning", self.bot.db)
+            gave = await flow_app.free_flow(user_id, start, end, "morning", self.bot.db)
             if gave:
                 await message.add_reaction("<:morning:982608491426508810>")
         elif any(keyword in content for keyword in noon_keywords):
             start = time(12, 0, 0)
             end = time(16, 59, 59)
-            gave = await flow.free_flow(user_id, start, end, "noon", self.bot.db)
+            gave = await flow_app.free_flow(user_id, start, end, "noon", self.bot.db)
             if gave:
                 await message.add_reaction("<:noon:982608493313929246>")
         elif any(keyword in content for keyword in night_keywords):
             start = time(17, 0, 0)
             end = time(23, 59, 59)
-            gave = await flow.free_flow(user_id, start, end, "night", self.bot.db)
+            gave = await flow_app.free_flow(user_id, start, end, "night", self.bot.db)
             if gave:
                 await message.add_reaction("<:night:982608497290125366>")
 
@@ -72,7 +72,7 @@ class FlowCog(commands.Cog, name="flow"):
             (member.id,),
         ) as cursor:
             data = await cursor.fetchone()
-        flow = await flow.get_user_flow(member.id, i.client.db)
+        flow = await flow_app.get_user_flow(member.id, i.client.db)
         value = ""
         emojis = [
             "<:morning:982608491426508810>",
@@ -99,7 +99,7 @@ class FlowCog(commands.Cog, name="flow"):
                 ).set_author(name="不可以給負數 暴幣", icon_url=i.user.display_avatar.url),
                 ephemeral=True,
             )
-        user_flow = await flow.get_user_flow(i.user.id, i.client.db)
+        user_flow = await flow_app.get_user_flow(i.user.id, i.client.db)
         if user_flow < flow:
             return await i.response.send_message(
                 embed=error_embed(f"需要至少: {flow} 暴幣").set_author(
@@ -107,8 +107,8 @@ class FlowCog(commands.Cog, name="flow"):
                 ),
                 ephemeral=True,
             )
-        await flow.flow_transaction(i.user.id, -flow, i.client.db)
-        await flow.flow_transaction(member.id, flow, i.client.db)
+        await flow_app.flow_transaction(i.user.id, -flow, i.client.db)
+        await flow_app.flow_transaction(member.id, flow, i.client.db)
         embed = default_embed(
             message=f"{i.user.mention} | -{flow} 暴幣\n{member.mention} | +{flow} 暴幣"
         ).set_author(name="交易成功", icon_url=i.user.display_avatar.url)
@@ -132,10 +132,10 @@ class FlowCog(commands.Cog, name="flow"):
         flow: int,
         private: int = 1,
     ):
-        check = await flow.check_flow_account(member.id, i.client.db)
+        check = await flow_app.check_flow_account(member.id, i.client.db)
         if not check:
-            await flow.register_flow_account(member.id, i.client.db)
-        await flow.flow_transaction(member.id, -flow, i.client.db)
+            await flow_app.register_flow_account(member.id, i.client.db)
+        await flow_app.flow_transaction(member.id, -flow, i.client.db)
         embed = default_embed(
             "已成功施展「反」摩拉克斯的力量",
             f"{i.user.mention} 從 {member.mention} 的帳戶裡拿走了 {flow} 枚 暴幣",
@@ -159,10 +159,10 @@ class FlowCog(commands.Cog, name="flow"):
         flow: int,
         private: int = 1,
     ):
-        check = await flow.check_flow_account(member.id, i.client.db)
+        check = await flow_app.check_flow_account(member.id, i.client.db)
         if not check:
-            await flow.register_flow_account(member.id, i.client.db)
-        await flow.flow_transaction(member.id, flow, i.client.db)
+            await flow_app.register_flow_account(member.id, i.client.db)
+        await flow_app.flow_transaction(member.id, flow, i.client.db)
         embed = default_embed(
             "已成功施展摩拉克斯的力量",
             f"{i.user.mention} 給了 {member.mention} {flow} 枚 暴幣",
@@ -172,7 +172,7 @@ class FlowCog(commands.Cog, name="flow"):
 
     @discord.app_commands.command(name="total", description="查看目前群組帳號及銀行 暴幣分配情況")
     async def total(self, i: discord.Interaction):
-        bank = await flow.get_blank_flow(i.client.db)
+        bank = await flow_app.get_blank_flow(i.client.db)
         async with i.client.db.execute(
             "SELECT COUNT(user_id) FROM flow_accounts"
         ) as cursor:
