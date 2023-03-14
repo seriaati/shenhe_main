@@ -4,12 +4,17 @@ from typing import Any, List
 
 import aiosqlite
 import discord
-from apps.flow import (check_flow_account, flow_transaction, free_flow,
-                       get_blank_flow, get_user_flow, register_flow_account)
+from apps.flow import (
+    check_flow_account,
+    flow_transaction,
+    free_flow,
+    get_blank_flow,
+    get_user_flow,
+    register_flow_account,
+)
 from dateutil import parser
 from debug import DefaultView
-from discord import (Button, Interaction, Member, SelectOption, TextStyle,
-                     app_commands)
+from discord import Button, Interaction, Member, SelectOption, TextStyle, app_commands
 from discord.app_commands import Choice
 from discord.ext import commands
 from discord.ui import Modal, Select, TextInput
@@ -27,11 +32,11 @@ class FlowCog(commands.Cog, name="flow"):
         user_id = message.author.id
         if message.author.bot:
             return
-        
+
         morning_keywords = ["早", "good morning", "gm", "morning"]
         noon_keywords = ["午", "good noon"]
         night_keywords = ["晚", "good night", "good evening", "gn"]
-        
+
         content = message.content.lower()
 
         if "早午晚" in message.content:
@@ -116,8 +121,7 @@ class FlowCog(commands.Cog, name="flow"):
         await flow_transaction(i.user.id, -flow, i.client.db)
         await flow_transaction(member.id, flow, i.client.db)
         embed = default_embed(
-            message=f"{i.user.mention} | -{flow} 暴幣\n"
-            f"{member.mention} | +{flow} 暴幣"
+            message=f"{i.user.mention} | -{flow} 暴幣\n" f"{member.mention} | +{flow} 暴幣"
         ).set_author(name="交易成功", icon_url=i.user.display_avatar.url)
         await i.response.send_message(
             content=f"{i.user.mention} {member.mention}", embed=embed
@@ -336,360 +340,6 @@ class FlowCog(commands.Cog, name="flow"):
         view = FlowCog.ShopItemView(item_names, "remove", self.bot.db, i.user)
         await i.response.send_message(view=view, ephemeral=True)
 
-    def in_find_channel():
-        async def predicate(i: Interaction) -> bool:
-            find_channel_id = (
-                909595117952856084 if i.client.debug_toggle else 960861105503232030
-            )
-            return i.channel.id == find_channel_id
-
-        return app_commands.check(predicate)
-
-    async def check_flow(self, user_id: int, flow: int):
-        user_flow = await get_user_flow(user_id, self.bot.db)
-        if user_flow < 0 and flow >= 0:
-            return True, None
-        if flow < 0:
-            result = error_embed("發布失敗, 請輸入大於 0 的暴幣")
-            return False, result
-        elif user_flow < int(flow):
-            result = error_embed("發布失敗, 請勿輸入大於自己擁有數量的暴幣")
-            return False, result
-        else:
-            return True, None
-
-    class AcceptView(DefaultView):
-        def __init__(self, db: aiosqlite.Connection, bot):
-            super().__init__(timeout=None)
-            self.db = db
-            self.bot = bot
-
-        async def interaction_check(self, i: Interaction) -> bool:
-            c = await self.db.cursor()
-            await c.execute(
-                "SELECT author_id FROM find WHERE msg_id = ?", (i.message.id,)
-            )
-            author_id = await c.fetchone()
-            author_id = author_id[0]
-            if i.user.id == author_id:
-                await i.response.send_message(
-                    embed=error_embed().set_author(
-                        name="不能自己接自己的委託", icon_url=i.user.display_avatar.url
-                    ),
-                    ephemeral=True,
-                )
-            return i.user.id != author_id
-
-        @discord.ui.button(
-            label="接受委託",
-            style=discord.ButtonStyle.green,
-            custom_id="accept_commision_button",
-        )
-        async def confirm(self, i: Interaction, button: discord.ui.Button):
-            self.stop()
-            button.disabled = True
-            await i.response.edit_message(view=self)
-            msg = i.message
-            c = await self.db.cursor()
-            await c.execute("SELECT * FROM find WHERE msg_id = ?", (msg.id,))
-            result = await c.fetchone()
-            flow = result[1]
-            title = result[2]
-            type = result[3]
-            author_id = result[4]
-            author = i.client.get_user(author_id)
-            confirmer = i.client.get_user(i.user.id)
-            await c.execute(
-                "SELECT uid FROM genshin_accounts WHERE user_id = ?", (confirmer.id,)
-            )
-            uid = (await c.fetchone())[0]
-            thread = await msg.create_thread(name=f"{author.name} • {title}")
-            await thread.add_user(author)
-            await thread.add_user(confirmer)
-            if type == 2:
-                await thread.send(
-                    embed=default_embed(message=uid).set_author(
-                        name="接受人 uid", icon_url=confirmer.avatar
-                    )
-                )
-            action_str = ["委託", "素材委託", "委託", "幫助"]
-            for index in range(1, 5):
-                if type == index:
-                    await i.followup.send(
-                        embed=default_embed(
-                            message=f"{confirmer.mention} 已接受 {author.mention} 的 **{title}** {action_str[index-1]}"
-                        ).set_author(name="委託接受", icon_url=confirmer.avatar)
-                    )
-            if type == 4:
-                embedDM = default_embed(
-                    message=f"當{confirmer.mention}完成幫忙的內容時, 請按OK來結算暴幣\n"
-                    f"按下後, 你的暴幣將會 **-{flow}**\n"
-                    f"對方則會 **+{flow}**"
-                )
-            else:
-                embedDM = default_embed(
-                    message=f"當{confirmer.mention}完成委託的內容時, 請按OK來結算暴幣\n"
-                    f"按下後, 你的暴幣將會 **-{flow}**\n"
-                    f"對方則會 **+{flow}**"
-                )
-            embedDM.set_author(name="結算單", icon_url=author.avatar)
-            view = FlowCog.ConfirmView(self.db)
-            confirm_message = await thread.send(embed=embedDM, view=view)
-            await c.execute(
-                "UPDATE find SET msg_id = ?, confirmer_id = ? WHERE msg_ID = ?",
-                (confirm_message.id, i.user.id, i.message.id),
-            )
-            await c.close()
-            await self.db.commit()
-
-    class ConfirmView(DefaultView):
-        def __init__(self, db: aiosqlite.Connection):
-            self.db = db
-            super().__init__(timeout=None)
-
-        async def interaction_check(self, i: Interaction) -> bool:
-            async with i.client.db.execute(
-                "SELECT author_id FROM find WHERE msg_id = ?", (i.message.id,)
-            ) as cursor:
-                author_id = (await cursor.fetchone())[0]
-            if i.user.id != author_id:
-                await i.response.send_message(
-                    embed=error_embed("你不是這個委託的發布者!"), ephemeral=True
-                )
-            return i.user.id == author_id
-
-        @discord.ui.button(
-            label="OK", style=discord.ButtonStyle.blurple, custom_id="ok_confirm_button"
-        )
-        async def ok_confirm(self, i: Interaction, button: Button):
-            self.stop()
-            button.disabled = True
-            await i.response.edit_message(view=self)
-            c: aiosqlite.Cursor = await i.client.db.cursor()
-            await c.execute("SELECT * FROM find WHERE msg_id = ?", (i.message.id,))
-            result = await c.fetchone()
-            flow = result[1]
-            title = result[2]
-            type = result[3]
-            author_id = result[4]
-            confirmer_id = result[5]
-            check = await check_flow_account(confirmer_id, i.client.db)
-            if not check:
-                await register_flow_account(confirmer_id, i.client.db)
-            str = ""
-            author = i.client.get_user(author_id)
-            confirmer = i.client.get_user(confirmer_id)
-            await c.execute(
-                "SELECT find_free_trial FROM flow_accounts WHERE user_id = ?",
-                (author_id,),
-            )
-            author_free_trial = (await c.fetchone())[0]
-            await c.execute(
-                "SELECT find_free_trial FROM flow_accounts WHERE user_id = ?",
-                (confirmer_id,),
-            )
-            confirmer_free_trial = (await c.fetchone())[0]
-            if type == 4:
-                new_flow = flow
-                if confirmer_free_trial < 10 and flow >= 10:
-                    new_flow = flow - 10
-                    await c.execute(
-                        "UPDATE flow_accounts SET find_free_trial = ? WHERE user_id = ?",
-                        (confirmer_free_trial + 1, confirmer_id),
-                    )
-                    str = f"({confirmer.mention}受到 10 暴幣贊助)\n"
-                    f"已使用 {confirmer_free_trial+1}/10 次贊助機會"
-                await flow_transaction(author_id, flow, i.client.db)
-                await flow_transaction(confirmer_id, -new_flow, i.client.db)
-                embed = default_embed(
-                    "🆗 結算成功",
-                    f"幫忙名稱: {title}\n"
-                    f"幫助人: {author.mention} **+{flow}** 暴幣\n"
-                    f"被幫助人: {confirmer.mention} **-{new_flow}** 暴幣\n{str}",
-                )
-            else:
-                new_flow = flow
-                if author_free_trial < 10 and flow >= 10:
-                    new_flow = flow - 10
-                    await c.execute(
-                        "UPDATE flow_accounts SET find_free_trial = ? WHERE user_id = ?",
-                        (author_free_trial + 1, author_id),
-                    )
-                    str = f"({author.mention}受到 10 暴幣贊助)\n"
-                    f"已使用 {author_free_trial+1}/10 次贊助機會"
-                await flow_transaction(author_id, -new_flow, i.client.db)
-                await flow_transaction(confirmer_id, flow, i.client.db)
-                embed = default_embed(
-                    "🆗 結算成功",
-                    f"委託名稱: {title}\n"
-                    f"委託人: {author.mention} **-{new_flow}** 暴幣\n"
-                    f"接收人: {confirmer.mention} **+{flow}** 暴幣\n{str}",
-                )
-            await i.followup.send(embed=embed)
-            t = i.guild.get_thread(i.channel.id)
-            await t.edit(archived=True, locked=True)
-            await c.execute("DELETE FROM find WHERE msg_id = ?", (i.message.id,))
-            await c.close()
-            await self.db.commit()
-
-    class FindView(DefaultView):
-        def __init__(self):
-            super().__init__(timeout=None)
-            self.title = ""
-            self.description = ""
-            self.flow = None
-            self.type = None
-
-            self.add_item(FlowCog.FindTypeSelect())
-
-    class FindTypeSelect(Select):
-        def __init__(self):
-            options = [
-                SelectOption(
-                    label="1類委託", description="其他玩家進入你的世界(例如: 陪玩, 打素材等)", value=1
-                ),
-                SelectOption(label="2類委託", description="你進入其他玩家的世界(例如: 拿特產)", value=2),
-                SelectOption(
-                    label="3類委託", description="其他委託(例如: 打apex, valorant)", value=3
-                ),
-                SelectOption(label="4類委託", description="可以幫助別人(讓拿素材, 可幫打刀鐔等)", value=4),
-            ]
-            super().__init__(placeholder="選擇委託類型", options=options)
-
-        async def callback(self, i: Interaction) -> Any:
-            self.view: FlowCog.FindView
-            modal = FlowCog.FindModal()
-            await i.response.send_modal(modal)
-            await modal.wait()
-            self.view.type = self.values[0]
-            self.view.title = modal.find_title.value
-            self.view.description = modal.description.value
-            self.view.flow = modal.flow.value
-            self.view.stop()
-
-    class FindModal(Modal):
-        find_title = TextInput(label="標題", placeholder="跟公子以及他的同夥要錢錢！")
-        description = TextInput(
-            label="敘述", placeholder="打周本 x5", style=TextStyle.long, required=False
-        )
-        flow = TextInput(label="暴幣數量", placeholder="100")
-
-        def __init__(self) -> None:
-            super().__init__(title="發布委託", timeout=None)
-
-        async def on_submit(self, i: Interaction) -> None:
-            if not self.flow.value.isdigit():
-                return await i.response.send_message(
-                    embed=error_embed(message="例如 100, 1000, 10000").set_author(
-                        name="暴幣數量: 請輸入數字", icon_url=i.user.display_avatar.url
-                    ),
-                    ephemeral=True,
-                )
-            self.stop()
-            await i.response.defer()
-
-    @in_find_channel()
-    @has_flow_account()
-    @app_commands.command(name="find", description="發布委託")
-    @app_commands.rename(tag="tag人開關")
-    @app_commands.describe(tag="是否要tag 委託通知 身份組?")
-    @app_commands.choices(
-        tag=[Choice(name="不 tag", value=0), Choice(name="我 tag 爆", value=1)]
-    )
-    async def find(self, i: Interaction, tag: int = 1):
-        channel = i.client.get_channel(962311051683192842)
-        role_found = False
-        if not self.debug_toggle:
-            WLroles = []
-            for index in range(1, 9):
-                WLroles.append(
-                    discord.utils.get(i.user.guild.roles, name=f"W{str(index)}")
-                )
-            for r in WLroles:
-                if r in i.user.roles:
-                    role_name = r.name
-                    role_found = True
-                    break
-
-        view = FlowCog.FindView()
-        await i.response.send_message(view=view, ephemeral=True)
-        await view.wait()
-        if "" in [view.title, view.flow]:
-            return
-        flow = int(view.flow)
-        title = view.title
-        description = view.description
-        type = int(view.type)
-
-        check, msg = await self.check_flow(i.user.id, flow)
-        if check == False:
-            await i.response.send_message(embed=msg, ephemeral=True)
-            return
-
-        if not role_found:
-            role_str = f"請至 {channel.mention} 選擇世界等級身份組"
-        else:
-            if type == 1:
-                if role_name == "W8":
-                    role_str = role_name
-                else:
-                    role_str = f">= {role_name}"
-            else:
-                if role_name == "W1":
-                    role_str = role_name
-                else:
-                    role_str = f"<= {role_name}"
-
-        c: aiosqlite.Cursor = await i.client.db.cursor()
-        await c.execute(
-            "SELECT uid FROM genshin_accounts WHERE user_id = ?", (i.user.id,)
-        )
-        uid = await c.fetchone()
-        uid = uid[0]
-
-        embed = default_embed(title, description)
-        if type == 1:
-            embed.set_author(name="1 類委託 - 請求幫助")
-            embed.add_field(
-                name="資訊",
-                value=f"發布者: {i.user.mention}\n"
-                f"暴幣: {flow}\n"
-                f"世界等級: {role_str}\n"
-                f"發布者 UID: {uid}",
-            )
-        elif type == 2:
-            embed.set_author(name="2 類委託 - 需要素材")
-            embed.add_field(
-                name="資訊",
-                value=f"發布者: {i.user.mention}\n"
-                f"暴幣: {flow}\n"
-                f"世界等級: {role_str}\n"
-                f"發布者 UID: {uid}",
-            )
-        elif type == 3:
-            embed.set_author(name="3 類委託 - 其他")
-            embed.add_field(
-                name="資訊", value=f"發布者: {i.user.mention}\n" f"暴幣: {flow}"
-            )
-        elif type == 4:
-            embed.set_author(name="1 類委託 - 可以幫助")
-            embed.add_field(
-                name="資訊",
-                value=f"發布者: {i.user.mention}\n"
-                f"暴幣: {flow}\n"
-                f"世界等級: {role_name}\n"
-                f"發布者 UID: {uid}",
-            )
-        view = self.AcceptView(self.bot.db, self.bot)
-        msg = await i.channel.send(
-            content="<@&965141973700857876>" if tag == 1 else "", embed=embed, view=view
-        )
-        await c.execute(
-            "INSERT INTO find(msg_id, flow, title, type, author_id) VALUES (?, ?, ?, ?, ?)",
-            (msg.id, flow, title, type, i.user.id),
-        )
-        await c.close()
-        await self.bot.db.commit()
 
 async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(FlowCog(bot))
