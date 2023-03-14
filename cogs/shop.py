@@ -24,7 +24,7 @@ class ShopItemView(DefaultView):
         self.author = author
         self.add_item(ShopItemSelect(item_names, action, db))
 
-    async def interaction_check(self, interaction: discord.discord.Interaction) -> bool:
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
         if self.author.id != interaction.user.id:
             await interaction.response.send_message(
                 embed=error_embed().set_author(
@@ -46,7 +46,7 @@ class ShopItemSelect(ui.Select):
             placeholder="選擇要購買的商品", min_values=1, max_values=1, options=options
         )
 
-    async def callback(self, i: discord.discord.Interaction) -> typing.Any:
+    async def callback(self, i: discord.Interaction) -> typing.Any:
         if self.action == "remove":
             await i.client.db.execute(
                 "DELETE FROM flow_shop WHERE name = ?", (self.values[0],)
