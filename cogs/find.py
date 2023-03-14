@@ -6,8 +6,9 @@ from discord.ext import commands
 from utility.utils import default_embed
 
 games = {
-    "1083175433052372992": "傳說 AOV",
+    "1083175433052372992": "傳說 AoV",
     "1083175539369582663": "瓦羅蘭 VALORANT",
+    "1085146432622821408": "原神 Genshin Impact",
 }
 
 
