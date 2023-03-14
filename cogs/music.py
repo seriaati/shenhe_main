@@ -27,14 +27,14 @@ class MusicCog(commands.Cog, name="music"):
             port=2333,
             password=os.getenv("lavalink"),
             spotify_client=spotify.SpotifyClient(
-                client_id="5f86059662e84a53b79454457f923fe0",
-                client_secret="30812d67a6ab40419ca7d4d228a956ba",
+                client_id=os.getenv("spotify_client"),
+                client_secret=os.getenv("spotify_secret"),
             ),
         )
 
     @commands.Cog.listener()
     async def on_wavelink_track_end(
-        self, player: wavelink.Player, track: wavelink.Track, reason
+        self, player: wavelink.Player, track: wavelink.Track, _
     ):
         if self.bot.repeat:
             await player.play(track)
