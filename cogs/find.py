@@ -22,9 +22,12 @@ class FindView(ui.View):
     async def update_embed(self, i):
         embed = self.embed
         embed.remove_field(-1)
+        value = "\n".join(member.mention for member in self.members)
+        if not self.members:
+            value = "_"
         embed.add_field(
             name=f"已加入 ({len(self.members)})",
-            value="\n".join(member.mention for member in self.members),
+            value=value,
             inline=False,
         )
         await i.response.edit_message(embed=embed)
@@ -50,7 +53,7 @@ class FindView(ui.View):
         if i.user.id != self.author.id:
             await i.response.send_message("你不是發起人", ephemeral=True)
         else:
-            await i.delete_original_response()
+            await i.message.delete()
 
 
 class FindCog(commands.Cog):
