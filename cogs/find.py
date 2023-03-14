@@ -66,12 +66,6 @@ class FindCog(commands.Cog):
     @app_commands.describe(
         game="要尋找的遊戲", room_num="房號 (選填)", extra_info="如時間等其他資訊 (選填)"
     )
-    @app_commands.choices(
-        game=[
-            app_commands.Choice(name=game, value=game_id)
-            for game_id, game in games.items()
-        ]
-    )
     async def find(
         self,
         i: discord.Interaction,
@@ -79,6 +73,9 @@ class FindCog(commands.Cog):
         extra_info: typing.Optional[str] = None,
         room_num: typing.Optional[app_commands.Range[int, 0, 99999]] = None,
     ):
+        if game not in games:
+            return await i.response.send_message("該遊戲尚未支援", ephemeral=True)
+        
         embed = default_embed(message=extra_info).set_author(name="⛳ 一起來玩遊戲！")
         embed.add_field(name="遊戲", value=games.get(game))
         if room_num is not None:
@@ -91,6 +88,14 @@ class FindCog(commands.Cog):
         view = FindView(i.user, embed)
         await find_channel.send(embed=embed, view=view, content=f"<@&{game}>")
         await i.response.send_message("已發送", ephemeral=True)
+
+    @find.autocomplete("game")
+    async def find_game(self, i: discord.Interaction, current: str):
+        return [
+            app_commands.OptionChoice(name=game_name, value=game_id)
+            for game_id, game_name in games.items()
+            if current.lower() in game_name.lower()
+        ]
 
 
 async def setup(bot: commands.Bot) -> None:
