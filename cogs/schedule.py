@@ -1,6 +1,7 @@
 import datetime
 
 from discord.ext import commands, tasks
+import calendar
 
 from utility.utils import default_embed
 
@@ -32,20 +33,26 @@ class Schedule(commands.Cog):
             )
             await notif_channel.send(
                 content="<@&1075027069832015943>",
-                embed=default_embed("😣 原神裡的居民們需要幫助！記得去幫忙喔！"),
+                embed=default_embed("🛖 原神裡的居民們需要幫助！記得去幫忙喔！"),
             )
 
+        max_day_in_month = calendar.monthrange(now.year, now.month)[1]
         # every month's 1st and 16th
         if now.day in (1, 16) and now.hour == 4:
             await notif_channel.send(
                 content="<@&1075027095786365009>",
-                embed=default_embed("🌙 深淵玩家們，開幹啦！！！（有原石喔 owob）"),
+                embed=default_embed("🌙 深淵玩家們，開幹啦！！\n（有原石喔 owob）"),
             )
             if now.day == 1:
                 await notif_channel.send(
                     content="<@&1075027124454440992>",
                     embed=default_embed("🎉 今天是月初，記得去兌換粉球哦！"),
                 )
+        elif now.day in (max_day_in_month, 15) and now.hour == 4:
+            await notif_channel.send(
+                content="<@&1075027095786365009>",
+                embed=default_embed("🌙 深淵明天重置，還沒打的趕快去打！"),
+            )
 
     @notif_task.before_loop
     async def before_notif_task(self):
