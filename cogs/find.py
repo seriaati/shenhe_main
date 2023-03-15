@@ -10,11 +10,18 @@ from utility.utils import default_embed
 
 class FindView(ui.View):
     def __init__(self, author: discord.Member, embed: discord.Embed):
-        super().__init__(timeout=None)
+        super().__init__(timeout=21600)
 
-        self.members: typing.List[discord.Member] = []
+        self.members: typing.List[discord.Member] = [author]
         self.author = author
         self.embed = embed
+        self.message: discord.Message
+
+    async def on_timeout(self) -> None:
+        try:
+            await self.message.delete()
+        except discord.NotFound:
+            pass
 
     async def update_embed(self, i):
         embed = self.embed
@@ -29,7 +36,7 @@ class FindView(ui.View):
         )
         await i.response.edit_message(embed=embed)
 
-    @ui.button(label="加入", style=discord.ButtonStyle.green)
+    @ui.button(label="加入", style=discord.ButtonStyle.green, custom_id="join")
     async def join(self, i: discord.Interaction, button: ui.Button):
         if i.user in self.members:
             await i.response.send_message("你已經加入了", ephemeral=True)
@@ -37,7 +44,7 @@ class FindView(ui.View):
             self.members.append(i.user)
             await self.update_embed(i)
 
-    @ui.button(label="退出", style=discord.ButtonStyle.red)
+    @ui.button(label="退出", style=discord.ButtonStyle.red, custom_id="leave")
     async def leave(self, i: discord.Interaction, button: ui.Button):
         if i.user not in self.members:
             await i.response.send_message("你還沒有加入過", ephemeral=True)
@@ -45,7 +52,7 @@ class FindView(ui.View):
             self.members.remove(i.user)
             await self.update_embed(i)
 
-    @ui.button(label="結束", style=discord.ButtonStyle.grey)
+    @ui.button(label="結束", style=discord.ButtonStyle.grey, custom_id="end")
     async def end(self, i: discord.Interaction, button: ui.Button):
         if i.user.id != self.author.id:
             await i.response.send_message("你不是發起人", ephemeral=True)
@@ -81,12 +88,13 @@ class FindCog(commands.Cog):
         if room_num is not None:
             embed.add_field(name="房號", value=room_num)
         embed.add_field(name="發起人", value=i.user.mention)
-        embed.add_field(name="已加入 (0)", value="_", inline=False)
+        embed.add_field(name="已加入 (1)", value=i.user.mention, inline=False)
         embed.set_footer(text="點擊下方的按鈕加入或退出")
 
         find_channel = i.guild.get_channel(1085138080849207336)
         view = FindView(i.user, embed)
-        await find_channel.send(embed=embed, view=view, content=f"<@&{game}>")
+        message = await find_channel.send(embed=embed, view=view, content=f"<@&{game}>")
+        view.message = message
         await i.response.send_message("已發送", ephemeral=True)
 
     @find.autocomplete("game")
