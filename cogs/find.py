@@ -20,7 +20,9 @@ class FindView(ui.View):
     async def on_timeout(self) -> None:
         try:
             embed = self.edit_embed(self.message.embeds[0])
-            await self.message.edit(embed=embed, view=None)
+            for child in self.children:
+                child.disabled = True
+            await self.message.edit(embed=embed, view=self)
         except discord.NotFound:
             pass
 
@@ -59,11 +61,13 @@ class FindView(ui.View):
             await i.response.send_message("你不是發起人", ephemeral=True)
         else:
             embed = self.edit_embed(i.message.embeds[0])
-            await i.response.edit_message(embed=embed, view=None)
+            for child in self.children:
+                child.disabled = True
+            await i.response.edit_message(embed=embed, view=self)
 
     def edit_embed(self, embed) -> discord.Embed:
         embed.color = discord.Color.light_gray()
-        embed.author.name = "⛳ (已結束)"
+        embed.set_author(name="⛳ (已結束)")
         return embed
 
 
