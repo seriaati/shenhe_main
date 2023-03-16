@@ -10,7 +10,7 @@ from utility.utils import default_embed
 
 class FindView(ui.View):
     def __init__(self, author: discord.Member, embed: discord.Embed):
-        super().__init__(timeout=21600)
+        super().__init__(timeout=3600)
 
         self.members: typing.List[discord.Member] = [author]
         self.author = author
@@ -19,7 +19,8 @@ class FindView(ui.View):
 
     async def on_timeout(self) -> None:
         try:
-            await self.message.delete()
+            embed = self.edit_embed(self.message.embeds[0])
+            await self.message.edit(embed=embed, view=None)
         except discord.NotFound:
             pass
 
@@ -57,7 +58,13 @@ class FindView(ui.View):
         if i.user.id != self.author.id:
             await i.response.send_message("你不是發起人", ephemeral=True)
         else:
-            await i.message.delete()
+            embed = self.edit_embed(i.message.embeds[0])
+            await i.response.edit_message(embed=embed, view=None)
+
+    def edit_embed(self, embed) -> discord.Embed:
+        embed.color = discord.Color.light_gray()
+        embed.author.name = "⛳ (已結束)"
+        return embed
 
 
 class FindCog(commands.Cog):
