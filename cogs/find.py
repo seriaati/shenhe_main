@@ -96,15 +96,15 @@ class FindCog(commands.Cog):
 
         for role in message.role_mentions:
             if role.id in constants.game_role_ids:
+                embed = self.make_find_embed(
+                    message.author,
+                    role.id,
+                    message.content.replace(role.mention, ""),
+                    None,
+                )
+                view = FindView(message.author, embed)
+                await message.reply(embed=embed, view=view)
                 break
-            embed = self.make_find_embed(
-                message.author,
-                role.id,
-                message.content.replace(role.mention, ""),
-                None,
-            )
-            view = FindView(message.author, embed)
-            await message.reply(embed=embed, view=view)
 
     @app_commands.command(name="find", description="尋找其他玩家")
     @app_commands.rename(game="遊戲", room_num="房號", extra_info="其他資訊")
@@ -137,6 +137,9 @@ class FindCog(commands.Cog):
         extra_info: typing.Optional[str] = None,
         room_num: typing.Optional[int] = None,
     ):
+        if not extra_info:
+            extra_info = None
+
         embed = default_embed(message=extra_info).set_author(name="⛳ 一起來玩遊戲！")
         embed.add_field(name="遊戲", value=self.games.get(game))
         if room_num is not None:
