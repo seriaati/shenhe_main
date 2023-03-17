@@ -86,8 +86,7 @@ class FindCog(commands.Cog):
             await guild.chunk()
 
         self.games = {
-            str(role_id): guild.get_role(role_id).name
-            for role_id in constants.game_role_ids
+            role_id: guild.get_role(role_id).name for role_id in constants.game_role_ids
         }
 
     @commands.Cog.listener(name="on_message")
@@ -115,7 +114,7 @@ class FindCog(commands.Cog):
     async def find(
         self,
         i: discord.Interaction,
-        game: str,
+        game: int,
         extra_info: typing.Optional[str] = None,
         room_num: typing.Optional[app_commands.Range[int, 0, 99999]] = None,
     ):
@@ -134,7 +133,7 @@ class FindCog(commands.Cog):
     def make_find_embed(
         self,
         author: discord.Member,
-        game: str,
+        game: int,
         extra_info: typing.Optional[str] = None,
         room_num: typing.Optional[int] = None,
     ):
