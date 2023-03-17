@@ -96,14 +96,21 @@ class FindCog(commands.Cog):
 
         for role in message.role_mentions:
             if role.id in constants.game_role_ids:
+                room_num = None
+                for word in message.content.split():
+                    if word.isdigit() and len(word) == 5:
+                        room_num = int(word)
+                        break
+
                 embed = self.make_find_embed(
                     message.author,
                     role.id,
                     message.content.replace(role.mention, ""),
-                    None,
+                    room_num,
                 )
                 view = FindView(message.author, embed)
-                await message.reply(embed=embed, view=view)
+                message_ = await message.reply(embed=embed, view=view)
+                view.message = message_
                 break
 
     @app_commands.command(name="find", description="尋找其他玩家")
@@ -124,11 +131,9 @@ class FindCog(commands.Cog):
 
         embed = self.make_find_embed(i.user, game, extra_info, room_num)
 
-        find_channel = i.guild.get_channel(1085138080849207336)
         view = FindView(i.user, embed)
-        message = await find_channel.send(embed=embed, view=view, content=f"<@&{game}>")
-        view.message = message
-        await i.response.send_message("已發送", ephemeral=True)
+        await i.response.send_message(embed=embed, view=view, content=f"<@&{game}>")
+        view.message = await i.original_response()
 
     def make_find_embed(
         self,
