@@ -40,7 +40,7 @@ class FindView(ui.View):
         await i.response.edit_message(embed=embed)
 
     @ui.button(label="加入", style=discord.ButtonStyle.green, custom_id="join")
-    async def join(self, i: discord.Interaction, button: ui.Button):
+    async def join(self, i: discord.Interaction, _: ui.Button):
         if i.user in self.members:
             await i.response.send_message("你已經加入了", ephemeral=True)
         else:
@@ -48,7 +48,7 @@ class FindView(ui.View):
             await self.update_embed(i)
 
     @ui.button(label="退出", style=discord.ButtonStyle.red, custom_id="leave")
-    async def leave(self, i: discord.Interaction, button: ui.Button):
+    async def leave(self, i: discord.Interaction, _: ui.Button):
         if i.user not in self.members:
             await i.response.send_message("你還沒有加入過", ephemeral=True)
         else:
@@ -56,7 +56,7 @@ class FindView(ui.View):
             await self.update_embed(i)
 
     @ui.button(label="結束", style=discord.ButtonStyle.grey, custom_id="end")
-    async def end(self, i: discord.Interaction, button: ui.Button):
+    async def end(self, i: discord.Interaction, _: ui.Button):
         if i.user.id != self.author.id:
             await i.response.send_message("你不是發起人", ephemeral=True)
         else:
@@ -75,6 +75,38 @@ class FindCog(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
+    async def cog_load(self) -> None:
+        self.bot.loop.create_task(self.load_games())
+
+    async def load_games(self) -> None:
+        await self.bot.wait_until_ready()
+
+        guild = self.bot.get_guild(constants.guild_id)
+        if not guild.chunked:
+            await guild.chunk()
+
+        self.games = {
+            str(role_id): guild.get_role(role_id).name
+            for role_id in constants.game_role_ids
+        }
+
+    @commands.Cog.listener(name="on_message")
+    async def on_message(self, message: discord.Message):
+        if message.author.bot:
+            return
+
+        for role in message.role_mentions:
+            if role.id in constants.game_role_ids:
+                break
+            embed = self.make_find_embed(
+                message.author,
+                role.id,
+                message.content.replace(role.mention, ""),
+                None,
+            )
+            view = FindView(message.author, embed)
+            await message.reply(embed=embed, view=view)
+
     @app_commands.command(name="find", description="尋找其他玩家")
     @app_commands.rename(game="遊戲", room_num="房號", extra_info="其他資訊")
     @app_commands.describe(
@@ -87,20 +119,11 @@ class FindCog(commands.Cog):
         extra_info: typing.Optional[str] = None,
         room_num: typing.Optional[app_commands.Range[int, 0, 99999]] = None,
     ):
-        games = {
-            str(role_id): i.guild.get_role(role_id).name
-            for role_id in constants.game_role_ids
-        }
-        if game not in games:
+
+        if game not in self.games:
             return await i.response.send_message("該遊戲尚未支援", ephemeral=True)
 
-        embed = default_embed(message=extra_info).set_author(name="⛳ 一起來玩遊戲！")
-        embed.add_field(name="遊戲", value=games.get(game))
-        if room_num is not None:
-            embed.add_field(name="房號", value=room_num)
-        embed.add_field(name="發起人", value=i.user.mention)
-        embed.add_field(name="已加入 (1)", value=i.user.mention, inline=False)
-        embed.set_footer(text="點擊下方的按鈕加入或退出")
+        embed = self.make_find_embed(i.user, game, extra_info, room_num)
 
         find_channel = i.guild.get_channel(1085138080849207336)
         view = FindView(i.user, embed)
@@ -108,15 +131,27 @@ class FindCog(commands.Cog):
         view.message = message
         await i.response.send_message("已發送", ephemeral=True)
 
+    def make_find_embed(
+        self,
+        author: discord.Member,
+        game: str,
+        extra_info: typing.Optional[str] = None,
+        room_num: typing.Optional[int] = None,
+    ):
+        embed = default_embed(message=extra_info).set_author(name="⛳ 一起來玩遊戲！")
+        embed.add_field(name="遊戲", value=self.games.get(game))
+        if room_num is not None:
+            embed.add_field(name="房號", value=room_num)
+        embed.add_field(name="發起人", value=author.mention)
+        embed.add_field(name="已加入 (1)", value=author.mention, inline=False)
+        embed.set_footer(text="點擊下方的按鈕加入或退出")
+        return embed
+
     @find.autocomplete("game")
-    async def find_game(self, i: discord.Interaction, current: str):
-        games = {
-            str(role_id): i.guild.get_role(role_id).name
-            for role_id in constants.game_role_ids
-        }
+    async def find_game(self, _: discord.Interaction, current: str):
         return [
             app_commands.Choice(name=game_name, value=game_id)
-            for game_id, game_name in games.items()
+            for game_id, game_name in self.games.items()
             if current.lower() in game_name.lower()
         ][:25]
 
