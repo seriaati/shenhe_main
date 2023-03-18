@@ -7,6 +7,7 @@ from discord.ext import commands
 
 from utility.paginators.paginator import GeneralPaginator
 from utility.utils import default_embed
+import traceback
 
 
 def create_gv_embed(
@@ -39,6 +40,16 @@ class GiveAwayView(ui.View):
         self.author = author
         self.prize_num = prize_num
         self.extra_info = extra_info
+
+    async def on_error(
+        self,
+        i: discord.Interaction,
+        error: Exception,
+        item: ui.Item[typing.Any],
+    ) -> None:
+        await i.response.send_message(
+            f"```py\n{traceback.format_exc()}\n```", ephemeral=True
+        )
 
     async def update_embed_and_view(self, i: discord.Interaction):
         embed = create_gv_embed(
@@ -102,9 +113,7 @@ class GiveAwayView(ui.View):
 
             await GeneralPaginator(i, embeds).start(ephemeral=True)
 
-    @ui.button(
-        label="結束抽獎", style=discord.ButtonStyle.red, custom_id="end_gv", emoji="🎊"
-    )
+    @ui.button(label="結束抽獎", style=discord.ButtonStyle.red, custom_id="end_gv")
     async def end_gv(self, i: discord.Interaction, button: ui.Button):
         if i.user.id != self.author.id:
             await i.response.send_message("你不是主辦人，無法結束抽獎", ephemeral=True)
