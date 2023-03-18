@@ -138,6 +138,10 @@ class GiveAwayCog(commands.Cog):
     def __init__(self, bot) -> None:
         self.bot = bot
 
+    @app_commands.rename(prize="獎品名稱", prize_num="獎品數量", extra_info="其他資訊")
+    @app_commands.describe(
+        prize="要抽獎的獎品名稱", prize_num="要抽獎的獎品數量", extra_info="其他資訊 (選填)"
+    )
     @app_commands.command(name="gv", description="開始一個抽獎")
     async def gv(
         self,
