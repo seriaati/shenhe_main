@@ -137,7 +137,7 @@ class RerollWinners(ui.Button[GiveAwayView]):
         )
 
     async def callback(self, i: discord.Interaction) -> typing.Any:
-        if i.user.id != self.author.id:
+        if i.user.id != self.view.author.id:
             await i.response.send_message("你不是主辦人，無法結束抽獎", ephemeral=True)
         else:
             await self.view.announce_winners(i)
