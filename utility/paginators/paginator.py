@@ -115,7 +115,7 @@ class GeneralPaginator:
         view.first.disabled = view.previous.disabled = True
         view.last.disabled = view.next.disabled = len(self.embeds) == 1
 
-        view.page.label = f"第{self.current_page + 1}/{len(self.embeds)}頁"
+        view.page.label = f"第{view.current_page + 1}/{len(self.embeds)}頁"
 
         if len(self.custom_children) > 0:
             for child in self.custom_children:
