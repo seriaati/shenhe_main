@@ -10,12 +10,10 @@ from discord.ext import commands
 from utility.utils import error_embed
 
 
-def detect_url(message: str) -> List[str]:
-    regex = re.compile(
-        r"((http|ftp|https):\/\/)?(www\.)?([a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,3})(\/\S*)?"
-    )
-    url = re.findall(regex, message)
-    return [x[0] for x in url]
+def extract_urls(string_with_urls: str) -> List[str]:
+    url_pattern = re.compile(r"https?://\S+")
+    urls = re.findall(url_pattern, string_with_urls)
+    return urls
 
 
 class AdminCog(commands.Cog):
@@ -70,8 +68,8 @@ class AdminCog(commands.Cog):
         if message.guild.id != self.bot.guild_id:
             return
 
-        urls = detect_url(message.content)
-        if message.channel.id and urls:
+        urls = extract_urls(message.content)
+        if message.channel.id == 1061898394446069852 and urls:
             await message.delete()
             content = ""
             for url in urls:
