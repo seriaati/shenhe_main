@@ -1,19 +1,13 @@
 import importlib
 import io
+import re
 import sys
 from typing import List
-import re
 
 import discord
 from discord.ext import commands
 
 from utility.utils import error_embed
-
-
-def extract_urls(string_with_urls: str) -> List[str]:
-    url_pattern = re.compile(r"https?://\S+")
-    urls = re.findall(url_pattern, string_with_urls)
-    return urls
 
 
 class AdminCog(commands.Cog):
@@ -68,16 +62,6 @@ class AdminCog(commands.Cog):
         if message.guild.id != self.bot.guild_id:
             return
 
-        urls = extract_urls(message.content)
-        if message.channel.id == 1061898394446069852 and urls:
-            await message.delete()
-            content = ""
-            for url in urls:
-                content += f"||{url}||\n"
-            await message.channel.send(
-                content=f"由 {message.author.mention} 寄出\n" + content
-            )
-
         if message.channel.id == 1061898394446069852 and any(
             not a.is_spoiler() for a in message.attachments
         ):
@@ -96,7 +80,7 @@ class AdminCog(commands.Cog):
                     files.append(await attachment.to_file())
 
             await message.channel.send(
-                content=f"由 <@{message.author.id}> 寄出", files=files
+                content=f"{message.content}\n(由 <@{message.author.id}> 寄出)", files=files
             )
 
 
