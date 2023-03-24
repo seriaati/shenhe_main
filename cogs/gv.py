@@ -163,6 +163,7 @@ class GiveAwayCog(commands.Cog):
             await i.response.send_message(
                 "請在 <#1084301366031302656> 頻道使用此指令", ephemeral=True
             )
+            return
 
         embed = create_gv_embed(prize, i.user, prize_num, extra_info)
         view = GiveAwayView(prize, i.user, prize_num, extra_info)
