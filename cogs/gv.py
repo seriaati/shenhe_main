@@ -1,4 +1,5 @@
 import random
+import traceback
 import typing
 
 import discord
@@ -7,7 +8,6 @@ from discord.ext import commands
 
 from utility.paginators.paginator import GeneralPaginator
 from utility.utils import default_embed
-import traceback
 
 
 def create_gv_embed(
@@ -159,6 +159,11 @@ class GiveAwayCog(commands.Cog):
         prize_num: int,
         extra_info: typing.Optional[str] = None,
     ):
+        if i.channel and i.channel.id != 1084301366031302656:
+            await i.response.send_message(
+                "請在 <#1084301366031302656> 頻道使用此指令", ephemeral=True
+            )
+
         embed = create_gv_embed(prize, i.user, prize_num, extra_info)
         view = GiveAwayView(prize, i.user, prize_num, extra_info)
         await i.response.send_message(embed=embed, view=view)
