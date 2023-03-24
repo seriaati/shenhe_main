@@ -1,6 +1,6 @@
 import random
 
-from discord import File, Interaction, Member, Message, Role, app_commands
+from discord import Attachment, File, Interaction, Member, Message, Role, app_commands
 from discord.app_commands import Choice
 from discord.ext import commands
 from discord.ui import Button
@@ -56,6 +56,12 @@ class OtherCMDCog(commands.Cog, name="other"):
     async def mark_fbi_message(self, i: Interaction, message: Message):
         await i.response.send_message("標記成功", ephemeral=True)
         await message.reply(f"⚠️ {i.user.mention} 已將此訊息標記為危險訊息，將自動通報至 FBI")
+
+    @app_commands.command(name="bypass", description="繞過 Discord 的圖片禁令限制")
+    @app_commands.rename(image="圖片")
+    @app_commands.describe(image="要上傳的圖片")
+    async def bypass(self, i: Interaction, image: Attachment):
+        await i.response.send_message(image.url)
 
     @app_commands.command(name="haose", description="好色喔")
     @app_commands.rename(user="使用者", leaderboard="排行榜")
