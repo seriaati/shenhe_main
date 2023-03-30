@@ -72,33 +72,29 @@ class FlowCog(commands.Cog, name="flow"):
     async def poke(self, i: discord.Interaction, member: discord.Member):
         success = True if randint(1, 100) <= 50 else False
         flow_num = randint(1, 3)
-        if not success:
-            new_member = i.user
-        else:
-            new_member = member
-        flow = await flow_app.get_user_flow(new_member.id, i.client.db)
-        flow2 = await flow_app.get_user_flow(i.user.id, i.client.db)
+        flow_member = await flow_app.get_user_flow(member.id, i.client.db)
+        flow_user = await flow_app.get_user_flow(i.user.id, i.client.db)
         await flow_app.flow_transaction(
-            new_member.id, flow_num if success else -flow_num, i.client.db
+            member.id, -flow_num if success else flow_num, i.client.db
         )
         await flow_app.flow_transaction(
-            i.user.id, -flow_num if success else flow_num, i.client.db
+            i.user.id, flow_num if success else -flow_num, i.client.db
         )
         if success:
             message = f"""
             {i.user.mention} 戳到了 {member.mention}
-            {i.user.mention} | {flow2+flow_num} (+{flow_num})
-            {member.mention} | {flow-flow_num} (-{flow_num})
+            
+            {i.user.mention} | {flow_user+flow_num} (+{flow_num})
+            {member.mention} | {flow_member-flow_num} (-{flow_num})
             """
         else:
             message = f"""
             {i.user.mention} 想戳 {member.mention} 但是戳到了自己
-            {i.user.mention} | {flow2-flow_num} (-{flow_num})
-            {member.mention} | {flow+flow_num} (+{flow_num})
+            
+            {i.user.mention} | {flow_user-flow_num} (-{flow_num})
+            {member.mention} | {flow_member+flow_num} (+{flow_num})
             """
-        embed = default_embed(
-            f"{i.user.display_name} 戳戳 👉 {member.display_name}", message
-        )
+        embed = default_embed(f"{i.user.display_name} 👉 {member.display_name}", message)
         await i.response.send_message(
             content=f"{i.user.mention}, {member.mention}", embed=embed
         )
