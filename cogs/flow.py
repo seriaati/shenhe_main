@@ -93,9 +93,7 @@ class FlowCog(commands.Cog, name="flow"):
             {member.mention} | **{flow_member+flow_num}** (+{flow_num})
             """
         embed = default_embed(f"{i.user.display_name} 👉 {member.display_name}", message)
-        await i.response.send_message(
-            content=f"{i.user.mention}, {member.mention}", embed=embed
-        )
+        await i.response.send_message(embed=embed)
 
     @poke.error
     async def poke_error(self, i: discord.Interaction, error):
