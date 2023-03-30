@@ -74,6 +74,8 @@ class FlowCog(commands.Cog, name="flow"):
         flow_num = randint(1, 3)
         if not success:
             new_member = i.user
+        else:
+            new_member = member
         flow = await flow_app.get_user_flow(new_member.id, i.client.db)
         await flow_app.flow_transaction(new_member.id, 0 - flow_num, i.client.db)
         if success:
