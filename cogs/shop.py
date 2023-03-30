@@ -57,25 +57,17 @@ class ShopItemSelect(ui.Select):
             )
         elif self.action == "buy":
             async with i.client.db.execute(
-                "SELECT flow, current, max FROM flow_shop WHERE name= ?",
+                "SELECT flow, current FROM flow_shop WHERE name= ?",
                 (self.values[0],),
             ) as cursor:
                 data = await cursor.fetchone()
             flow = data[0]
             current = data[1]
-            item_max = data[2]
             user_flow = await get_user_flow(i.user.id, i.client.db)
             if user_flow < flow:
                 return await i.response.send_message(
                     embed=error_embed().set_author(
                         name="你的暴幣不足夠購買這項商品", icon_url=i.user.display_avatar.url
-                    ),
-                    ephemeral=True,
-                )
-            if current == item_max:
-                return await i.response.send_message(
-                    embed=error_embed().set_author(
-                        name="此商品已售罄", icon_url=i.user.display_avatar.url
                     ),
                     ephemeral=True,
                 )
@@ -119,15 +111,13 @@ class ShopCog(commands.Cog):
     @has_flow_account()
     @app_commands.command(name="shop", description="暴幣商店")
     async def show(self, i: discord.Interaction):
-        async with i.client.db.execute(
-            "SELECT name, flow, current, max FROM flow_shop"
-        ) as cursor:
+        async with i.client.db.execute("SELECT name, flow FROM flow_shop") as cursor:
             data = await cursor.fetchall()
         item_str = ""
         item_names = []
         for _, tpl in enumerate(data):
             item_names.append(tpl[0])
-            item_str += f"• {tpl[0]} - **{tpl[1]}** 暴幣 ({tpl[2]}/{tpl[3]})\n\n"
+            item_str += f"• {tpl[0]} - **{tpl[1]}** 暴幣\n\n"
         embed = default_embed("🛒 暴幣商店", item_str)
         view = ShopItemView(item_names, "buy", i.client.db, i.user)
         await i.response.send_message(embed=embed, view=view)
