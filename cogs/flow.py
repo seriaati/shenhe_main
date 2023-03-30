@@ -1,13 +1,14 @@
 from datetime import time
+from random import randint
 
 import discord
-import apps.flow as flow_app
 from dateutil import parser
-import discord
 from discord import app_commands
 from discord.ext import commands
+
+import apps.flow as flow_app
 from utility.paginators.paginator import GeneralPaginator
-from utility.utils import default_embed, divide_chunks, error_embed
+from utility.utils import default_embed, divide_chunks
 
 
 def has_flow_account():
@@ -31,9 +32,9 @@ class FlowCog(commands.Cog, name="flow"):
         if message.author.bot:
             return
 
-        morning_keywords = ["早", "good morning", "gm", "morning"]
-        noon_keywords = ["午", "good noon"]
-        night_keywords = ["晚", "good night", "good evening", "gn"]
+        morning_keywords = ("早", "good morning", "gm", "morning")
+        noon_keywords = ("午", "good noon", "noon", "gn")
+        night_keywords = ("晚", "good night", "good evening", "gn")
 
         content = message.content.lower()
 
@@ -62,6 +63,38 @@ class FlowCog(commands.Cog, name="flow"):
                 await message.add_reaction("<:night:982608497290125366>")
 
     @has_flow_account()
+    @discord.app_commands.checks.cooldown(
+        1, 3600, key=lambda i: (i.guild_id, i.user.id)
+    )
+    @discord.app_commands.command(name="poke", description="戳戳")
+    @discord.app_commands.rename(member="使用者")
+    @discord.app_commands.describe(member="被戳的使用者")
+    async def poke(self, i: discord.Interaction, member: discord.Member):
+        success = True if randint(1, 100) <= 50 else False
+        flow_num = randint(1, 3)
+        if not success:
+            new_member = i.user
+        flow = await flow_app.get_user_flow(new_member.id, i.client.db)
+        await flow_app.flow_transaction(new_member.id, 0 - flow_num, i.client.db)
+        if success:
+            message = (
+                f"{member.mention} 被 {i.user.mention}戳了一下，剩下 __{flow - flow_num}__ 枚暴幣"
+            )
+        else:
+            message = f"{i.user.mention} 想偷戳 {member.mention} 但戳到了自己，剩下 __{flow - flow_num}__ 枚暴幣"
+        embed = default_embed("戳戳", message)
+        await i.response.send_message(
+            content=f"{i.user.mention}, {member.mention}", embed=embed
+        )
+
+    @poke.error
+    async def poke_error(self, i: discord.Interaction, error):
+        if isinstance(error, app_commands.CommandOnCooldown):
+            await i.response.send_message(content="一小時最多戳一次哦", ephemeral=True)
+        else:
+            await self.bot.tree.on_error(i, error)
+
+    @has_flow_account()
     @discord.app_commands.command(name="acc", description="查看暴幣帳號")
     @discord.app_commands.rename(member="使用者")
     @discord.app_commands.describe(member="查看其他使用者的暴幣帳號")
@@ -88,34 +121,6 @@ class FlowCog(commands.Cog, name="flow"):
         embed.set_author(name="暴幣帳號", icon_url=member.avatar)
         await i.response.send_message(embed=embed)
 
-    @has_flow_account()
-    @discord.app_commands.command(name="give", description="給其他人暴幣")
-    @discord.app_commands.rename(member="使用者", flow="要給予的暴幣數量")
-    async def give(self, i: discord.Interaction, member: discord.Member, flow: int):
-        if flow < 0:
-            return await i.response.send_message(
-                embed=error_embed(
-                    message="<:PaimonSeria:958341967698337854> 還想學 <:Yeastken_ttosdog:1059516840210083880> 跟ceye洗錢啊!"
-                ).set_author(name="不可以給負數 暴幣", icon_url=i.user.display_avatar.url),
-                ephemeral=True,
-            )
-        user_flow = await flow_app.get_user_flow(i.user.id, i.client.db)
-        if user_flow < flow:
-            return await i.response.send_message(
-                embed=error_embed(f"需要至少: {flow} 暴幣").set_author(
-                    name="暴幣不足", icon_url=i.user.display_avatar.url
-                ),
-                ephemeral=True,
-            )
-        await flow_app.flow_transaction(i.user.id, -flow, i.client.db)
-        await flow_app.flow_transaction(member.id, flow, i.client.db)
-        embed = default_embed(
-            message=f"{i.user.mention} | -{flow} 暴幣\n{member.mention} | +{flow} 暴幣"
-        ).set_author(name="交易成功", icon_url=i.user.display_avatar.url)
-        await i.response.send_message(
-            content=f"{i.user.mention} {member.mention}", embed=embed
-        )
-
     @discord.app_commands.command(name="take", description="將一個使用者的 暴幣轉回銀行")
     @discord.app_commands.rename(member="使用者", flow="要拿取的暴幣數量", private="私人訊息")
     @discord.app_commands.choices(
@@ -124,7 +129,7 @@ class FlowCog(commands.Cog, name="flow"):
             app_commands.Choice(name="否", value=0),
         ]
     )
-    @discord.app_commands.checks.has_role("猜猜我是誰")
+    @discord.app_commands.checks.has_permissions(manage_guild=True)
     async def take(
         self,
         i: discord.Interaction,
@@ -151,7 +156,7 @@ class FlowCog(commands.Cog, name="flow"):
             app_commands.Choice(name="否", value=0),
         ]
     )
-    @discord.app_commands.checks.has_role("猜猜我是誰")
+    @discord.app_commands.checks.has_permissions(manage_guild=True)
     async def make(
         self,
         i: discord.Interaction,
