@@ -77,12 +77,28 @@ class FlowCog(commands.Cog, name="flow"):
         else:
             new_member = member
         flow = await flow_app.get_user_flow(new_member.id, i.client.db)
-        await flow_app.flow_transaction(new_member.id, 0 - flow_num, i.client.db)
+        flow2 = await flow_app.get_user_flow(i.user.id, i.client.db)
+        await flow_app.flow_transaction(
+            new_member.id, flow_num if success else -flow_num, i.client.db
+        )
+        await flow_app.flow_transaction(
+            i.user.id, -flow_num if success else flow_num, i.client.db
+        )
         if success:
-            message = f"{member.mention} 被 {i.user.mention}戳了一下，剩下 **__{flow - flow_num}__** 枚暴幣 (-{flow_num})"
+            message = f"""
+            {i.user.mention} 戳到了 {member.mention}
+            {i.user.mention} | {flow2+flow_num} (+{flow_num})
+            {member.mention} | {flow-flow_num} (-{flow_num})
+            """
         else:
-            message = f"{i.user.mention} 想偷戳 {member.mention} 但戳到了自己，剩下 **__{flow - flow_num}__** 枚暴幣 (-{flow_num})"
-        embed = default_embed("戳戳 👉", message)
+            message = f"""
+            {i.user.mention} 想戳 {member.mention} 但是戳到了自己
+            {i.user.mention} | {flow2-flow_num} (-{flow_num})
+            {member.mention} | {flow+flow_num} (+{flow_num})
+            """
+        embed = default_embed(
+            f"{i.user.display_name} 戳戳 👉 {member.display_name}", message
+        )
         await i.response.send_message(
             content=f"{i.user.mention}, {member.mention}", embed=embed
         )
