@@ -63,9 +63,7 @@ class FlowCog(commands.Cog, name="flow"):
                 await message.add_reaction("<:night:982608497290125366>")
 
     @has_flow_account()
-    @discord.app_commands.checks.cooldown(
-        1, 3600, key=lambda i: (i.guild_id, i.user.id)
-    )
+    @discord.app_commands.checks.cooldown(1, 60, key=lambda i: (i.guild_id, i.user.id))
     @discord.app_commands.command(name="poke", description="戳戳")
     @discord.app_commands.rename(member="使用者")
     @discord.app_commands.describe(member="被戳的使用者")
@@ -102,7 +100,7 @@ class FlowCog(commands.Cog, name="flow"):
     @poke.error
     async def poke_error(self, i: discord.Interaction, error):
         if isinstance(error, app_commands.CommandOnCooldown):
-            await i.response.send_message(content="一小時最多戳一次哦", ephemeral=True)
+            await i.response.send_message(content="一分鐘最多戳一次哦", ephemeral=True)
         else:
             await self.bot.tree.on_error(i, error)
 
