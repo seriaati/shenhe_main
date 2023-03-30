@@ -82,7 +82,7 @@ class FlowCog(commands.Cog, name="flow"):
             message = f"{member.mention} 被 {i.user.mention}戳了一下，剩下 **__{flow - flow_num}__** 枚暴幣 (-{flow_num})"
         else:
             message = f"{i.user.mention} 想偷戳 {member.mention} 但戳到了自己，剩下 **__{flow - flow_num}__** 枚暴幣 (-{flow_num})"
-        embed = default_embed("戳戳", message)
+        embed = default_embed("戳戳 👉", message)
         await i.response.send_message(
             content=f"{i.user.mention}, {member.mention}", embed=embed
         )
