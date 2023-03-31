@@ -1,6 +1,7 @@
 import aiosqlite
 import wavelink
 from discord import (
+    ChannelType,
     Interaction,
     Member,
     NotFound,
@@ -38,10 +39,6 @@ class VoiceCog(commands.GroupCog, name="vc"):
     async def on_voice_state_update(
         self, member: Member, before: VoiceState, after: VoiceState
     ):
-        # skip stage channel
-        if after.channel.id == 1091200887462047744:
-            return
-
         make_vc = utils.get(member.guild.channels, name="創建語音台")
         vc_role = utils.get(member.guild.roles, name="正在使用語音台")
         old_channel: VoiceChannel = before.channel
@@ -86,6 +83,8 @@ class VoiceCog(commands.GroupCog, name="vc"):
             and old_channel != make_vc
             and len(old_channel.members) == 0
         ):
+            if old_channel.type is ChannelType.stage_voice:
+                return
             try:
                 await old_channel.delete()
             except NotFound:
