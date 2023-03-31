@@ -108,7 +108,6 @@ class AprilFoolCog(commands.Cog):
                     name=real_author.display_name,
                     icon_url=real_author.display_avatar.url,
                 )
-                content += f"\n\n{mention}"
 
             await webhook.send(
                 content=content,
