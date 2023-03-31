@@ -82,15 +82,15 @@ class FlowCog(commands.Cog, name="flow"):
             message = f"""
             {i.user.mention} 戳到了 {member.mention}
             
-            {i.user.mention} | **{flow_user+flow_num}** (+{flow_num})
-            {member.mention} | **{flow_member-flow_num}** (-{flow_num})
+            {i.user.mention} | **{flow_user}** (+{flow_num})
+            {member.mention} | **{flow_member}** (-{flow_num})
             """
         else:
             message = f"""
             {i.user.mention} 想戳 {member.mention} 但是戳到了自己
             
-            {i.user.mention} | **{flow_user-flow_num}** (-{flow_num})
-            {member.mention} | **{flow_member+flow_num}** (+{flow_num})
+            {i.user.mention} | **{flow_user}** (-{flow_num})
+            {member.mention} | **{flow_member}** (+{flow_num})
             """
         embed = default_embed(f"{i.user.display_name} 👉 {member.display_name}", message)
         await i.response.send_message(embed=embed)
