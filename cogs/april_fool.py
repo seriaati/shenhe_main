@@ -56,7 +56,7 @@ class AprilFoolCog(commands.Cog):
     async def on_message(self, message: discord.Message) -> None:
         if message.author.bot:
             return
-        if message.channel.id == 1091299347213324348:
+        if message.channel.id in (1091299347213324348, 1061946990927290370):
             return
 
         now = datetime.now()
