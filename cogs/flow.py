@@ -70,14 +70,14 @@ class FlowCog(commands.Cog, name="flow"):
     async def poke(self, i: discord.Interaction, member: discord.Member):
         success = True if randint(1, 100) <= 50 else False
         flow_num = randint(1, 3)
-        flow_member = await flow_app.get_user_flow(member.id, i.client.db)
-        flow_user = await flow_app.get_user_flow(i.user.id, i.client.db)
         await flow_app.flow_transaction(
             member.id, -flow_num if success else flow_num, i.client.db
         )
         await flow_app.flow_transaction(
             i.user.id, flow_num if success else -flow_num, i.client.db
         )
+        flow_member = await flow_app.get_user_flow(member.id, i.client.db)
+        flow_user = await flow_app.get_user_flow(i.user.id, i.client.db)
         if success:
             message = f"""
             {i.user.mention} 戳到了 {member.mention}
