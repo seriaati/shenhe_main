@@ -9,9 +9,11 @@ nii_lang_dict = {
     "你": "尼",
     "吧": "叭",
     "來": "乃",
-    "好": "毫",
+    "好": "豪",
     "幹": "尬",
     "嗎": "麼",
+    "了": "勒",
+    "媽": "麻",
 }
 
 
@@ -42,6 +44,7 @@ class AprilFoolCog(commands.Cog):
                 content=new_content,
                 username=message.author.display_name,
                 avatar_url=message.author.display_avatar.url,
+                files=[await a.to_file() for a in message.attachments],
             )
 
 
