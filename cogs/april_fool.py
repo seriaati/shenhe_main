@@ -83,7 +83,15 @@ class AprilFoolCog(commands.Cog):
                 new_content = re.sub(r"<a:\w+:\d+>", choice(kokomi_emojis), new_content)
 
             if message.reference:
-                new_content = f"[↶](<{message.reference.jump_url}>) {message.reference.resolved.author.mention} {message.reference.resolved.content}\n\n{new_content}"
+                real_author = discord.utils.get(
+                    message.guild.members,
+                    display_name=message.reference.resolved.author.name,
+                )
+                if real_author:
+                    mention = real_author.mention
+                else:
+                    mention = message.reference.resolved.author.mention
+                new_content = f"[↶](<{message.reference.jump_url}>) {mention} {message.reference.resolved.content}\n\n{new_content}"
             await webhook.send(
                 content=new_content,
                 username=message.author.display_name,
