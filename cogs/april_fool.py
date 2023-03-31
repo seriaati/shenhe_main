@@ -56,10 +56,11 @@ class AprilFoolCog(commands.Cog):
     async def on_message(self, message: discord.Message) -> None:
         if message.author.bot:
             return
+        if message.channel.id == 1091299347213324348:
+            return
+
         now = datetime.now()
-        if (
-            now.month == 4 and now.day == 1
-        ) or message.channel.id == 1091296420486729758:
+        if now.month == 4 and now.day == 1:
             await message.delete()
 
             webhook = await message.channel.webhooks()
@@ -68,19 +69,20 @@ class AprilFoolCog(commands.Cog):
             else:
                 webhook = webhook[0]
 
-            new_content = message.content
+            content = message.content
             for k, v in nii_lang_dict.items():
-                new_content = new_content.replace(k, v)
+                content = content.replace(k, v)
 
             num = randint(1, 100)
             if num <= 10:
-                new_content += "ww"
+                ww_num = randint(1, 4)
+                content += "w" * ww_num
 
             # reaplce all emoji strings with "?"
             guild_emoji_strings = [f"<:{a.name}:{a.id}>" for a in message.guild.emojis]
-            if not any(a in new_content for a in guild_emoji_strings):
-                new_content = re.sub(r"<:\w+:\d+>", choice(kokomi_emojis), new_content)
-                new_content = re.sub(r"<a:\w+:\d+>", choice(kokomi_emojis), new_content)
+            if not any(a in content for a in guild_emoji_strings):
+                content = re.sub(r"<:\w+:\d+>", choice(kokomi_emojis), content)
+                content = re.sub(r"<a:\w+:\d+>", choice(kokomi_emojis), content)
 
             if message.reference:
                 real_author = discord.utils.get(
@@ -91,9 +93,15 @@ class AprilFoolCog(commands.Cog):
                     mention = real_author.mention
                 else:
                     mention = message.reference.resolved.author.mention
-                new_content = f"[↶](<{message.reference.jump_url}>) {mention} {message.reference.resolved.content}\n\n{new_content}"
+
+                if "↶" in content:
+                    reference_content = message.reference.resolved.content.split(".")[1]
+                else:
+                    reference_content = message.reference.resolved.content
+                content = f"[↶](<{message.reference.jump_url}>) {mention} {reference_content} .\n\n{content}"
+
             await webhook.send(
-                content=new_content,
+                content=content,
                 username=message.author.display_name,
                 avatar_url=message.author.display_avatar.url,
                 files=[await a.to_file() for a in message.attachments],
