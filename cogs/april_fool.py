@@ -74,7 +74,7 @@ class AprilFoolCog(commands.Cog):
                 content = content.replace(k, v)
 
             num = randint(1, 100)
-            if num <= 10:
+            if num <= 5:
                 ww_num = randint(1, 4)
                 content += "w" * ww_num
 
