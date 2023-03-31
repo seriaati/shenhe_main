@@ -101,14 +101,14 @@ class AprilFoolCog(commands.Cog):
 
                 embed = discord.Embed(
                     color=real_author.top_role.color,
-                    description=f"{content}\n\n[跳至該訊息]({message.reference.resolved.jump_url})",
+                    description=f"{message.reference.resolved.content}\n\n[跳至該訊息]({message.reference.resolved.jump_url})",
                     timestamp=message.created_at,
                 )
                 embed.set_author(
                     name=real_author.display_name,
                     icon_url=real_author.display_avatar.url,
                 )
-                content += f"\n{mention}"
+                content += f"\n\n{mention}"
 
             await webhook.send(
                 content=content,
