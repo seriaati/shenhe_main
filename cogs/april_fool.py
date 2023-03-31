@@ -28,13 +28,16 @@ class AprilFoolCog(commands.Cog):
             now.month == 4 and now.day == 1
         ) or message.channel.id == 1091296420486729758:
             await message.delete()
+
             webhook = await message.channel.webhooks()
             if not webhook:
                 webhook = await message.channel.create_webhook(name="April Fool")
             else:
                 webhook = webhook[0]
+
+            new_content = message.content
             for k, v in nii_lang_dict.items():
-                new_content = message.content.replace(k, v)
+                new_content = new_content.replace(k, v)
             await webhook.send(
                 content=new_content,
                 username=message.author.display_name,
