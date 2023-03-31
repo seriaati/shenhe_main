@@ -7,9 +7,9 @@ from discord import (
     VoiceChannel,
     VoiceState,
     app_commands,
+    utils,
 )
 from discord.ext import commands
-from discord import utils
 
 from utility.utils import default_embed, error_embed
 
@@ -38,6 +38,10 @@ class VoiceCog(commands.GroupCog, name="vc"):
     async def on_voice_state_update(
         self, member: Member, before: VoiceState, after: VoiceState
     ):
+        # skip stage channel
+        if after.channel.id == 1091200887462047744:
+            return
+
         make_vc = utils.get(member.guild.channels, name="創建語音台")
         vc_role = utils.get(member.guild.roles, name="正在使用語音台")
         old_channel: VoiceChannel = before.channel
