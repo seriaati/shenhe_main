@@ -81,6 +81,8 @@ class AprilFoolCog(commands.Cog):
                 new_content = re.sub(r"<:\w+:\d+>", choice(kokomi_emojis), new_content)
                 new_content = re.sub(r"<a:\w+:\d+>", choice(kokomi_emojis), new_content)
 
+            if message.reference:
+                new_content = f"[↰]({message.reference.jump_url}){message.reference.resolved.content}\n\n{new_content}"
             await webhook.send(
                 content=new_content,
                 username=message.author.display_name,
