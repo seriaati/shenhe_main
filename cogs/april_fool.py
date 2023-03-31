@@ -66,8 +66,6 @@ class AprilFoolCog(commands.Cog):
 
         now = datetime.now()
         if now.month == 4 and now.day == 1:
-            await message.delete()
-
             webhook = await message.channel.webhooks()
             if not webhook:
                 webhook = await message.channel.create_webhook(name="April Fool")
