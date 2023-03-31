@@ -21,6 +21,7 @@ nii_lang_dict = {
     "啊": "阿",
     "啦": "辣",
     "死": "鼠",
+    "很": "粉",
 }
 
 kokomi_emojis = (
@@ -98,17 +99,23 @@ class AprilFoolCog(commands.Cog):
                 else:
                     mention = message.reference.resolved.author.mention
 
-                if "↶" in content:
-                    reference_content = message.reference.resolved.content.split(".")[1]
-                else:
-                    reference_content = message.reference.resolved.content
-                content = f"[↶](<{message.reference.jump_url}>) {mention} {reference_content} .\n\n{content}"
+                embed = discord.Embed(
+                    color=real_author.top_role.color,
+                    description=f"{content}\n\n[跳至該訊息]({message.reference.resolved.jump_url})",
+                    timestamp=message.created_at,
+                )
+                embed.set_author(
+                    name=real_author.display_name,
+                    icon_url=real_author.display_avatar.url,
+                )
+                content += f"\n{mention}"
 
             await webhook.send(
                 content=content,
                 username=message.author.display_name,
                 avatar_url=message.author.display_avatar.url,
                 files=[await a.to_file() for a in message.attachments],
+                embed=embed,
             )
 
 
