@@ -6,8 +6,7 @@ class AprilFoolCog(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
 
-    @commands.is_owner()
-    @commands.command(name="test-fool")
+    @commands.command(name="fool")
     async def test_fool(self, ctx: commands.Context, content: str) -> None:
         await ctx.message.delete()
         webhook = await ctx.channel.webhooks()
