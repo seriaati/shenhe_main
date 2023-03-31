@@ -76,6 +76,7 @@ class AprilFoolCog(commands.Cog):
             guild_emoji_strings = [f"<:{a.name}:{a.id}>" for a in message.guild.emojis]
             if not any(a in new_content for a in guild_emoji_strings):
                 new_content = re.sub(r"<:\w+:\d+>", choice(kokomi_emojis), new_content)
+                new_content = re.sub(r"<a:\w+:\d+>", choice(kokomi_emojis), new_content)
 
             await webhook.send(
                 content=new_content,
