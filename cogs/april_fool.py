@@ -10,7 +10,11 @@ class AprilFoolCog(commands.Cog):
     @commands.command(name="test-fool")
     async def test_fool(self, ctx: commands.Context, content: str) -> None:
         await ctx.message.delete()
-        webhook = (await ctx.guild.webhooks())[0]
+        webhook = await ctx.channel.webhooks()
+        if not webhook:
+            webhook = await ctx.channel.create_webhook(name="April Fool")
+        else:
+            webhook = webhook[0]
         await webhook.send(
             content=content,
             username=ctx.author.display_name,
