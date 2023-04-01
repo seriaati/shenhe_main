@@ -73,7 +73,7 @@ class GuessNumCog(commands.Cog):
                 message.channel.id,
             )
             a, b = return_a_b(answer, message.content)
-            await message.reply(embed=DefaultEmbed(f"{a}A{b}B", f"第{guess[0]}次猜測"))
+            await message.reply(embed=DefaultEmbed(f"{a}A{b}B", f"第{guess}次猜測"))
 
             if a == 4:
                 await message.reply(

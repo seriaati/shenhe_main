@@ -59,7 +59,7 @@ class GuessNumModal(ui.Modal):
                 embed=ErrorEmbed("你不是玩家一", f"{p1.mention} 是玩家一（遊戲發起者）"),
                 ephemeral=True,
             )
-        elif not self.is_p1 and i.user.id == self.guess_num_view.authors[1].id:
+        elif not self.is_p1 and i.user.id != self.guess_num_view.authors[1].id:
             return await i.followup.send(
                 embed=ErrorEmbed("你不是玩家二", f"{p2.mention} 是玩家二"),
                 ephemeral=True,
