@@ -52,8 +52,15 @@ class GuessNumCog(commands.Cog):
 
         p1: int = row["player_one"]
         p1_num: int = row["player_one_num"]
+        p1_guess: int = row["player_one_guess"]
         p2: int = row["player_two"]
         p2_num: int = row["player_two_num"]
+        p2_guess: int = row["player_two_guess"]
+
+        if p2_guess + 1 > p1_guess:
+            return await message.reply(embed=ErrorEmbed("現在是輪到玩家一猜測"))
+        if p1_guess + 1 > p2_guess + 1:
+            return await message.reply(embed=ErrorEmbed("現在是輪到玩家二猜測"))
 
         answer = None
         is_p_one = False
@@ -119,9 +126,7 @@ class GuessNumCog(commands.Cog):
         assert isinstance(i.user, discord.Member)
         view.authors = (i.user, opponent)
 
-        view.channel = await view.message.create_thread(
-            name=f"猜數字-{randint(1000, 9999)}"
-        )
+        view.channel = await view.message.create_thread(name=f"猜數字-{randint(100, 999)}")
         await view.channel.add_user(i.user)
         await view.channel.add_user(opponent)
 
