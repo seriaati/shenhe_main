@@ -105,14 +105,13 @@ class AprilFoolCog(commands.Cog):
                         message.guild.members,
                         display_name=ref.author.name,
                     )
-                    role = real_author.top_role
                 else:
                     real_author = ref.author
-                    role = [r for r in real_author.roles if "神之眼" in r.name]
-                    if not role:
-                        role = real_author.top_role
-                    else:
-                        role = role[0]
+                role = [r for r in real_author.roles if "神之眼" in r.name]
+                if not role:
+                    role = real_author.top_role
+                else:
+                    role = role[0]
 
                 mention = real_author.mention
 
