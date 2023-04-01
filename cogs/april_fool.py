@@ -85,7 +85,10 @@ class AprilFoolCog(commands.Cog):
                 content += "w" * ww_num
 
             # reaplce all emoji strings with "?"
-            guild_emoji_strings = [f"<:{a.name}:{a.id}>" for a in message.guild.emojis]
+            guild_emoji_strings = [
+                f"<{'a' if a.animated else ''}:{a.name}:{a.id}>"
+                for a in message.guild.emojis
+            ]
             if not any(a in content for a in guild_emoji_strings):
                 content = re.sub(r"<:\w+:\d+>", choice(kokomi_emojis), content)
                 content = re.sub(r"<a:\w+:\d+>", choice(kokomi_emojis), content)
