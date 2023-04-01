@@ -67,7 +67,11 @@ class AprilFoolCog(commands.Cog):
             return
 
         now = datetime.now()
-        if now.month == 4 and now.day == 1:
+        if (
+            now.month == 4
+            and now.day == 1
+            and any(word in message.content for word in nii_lang_dict)
+        ):
             await message.delete()
 
             webhook = await message.channel.webhooks()
@@ -95,28 +99,35 @@ class AprilFoolCog(commands.Cog):
                 content = re.sub(r"<a:\w+:\d+>", choice(kokomi_emojis), content)
 
             if message.reference:
-                real_author = discord.utils.get(
-                    message.guild.members,
-                    display_name=message.reference.resolved.author.name,
-                )
-                if real_author:
-                    mention = real_author.mention
+                ref = message.reference.resolved
+                if ref.author.bot:
+                    real_author = discord.utils.get(
+                        message.guild.members,
+                        display_name=ref.author.name,
+                    )
+                    role = real_author.top_role
                 else:
-                    mention = message.reference.resolved.author.mention
+                    real_author = ref.author
+                    role = [r for r in real_author.roles if "神之眼" in r.name]
+                    if not role:
+                        role = real_author.top_role
+                    else:
+                        role = role[0]
+
+                mention = real_author.mention
 
                 embed = discord.Embed(
-                    color=real_author.top_role.color,
-                    description=f"{message.reference.resolved.content}\n\n[跳至該訊息]({message.reference.resolved.jump_url})",
+                    color=role.color,
+                    description=f"{ref.content}\n\n[跳至該訊息]({ref.jump_url})",
                     timestamp=message.created_at,
                 )
                 embed.set_author(
                     name=real_author.display_name,
                     icon_url=real_author.display_avatar.url,
                 )
-                if message.reference.resolved.attachments:
-                    embed.set_thumbnail(
-                        url=message.reference.resolved.attachments[0].url
-                    )
+
+                if ref.attachments:
+                    embed.set_thumbnail(url=ref.attachments[0].url)
                 content = f"{content} {mention}"
 
             await webhook.send(
