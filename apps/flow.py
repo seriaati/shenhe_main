@@ -1,5 +1,6 @@
 import logging
 from datetime import datetime, time, timedelta
+from typing import Optional
 
 import asyncpg
 
@@ -14,6 +15,7 @@ async def register_flow_account(user_id: int, pool: asyncpg.Pool) -> None:
         user_id (int): The user's ID.
         pool (asyncpg.Pool): The database pool.
     """
+    logging.info(f"Registering flow account for {user_id}")
     default = get_dt_now() - timedelta(days=1)
     await pool.execute(
         "INSERT INTO flow_accounts (user_id, morning, noon, night) VALUES ($1, $2, $3, $4) ON CONFLICT DO NOTHING",
@@ -99,12 +101,12 @@ async def free_flow(
     await register_flow_account(user_id, pool)
     now = get_dt_now()
     if time_in_range(start, end, now.time()):
-        last_give: datetime = await pool.fetchval(
+        last_give: Optional[datetime] = await pool.fetchval(
             f"SELECT {time_type.value} FROM flow_accounts WHERE user_id = $1", user_id
         )
         if last_give is not None and last_give.day != now.day:
             logging.info(
-                f"Free flow for {user_id}, lastgive is {last_give} ({time_type.value})"
+                f"Free flow for {user_id}, last_give is {last_give}, now is {now} ({time_type.value})"
             )
             await flow_transaction(user_id, 1, pool)
             await pool.execute(
