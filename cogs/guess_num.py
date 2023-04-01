@@ -86,6 +86,7 @@ class GuessNumCog(commands.Cog):
                 await self.bot.pool.execute(
                     "DELETE FROM guess_num WHERE channel_id = $1", message.channel.id
                 )
+                await message.channel.edit(name="猜數字-已結束", locked=True, archived=True)
 
     @app_commands.command(name="guess-num", description="猜數字遊戲")
     @app_commands.guild_only()
