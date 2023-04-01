@@ -2,7 +2,7 @@ from discord import Interaction, SelectOption, app_commands
 from discord.ext import commands
 from discord.ui import Select
 
-from debug import DefaultView
+from dev.model import BaseView
 from utility.utils import default_embed
 
 
@@ -54,7 +54,7 @@ class Dropdown(Select):
         await i.response.edit_message(embed=embed)
 
 
-class DropdownView(DefaultView):
+class DropdownView(BaseView):
     def __init__(self, bot: commands.Bot):
         super().__init__()
         self.add_item(Dropdown(bot))

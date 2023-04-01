@@ -10,8 +10,7 @@ from discord.ui import Button
 
 from apps.flow import flow_transaction, get_user_flow
 from data.fish.fish_data import fish_data
-from debug import DefaultView
-from dev.model import BotModel
+from dev.model import BaseView, BotModel
 from utility.utils import ayaaka_embed
 
 
@@ -155,7 +154,7 @@ class FishCog(commands.Cog):
             else:
                 await i.response.defer()
 
-    class TouchFishView(DefaultView):  # 摸魚view
+    class TouchFishView(BaseView):  # 摸魚view
         def __init__(
             self,
             db: aiosqlite.Connection,

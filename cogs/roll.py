@@ -14,7 +14,7 @@ from apps.flow import (
 )
 from apps.roll import RollApp
 from data.roll.banner import banner
-from debug import DefaultView
+from dev.model import BaseView
 from utility.utils import default_embed, error_embed, log
 
 
@@ -23,7 +23,7 @@ class RollCog(commands.Cog):
         self.bot = bot
         self.debug = self.bot.debug
 
-    class RollView(DefaultView):
+    class RollView(BaseView):
         def __init__(
             self, author: Member, db: aiosqlite.Connection, public: TextChannel
         ):

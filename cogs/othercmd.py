@@ -7,8 +7,7 @@ from discord.ext import commands
 from discord.ui import Button
 
 import utility.draw as draw
-from debug import DefaultView
-from dev.model import BotModel, DefaultEmbed, ErrorEmbed
+from dev.model import BaseView, BotModel, DefaultEmbed, ErrorEmbed
 
 
 class OtherCMDCog(commands.Cog, name="other"):
@@ -156,7 +155,7 @@ class OtherCMDCog(commands.Cog, name="other"):
     @app_commands.rename(member="使用者")
     async def avatar(self, i: discord.Interaction, member: discord.Member):
         embed = DefaultEmbed(str(member))
-        view = DefaultView()
+        view = BaseView()
         view.add_item(Button(label="下載頭像", url=member.display_avatar.url))
         embed.set_image(url=member.avatar)
         await i.response.send_message(embed=embed, view=view)

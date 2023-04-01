@@ -53,7 +53,7 @@ class BaseView(discord.ui.View):
     ):
         super().__init__(timeout=timeout)
         self.message: typing.Optional[discord.Message] = None
-        self.author: typing.Optional[discord.User] = None
+        self.author: typing.Optional[typing.Union[discord.User, discord.Member]] = None
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         if self.author is None:

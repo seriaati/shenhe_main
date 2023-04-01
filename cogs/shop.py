@@ -5,35 +5,21 @@ import discord
 from discord import app_commands, ui
 from discord.ext import commands
 
-from apps.flow import flow_transaction, get_user_flow
+from apps.flow import check_flow_account, flow_transaction, get_user_flow
 from apps.shop import create_shop_item, delete_shop_item, get_item_names
-from cogs.flow import has_flow_account
-from debug import DefaultView
 from dev.enum import ShopAction
-from dev.model import DefaultEmbed, ErrorEmbed, Inter
+from dev.model import BaseView, DefaultEmbed, ErrorEmbed, Inter
 
 
-class ShopItemView(DefaultView):
+class ShopItemView(BaseView):
     def __init__(
         self,
         item_names: typing.List,
         action: ShopAction,
         pool: asyncpg.Pool,
-        author: typing.Union[discord.Member, discord.User],
     ):
         super().__init__(timeout=None)
-        self.author = author
         self.add_item(ShopItemSelect(item_names, action, pool))
-
-    async def interaction_check(self, interaction: Inter) -> bool:
-        if self.author.id != interaction.user.id:
-            await interaction.response.send_message(
-                embed=ErrorEmbed().set_author(
-                    name="這不是你的操作視窗", icon_url=interaction.user.avatar
-                ),
-                ephemeral=True,
-            )
-        return self.author.id == interaction.user.id
 
 
 class ShopItemSelect(ui.Select):
@@ -91,10 +77,10 @@ class ShopCog(commands.Cog):
         super().__init__()
         self.bot = bot
 
-    @has_flow_account()
     @app_commands.command(name="shop", description="暴幣商店")
     async def show(self, inter: discord.Interaction):
         i: Inter = inter  # type: ignore
+        await check_flow_account(i.user.id, i.client.pool)
         rows = await i.client.pool.fetch("SELECT name, flow FROM flow_shop")
         item_str = ""
         item_names = []
@@ -103,8 +89,10 @@ class ShopCog(commands.Cog):
             item_str += f"• {row['name']} - **{row['flow']}** 暴幣\n\n"
 
         embed = DefaultEmbed("🛒 暴幣商店", item_str)
-        view = ShopItemView(item_names, ShopAction.BUY, i.client.pool, i.user)
+        view = ShopItemView(item_names, ShopAction.BUY, i.client.pool)
+        view.author = i.user
         await i.response.send_message(embed=embed, view=view)
+        view.message = await i.original_response()
 
     @app_commands.command(name="add-item", description="新增商品")
     @app_commands.rename(item="商品名稱", flow="價格")
@@ -121,7 +109,7 @@ class ShopCog(commands.Cog):
     async def removeitem(self, inter: discord.Interaction):
         i: Inter = inter  # type: ignore
         item_names = await get_item_names(i.client.pool)
-        view = ShopItemView(item_names, ShopAction.DELETE, i.client.pool, i.user)
+        view = ShopItemView(item_names, ShopAction.DELETE, i.client.pool)
         await i.response.send_message(view=view, ephemeral=True)
 
 
