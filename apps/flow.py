@@ -113,7 +113,7 @@ async def free_flow(
     now = get_dt_now()
     if time_in_range(start, end, now.time()):
         last_give: datetime = await pool.fetchval(
-            f"SELECT {time_type.value} FROM flow_accounts WHERE user_id = $1"
+            f"SELECT {time_type.value} FROM flow_accounts WHERE user_id = $1", user_id
         )
         if last_give is not None and last_give.day != now.day:
             await flow_transaction(user_id, 1, pool)
