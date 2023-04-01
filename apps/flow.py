@@ -107,7 +107,7 @@ async def free_flow(
         )
         if last_give is not None and last_give.day != now.day:
             logging.info(
-                f"Free flow for {user_id}, last_give is {last_give}, now is {now} ({time_type.value})"
+                f"Free flow for {user_id}, last_give is {last_give} ({time_type.value})"
             )
             await flow_transaction(user_id, 1, pool)
             await pool.execute(

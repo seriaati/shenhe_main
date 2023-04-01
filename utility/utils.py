@@ -53,7 +53,7 @@ def get_dt_now() -> datetime:
     utc8_now = utc_now.replace(tzinfo=pytz.utc).astimezone(
         tz
     )  # convert to UTC+8 timezone
-    return utc8_now
+    return utc8_now.replace(tzinfo=None)
 
 
 def divide_chunks(l, n):
