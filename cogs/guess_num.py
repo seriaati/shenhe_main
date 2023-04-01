@@ -57,9 +57,9 @@ class GuessNumCog(commands.Cog):
         p2_num: int = row["player_two_num"]
         p2_guess: int = row["player_two_guess"]
 
-        if p2_guess + 1 > p1_guess:
+        if p2_guess + 1 > p1_guess and message.author.id != p1:
             return await message.reply(embed=ErrorEmbed("現在是輪到玩家一猜測"))
-        if p1_guess + 1 > p2_guess + 1:
+        if p1_guess + 1 > p2_guess + 1 and message.author.id != p2:
             return await message.reply(embed=ErrorEmbed("現在是輪到玩家二猜測"))
 
         answer = None
