@@ -93,30 +93,30 @@ class AdminCog(commands.Cog):
         async with aiosqlite.connect("main.db") as db:
             async with db.execute("SELECT flow FROM bank") as cursor:
                 bank = await cursor.fetchone()
-                await self.bot.pool.execute("UPDATE bank SET flow = $1", bank["flow"])
+                await self.bot.pool.execute("UPDATE bank SET flow = $1", bank[0])
             async with db.execute("SELECT user_id, flow FROM flow_accounts") as cursor:
                 rows = await cursor.fetchall()
                 for row in rows:
                     await self.bot.pool.execute(
                         "INSERT INTO flow_accounts (user_id, flow) VALUES ($1, $2)",
-                        row["user_id"],
-                        row["flow"],
+                        row[0],
+                        row[1],
                     )
             async with db.execute("SELECT name, flow FROM flow_shop") as cursor:
                 rows = await cursor.fetchall()
                 for row in rows:
                     await self.bot.pool.execute(
                         "INSERT INTO flow_shop (name, flow) VALUES ($1, $2)",
-                        row["name"],
-                        row["flow"],
+                        row[0],
+                        row[1],
                     )
             async with db.execute("SELECT owner_id, channel_id FROM voice") as cursor:
                 rows = await cursor.fetchall()
                 for row in rows:
                     await self.bot.pool.execute(
                         "INSERT INTO voice (owner_id, channel_id) VALUES ($1, $2)",
-                        row["owner_id"],
-                        row["channel_id"],
+                        row[0],
+                        row[1],
                     )
         await ctx.send("Migrated")
 
