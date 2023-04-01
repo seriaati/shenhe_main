@@ -7,7 +7,7 @@ from discord import app_commands
 from discord.ext import commands
 
 import apps.flow as flow_app
-from utility.paginators.paginator import GeneralPaginator
+from utility.paginator import GeneralPaginator
 from utility.utils import default_embed, divide_chunks
 
 

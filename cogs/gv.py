@@ -6,7 +6,7 @@ import discord
 from discord import app_commands, ui
 from discord.ext import commands
 
-from utility.paginators.paginator import GeneralPaginator
+from utility.paginator import GeneralPaginator
 from utility.utils import default_embed
 
 
