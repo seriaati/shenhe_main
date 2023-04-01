@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime, time, timedelta
 
 import asyncpg
@@ -31,6 +32,7 @@ async def flow_transaction(user_id: int, amount: int, pool: asyncpg.Pool) -> Non
         amount (int): The amount of flow to transfer.
         pool (asyncpg.Pool): The database pool.
     """
+    logging.info(f"Transferring {amount} flow to {user_id}")
     await register_flow_account(user_id, pool)
     await pool.execute(
         "UPDATE flow_accounts SET flow = flow + $1 WHERE user_id = $2", amount, user_id
@@ -45,6 +47,7 @@ async def remove_flow_account(user_id: int, pool: asyncpg.Pool) -> None:
         user_id (int): The user's ID.
         pool (asyncpg.Pool): The database pool.
     """
+    logging.info(f"Removing flow account for {user_id}")
     flow = await get_user_flow(user_id, pool)
     await flow_transaction(user_id, flow, pool)
     await pool.execute("DELETE FROM flow_accounts WHERE user_id = $1", user_id)
@@ -100,6 +103,7 @@ async def free_flow(
             f"SELECT {time_type.value} FROM flow_accounts WHERE user_id = $1", user_id
         )
         if last_give is not None and last_give.day != now.day:
+            logging.info(f"Free flow for {user_id}, lastgive is {last_give} ({time_type.value})"
             await flow_transaction(user_id, 1, pool)
             await pool.execute(
                 f"UPDATE flow_accounts SET {time_type.value} = $1 WHERE user_id = $2",
