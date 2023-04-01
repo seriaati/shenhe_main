@@ -4,7 +4,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-from dev.model import BotModel, DefaultEmbed, Inter
+from dev.model import BotModel, DefaultEmbed, ErrorEmbed, Inter
 from ui.guess_num import GuessNumView
 
 
@@ -92,6 +92,15 @@ class GuessNumCog(commands.Cog):
     @app_commands.describe(opponent="猜數字的對手（玩家二）")
     async def guess_num(self, inter: discord.Interaction, opponent: discord.Member):
         i: Inter = inter  # type: ignore
+
+        if opponent.bot:
+            return await i.response.send_message(
+                embed=ErrorEmbed("錯誤", "對手不能是機器人 （雖然那樣會蠻酷的）"), ephemeral=True
+            )
+        if opponent == i.user:
+            return await i.response.send_message(
+                embed=ErrorEmbed("錯誤", "對手不能是自己"), ephemeral=True
+            )
 
         view = GuessNumView()
         await i.response.send_message(
