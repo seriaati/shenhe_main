@@ -44,7 +44,8 @@ class GuessNumCog(commands.Cog):
             return
 
         row = await self.bot.pool.fetchrow(
-            "SELECT * FROM guess_num WHERE channel_id = $1", message.channel.id
+            "SELECT * FROM guess_num WHERE channel_id = $1 AND player_one_num IS NOT NULL AND player_two_num IS NOT NULL",
+            message.channel.id,
         )
         if row is None:
             return
