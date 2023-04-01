@@ -10,10 +10,10 @@ class GuessNumView(BaseView):
     def __init__(self):
         super().__init__(timeout=60.0)
         self.channel: discord.Thread
-        self.authors: typing.List[discord.Member]
+        self.authors: typing.Tuple[discord.Member, discord.Member]
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
-        if interaction.user.id in self.authors:
+        if interaction.user in self.authors:
             return True
         else:
             await interaction.response.send_message(
