@@ -39,7 +39,9 @@ class AdminCog(commands.Cog):
         for module in modules:
             if module is None:
                 continue
-            if module.__name__.startswith(("cogs.", "utility.", "apps.", "data.")):
+            if module.__name__.startswith(
+                ("apps.", "cogs.", "data.", "dev.", "ui.", "utility.")
+            ):
                 try:
                     importlib.reload(module)
                 except Exception as e:
