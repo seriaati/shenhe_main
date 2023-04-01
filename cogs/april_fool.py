@@ -104,11 +104,8 @@ class AprilFoolCog(commands.Cog):
                 else:
                     mention = message.reference.resolved.author.mention
 
-                role = [r for r in real_author.roles if "神之眼" in r.name]
-                color = role[0].color if role else real_author.top_role.color
-
                 embed = discord.Embed(
-                    color=color,
+                    color=real_author.top_role.color,
                     description=f"{message.reference.resolved.content}\n\n[跳至該訊息]({message.reference.resolved.jump_url})",
                     timestamp=message.created_at,
                 )
