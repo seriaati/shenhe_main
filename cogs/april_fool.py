@@ -25,6 +25,9 @@ nii_lang_dict = {
     "沒": "迷",
     "怎": "腫",
     "的": "躂",
+    "平": "大",
+    "flat": "boing boing",
+    "牆": "大肉包",
 }
 
 kokomi_emojis = (
