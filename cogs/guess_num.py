@@ -58,10 +58,10 @@ class GuessNumCog(commands.Cog):
         answer = None
         is_p_one = False
         if message.author.id == p1:
-            answer = str(p2_num)
+            answer = str(p1_num)
             is_p_one = True
         elif message.author.id == p2:
-            answer = str(p1_num)
+            answer = str(p2_num)
 
         if answer:
             query = "player_one" if is_p_one else "player_two"
@@ -108,7 +108,8 @@ class GuessNumCog(commands.Cog):
         await i.response.send_message(
             content=f"{i.user.mention} 邀請 {opponent.mention} 來玩猜數字",
             embed=DefaultEmbed(
-                "請雙方設定數字", f"玩家一: {i.user.mention}\n玩家二: {opponent.mention}"
+                "請雙方設定數字",
+                f"點按按鈕即可設定數字，玩家二需等待玩家一設定完畢才可設定數字\n\n玩家一: {i.user.mention}\n玩家二: {opponent.mention}",
             ).set_footer(text="設定完後請在討論串中猜測數字"),
             view=view,
             allowed_mentions=discord.AllowedMentions(users=True),
@@ -118,7 +119,9 @@ class GuessNumCog(commands.Cog):
         assert isinstance(i.user, discord.Member)
         view.authors = (i.user, opponent)
 
-        view.channel = await view.message.create_thread(name=f"猜數字-{randint(1000, 9999)}")
+        view.channel = await view.message.create_thread(
+            name=f"猜數字-{randint(1000, 9999)}"
+        )
         await view.channel.add_user(i.user)
         await view.channel.add_user(opponent)
 

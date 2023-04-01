@@ -40,15 +40,21 @@ class GuessNumView(BaseView):
 class GuessNumModal(ui.Modal):
     number = ui.TextInput(placeholder="不可包含0", min_length=4, max_length=4, label="輸入數字")
 
-    def __init__(self, player_one: bool, guess_num_view: GuessNumView):
+    def __init__(self, is_p1: bool, guess_num_view: GuessNumView):
         super().__init__(title="輸入自己的數字", timeout=60.0)
 
-        self.is_p1 = player_one
+        self.is_p1 = is_p1
         self.guess_num_view = guess_num_view
 
     async def on_submit(self, i: Inter, /) -> None:
         if "0" in self.number.value:
-            return await i.response.send_message("數字不可包含0", ephemeral=True)
+            return await i.response.send_message(
+                embed=ErrorEmbed("數字不可包含0"), ephemeral=True
+            )
+        if not self.number.value.isdigit():
+            return await i.response.send_message(
+                embed=ErrorEmbed("請勿輸入數字以外的內容"), ephemeral=True
+            )
 
         await i.response.defer(ephemeral=True)
 
