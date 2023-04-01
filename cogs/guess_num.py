@@ -64,20 +64,19 @@ class GuessNumCog(commands.Cog):
 
         answer = None
         is_p_one = False
+        guess = "?"
         if message.author.id == p1:
-            answer = str(p1_num)
+            answer = str(p2_num)
+            guess = p1_guess + 1
             is_p_one = True
         elif message.author.id == p2:
-            answer = str(p2_num)
+            answer = str(p1_num)
+            guess = p2_guess + 1
 
         if answer:
             query = "player_one" if is_p_one else "player_two"
             await self.bot.pool.execute(
                 f"UPDATE guess_num SET {query}_guess = {query}_guess + 1 WHERE channel_id = $1",
-                message.channel.id,
-            )
-            guess = await self.bot.pool.fetchval(
-                f"SELECT {query}_guess FROM guess_num WHERE channel_id = $1",
                 message.channel.id,
             )
             a, b = return_a_b(answer, message.content)
