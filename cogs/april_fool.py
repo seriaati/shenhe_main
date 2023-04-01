@@ -115,7 +115,9 @@ class AprilFoolCog(commands.Cog):
                 content=content,
                 username=message.author.display_name,
                 avatar_url=message.author.display_avatar.url,
-                files=[await a.to_file() for a in message.attachments],
+                files=[
+                    await a.to_file(spoiler=a.is_spoiler()) for a in message.attachments
+                ],
                 embed=embed if message.reference else None,
             )
 
