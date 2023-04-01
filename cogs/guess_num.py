@@ -106,8 +106,8 @@ class GuessNumCog(commands.Cog):
         await i.response.send_message(
             content=f"{i.user.mention} 邀請 {opponent.mention} 來玩猜數字",
             embed=DefaultEmbed(
-                "請設定雙方數字", f"玩家一: {i.user.mention}\n玩家二: {opponent.mention}"
-            ),
+                "請雙方設定數字", f"玩家一: {i.user.mention}\n玩家二: {opponent.mention}"
+            ).set_footer(text="設定完後請在討論串中猜測數字"),
             view=view,
             allowed_mentions=discord.AllowedMentions(users=True),
         )

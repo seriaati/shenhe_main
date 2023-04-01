@@ -92,4 +92,7 @@ class GuessNumModal(ui.Modal):
             embed=DefaultEmbed("設定成功", f"你的數字為 {self.number.value}"), ephemeral=True
         )
         if p1_button.disabled and p2_button.disabled:
-            await i.followup.send(embed=DefaultEmbed("遊戲開始", "玩家一和玩家二都已設定數字"))
+            await self.guess_num_view.channel.send(
+                content=f"{p1.mention} {p2.mention}",
+                embed=DefaultEmbed("遊戲開始", "玩家一和玩家二都已設定數字"),
+            )
