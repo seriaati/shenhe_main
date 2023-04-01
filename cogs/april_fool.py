@@ -28,6 +28,8 @@ nii_lang_dict = {
     "flat": "boing boing",
     "牆": "大肉包",
     "小": "大",
+    "wall": "big",
+    "ㄑㄧㄤ": "ㄉㄚ",
 }
 
 kokomi_emojis = (
