@@ -118,7 +118,7 @@ class GuessNumCog(commands.Cog):
         assert isinstance(i.user, discord.Member)
         view.authors = (i.user, opponent)
 
-        view.channel = await view.message.create_thread(name=f"猜數字-{randint(0, 9999)}")
+        view.channel = await view.message.create_thread(name=f"猜數字-{randint(1000, 9999)}")
         await view.channel.add_user(i.user)
         await view.channel.add_user(opponent)
 

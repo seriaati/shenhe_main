@@ -94,5 +94,5 @@ class GuessNumModal(ui.Modal):
         if p1_button.disabled and p2_button.disabled:
             await self.guess_num_view.channel.send(
                 content=f"{p1.mention} {p2.mention}",
-                embed=DefaultEmbed("遊戲開始", "玩家一和玩家二都已設定數字"),
+                embed=DefaultEmbed("遊戲開始", "玩家一和玩家二都已設定數字\n直接在此頻道輸入任何四位數字即可開始猜測"),
             )
