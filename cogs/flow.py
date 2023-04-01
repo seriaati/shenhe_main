@@ -8,7 +8,7 @@ from discord.ext import commands
 
 import apps.flow as flow_app
 from dev.enum import TimeType
-from dev.model import BotModel, DefaultEmbed, Inter
+from dev.model import BotModel, DefaultEmbed, ErrorEmbed, Inter
 from utility.paginator import GeneralPaginator
 from utility.utils import divide_chunks
 
@@ -66,8 +66,16 @@ class FlowCog(commands.Cog, name="flow"):
     async def poke(self, i: discord.Interaction, member: discord.Member):
         await flow_app.register_flow_account(member.id, self.bot.pool)
 
-        success = True if randint(1, 100) <= 50 else False
+        success = True if randint(1, 2) == 1 else False
         flow_num = randint(1, 3)
+        flow_member = await flow_app.get_user_flow(member.id, self.bot.pool)
+        if flow_member < 0:
+            return await i.response.send_message(
+                embed=ErrorEmbed("對方的暴幣不足 (小於0)"), ephemeral=True
+            )
+        if success and flow_member < flow_num:
+            flow_num = flow_member
+
         await flow_app.flow_transaction(
             member.id, -flow_num if success else flow_num, self.bot.pool
         )
