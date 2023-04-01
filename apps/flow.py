@@ -15,15 +15,16 @@ async def register_flow_account(user_id: int, pool: asyncpg.Pool) -> None:
         user_id (int): The user's ID.
         pool (asyncpg.Pool): The database pool.
     """
-    logging.info(f"Registering flow account for {user_id}")
     default = get_dt_now() - timedelta(days=1)
-    await pool.execute(
+    result = await pool.execute(
         "INSERT INTO flow_accounts (user_id, morning, noon, night) VALUES ($1, $2, $3, $4) ON CONFLICT DO NOTHING",
         user_id,
         default,
         default,
         default,
     )
+    if result == "INSERT 0 1":
+        logging.info(f"Registered flow account for {user_id}")
 
 
 async def flow_transaction(user_id: int, amount: int, pool: asyncpg.Pool) -> None:
