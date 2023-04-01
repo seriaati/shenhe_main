@@ -1,8 +1,8 @@
 aiohttp==3.8.3
+asyncpg==0.27.0
 aiosqlite==0.18.0
 discord.py==2.1.0
 genshin==1.5.0
 python-dotenv==0.21.0
 python_dateutil==2.8.2
-pytz==2022.2.1
 wavelink==1.0.0
