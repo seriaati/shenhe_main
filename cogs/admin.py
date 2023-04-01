@@ -86,42 +86,6 @@ class AdminCog(commands.Cog):
                 content=f"{message.content}\n(由 <@{message.author.id}> 寄出)", files=files
             )
 
-    @commands.is_owner()
-    @commands.command(name="migrate")
-    async def migrate(self, ctx: commands.Context):
-        import aiosqlite
-
-        await ctx.send("Migrating...")
-        async with aiosqlite.connect("main.db") as db:
-            async with db.execute("SELECT flow FROM bank") as cursor:
-                bank = await cursor.fetchone()
-                await self.bot.pool.execute("UPDATE bank SET flow = $1", bank[0])
-            async with db.execute("SELECT user_id, flow FROM flow_accounts") as cursor:
-                rows = await cursor.fetchall()
-                for row in rows:
-                    await self.bot.pool.execute(
-                        "INSERT INTO flow_accounts (user_id, flow) VALUES ($1, $2)",
-                        row[0],
-                        row[1],
-                    )
-            async with db.execute("SELECT name, flow FROM flow_shop") as cursor:
-                rows = await cursor.fetchall()
-                for row in rows:
-                    await self.bot.pool.execute(
-                        "INSERT INTO flow_shop (name, flow) VALUES ($1, $2)",
-                        row[0],
-                        row[1],
-                    )
-            async with db.execute("SELECT owner_id, channel_id FROM voice") as cursor:
-                rows = await cursor.fetchall()
-                for row in rows:
-                    await self.bot.pool.execute(
-                        "INSERT INTO voice (owner_id, channel_id) VALUES ($1, $2)",
-                        row[0],
-                        row[1],
-                    )
-        await ctx.send("Migrated")
-
 
 async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(AdminCog(bot))
