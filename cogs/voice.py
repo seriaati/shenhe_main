@@ -64,7 +64,6 @@ class VoiceCog(commands.GroupCog, name="vc"):
 
         old = before.channel
         new = after.channel
-        assert old and new
 
         if (
             new is None
@@ -95,9 +94,9 @@ class VoiceCog(commands.GroupCog, name="vc"):
         if new is None:
             await member.remove_roles(vc_role)
             owner = await self.bot.pool.fetchrow(
-                "SELECT * FROM voice WHERE owner_id = $1", member.id
+                "SELECT 1 FROM voice WHERE owner_id = $1", member.id
             )
-            if owner is not None and len(old.members) != 0:
+            if owner is not None and old is not None and len(old.members) != 0:
                 await self.bot.pool.execute(
                     "UPDATE voice SET owner_id = $1 WHERE channel_id = $2",
                     random.choice(old.members).id,
