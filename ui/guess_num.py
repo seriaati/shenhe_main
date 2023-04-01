@@ -38,7 +38,7 @@ class GuessNumView(BaseView):
 
 
 class GuessNumModal(ui.Modal):
-    number = ui.TextInput(placeholder="不可包含0", min_length=1, max_length=4, label="輸入數字")
+    number = ui.TextInput(placeholder="不可包含0", min_length=4, max_length=4, label="輸入數字")
 
     def __init__(self, player_one: bool, guess_num_view: GuessNumView):
         super().__init__(title="輸入自己的數字", timeout=60.0)
