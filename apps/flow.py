@@ -103,7 +103,9 @@ async def free_flow(
             f"SELECT {time_type.value} FROM flow_accounts WHERE user_id = $1", user_id
         )
         if last_give is not None and last_give.day != now.day:
-            logging.info(f"Free flow for {user_id}, lastgive is {last_give} ({time_type.value})"
+            logging.info(
+                f"Free flow for {user_id}, lastgive is {last_give} ({time_type.value})"
+            )
             await flow_transaction(user_id, 1, pool)
             await pool.execute(
                 f"UPDATE flow_accounts SET {time_type.value} = $1 WHERE user_id = $2",
