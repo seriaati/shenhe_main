@@ -94,18 +94,13 @@ class AdminCog(commands.Cog):
             async with db.execute("SELECT flow FROM bank") as cursor:
                 bank = await cursor.fetchone()
                 await self.bot.pool.execute("UPDATE bank SET flow = $1", bank["flow"])
-            async with db.execute(
-                "SELECT user_id, flow, morning, noon, night FROM flow_accounts"
-            ) as cursor:
+            async with db.execute("SELECT user_id, flow FROM flow_accounts") as cursor:
                 rows = await cursor.fetchall()
                 for row in rows:
                     await self.bot.pool.execute(
-                        "INSERT INTO flow_accounts (user_id, flow, morning, noon, night) VALUES ($1, $2, $3, $4, $5)",
+                        "INSERT INTO flow_accounts (user_id, flow) VALUES ($1, $2)",
                         row["user_id"],
                         row["flow"],
-                        row["morning"],
-                        row["noon"],
-                        row["night"],
                     )
             async with db.execute("SELECT name, flow FROM flow_shop") as cursor:
                 rows = await cursor.fetchall()
