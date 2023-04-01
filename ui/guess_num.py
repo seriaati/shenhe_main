@@ -8,7 +8,7 @@ from dev.model import BaseView, DefaultEmbed, ErrorEmbed, Inter
 
 class GuessNumView(BaseView):
     def __init__(self):
-        super().__init__(timeout=60.0)
+        super().__init__(timeout=600.0)
         self.channel: discord.Thread
         self.authors: typing.Tuple[discord.Member, discord.Member]
 
