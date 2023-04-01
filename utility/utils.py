@@ -1,6 +1,7 @@
 from datetime import datetime, time
 
 import discord
+import pytz
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -45,9 +46,14 @@ def log(is_system: bool, is_error: bool, log_type: str, log_msg: str):
     return log_str
 
 
-def get_dt_now():
-    """Get current time in UTC+8"""
-    return datetime.now()
+def get_dt_now() -> datetime:
+    """Get current datetime in UTC+8"""
+    tz = pytz.timezone("Asia/Shanghai")  # UTC+8 timezone
+    utc_now = datetime.utcnow()  # get current UTC time
+    utc8_now = utc_now.replace(tzinfo=pytz.utc).astimezone(
+        tz
+    )  # convert to UTC+8 timezone
+    return utc8_now
 
 
 def divide_chunks(l, n):
