@@ -2,25 +2,26 @@ import asyncio
 from typing import Any
 
 import aiosqlite
-from discord import ButtonStyle, Interaction, TextChannel, app_commands, Member
+from discord import ButtonStyle, Interaction, Member, TextChannel, app_commands
 from discord.ext import commands
 from discord.ui import Button
+
 from apps.flow import (
     check_flow_account,
     flow_transaction,
     get_user_flow,
     register_flow_account,
 )
-from debug import DefaultView
 from apps.roll import RollApp
 from data.roll.banner import banner
+from debug import DefaultView
 from utility.utils import default_embed, error_embed, log
 
 
 class RollCog(commands.Cog):
     def __init__(self, bot) -> None:
         self.bot = bot
-        self.debug_toggle = self.bot.debug_toggle
+        self.debug = self.bot.debug
 
     class RollView(DefaultView):
         def __init__(
@@ -198,7 +199,7 @@ class RollCog(commands.Cog):
             await register_flow_account(i.user.id, i.client.db)
         public = (
             i.client.get_channel(916951131022843964)
-            if not self.bot.debug_toggle
+            if not self.bot.debug
             else i.client.get_channel(909595117952856084)
         )
         view = RollCog.RollView(i.user, self.bot.db, public)

@@ -1,42 +1,56 @@
 # shenhe-bot by seria
 
+import logging
 import os
 import platform
-import sys
-import traceback
 from pathlib import Path
 
 import aiohttp
-import aiosqlite
-from discord import Intents, Interaction, Message, app_commands
+import asyncpg
+import discord
 from discord.ext import commands
 from dotenv import load_dotenv
 
-from cogs.welcome import WelcomeCog
-from debug import DebugView
-from utility.utils import error_embed, log
+from dev.model import BotModel, ErrorEmbed
 
 load_dotenv()
 if platform.system() == "Windows":
     token = os.getenv("YELAN_TOKEN")
     prefix = ["?"]
     application_id = os.getenv("YELAN_APP_ID")
-    debug_toggle = True
+    debug = True
 else:
     token = os.getenv("SHENHE_MAIN_TOKEN")
     prefix = ["!"]
     application_id = os.getenv("SHENHE_MAIN_APP_ID")
-    debug_toggle = False
+    debug = False
 
-# 前綴, token, intents
-intents = Intents.default()
+intents = discord.Intents.default()
 intents.members = True
 intents.reactions = True
 intents.message_content = True
 intents.presences = True
 
 
-class ShenheBot(commands.Bot):
+class ShenheCommandTree(discord.app_commands.CommandTree):
+    def __init__(self, bot: commands.Bot):
+        super().__init__(bot)
+
+    async def on_error(
+        self, i: discord.Interaction, e: discord.app_commands.AppCommandError, /
+    ) -> None:
+        logging.error(f"Error in command {i.command}: {type(e)} {e}")
+
+        embed = ErrorEmbed("錯誤", str(e))
+        try:
+            await i.response.send_message(embed=embed, ephemeral=True)
+        except discord.InteractionResponded:
+            await i.followup.send(embed=embed, ephemeral=True)
+        except Exception:
+            pass
+
+
+class ShenheBot(BotModel):
     def __init__(self):
         super().__init__(
             command_prefix=prefix,
@@ -46,26 +60,26 @@ class ShenheBot(commands.Bot):
 
     async def setup_hook(self) -> None:
         self.session = aiohttp.ClientSession()
-        self.db = await aiosqlite.connect("main.db")
-        self.guild_id = 1061877505067327528
-        self.repeat = False
-        self.prev = False
-        self.debug_toggle = debug_toggle
-        self.gv_role_blacklist = []
-        self.gv_role_name = ""
+        self.debug = debug
+        if self.debug:
+            logging.basicConfig(level=logging.DEBUG)
+
+        pool = await asyncpg.create_pool(os.getenv("DATABASE_URL"))
+        assert pool
+        self.pool = pool
 
         await self.load_extension("jishaku")
         for filepath in Path("./cogs").glob("**/*.py"):
             cog_name = Path(filepath).stem
+            if cog_name in ("roll", "fish"):
+                continue
             await self.load_extension(f"cogs.{cog_name}")
 
-        self.add_view(WelcomeCog.AcceptRules())
-
     async def on_ready(self):
-        print(log(True, False, "Bot", f"Logged in as {self.user}"))
+        logging.info(f"Logged in as {self.user} (ID: {self.user.id})")
 
-    async def on_message(self, message: Message):
-        if message.author.id == self.user.id:
+    async def on_message(self, message: discord.Message):
+        if self.user and message.author.id == self.user.id:
             return
         await self.process_commands(message)
 
@@ -77,44 +91,14 @@ class ShenheBot(commands.Bot):
         if isinstance(error, ignored):
             return
         else:
-            print(
-                "Ignoring exception in command {}:".format(ctx.command), file=sys.stderr
-            )
-            traceback.print_exception(
-                type(error), error, error.__traceback__, file=sys.stderr
-            )
+            logging.error(f"Error in command {ctx.command}: {error}")
 
     async def close(self) -> None:
-        await self.db.close()
+        await self.pool.close()
         await self.session.close()
         return await super().close()
 
 
 bot = ShenheBot()
-
-
-@bot.before_invoke
-async def before_invoke(ctx):
-    if ctx.guild is not None and not ctx.guild.chunked:
-        await ctx.guild.chunk()
-
-
-tree = bot.tree
-
-
-@tree.error
-async def err_handle(i: Interaction, e: app_commands.AppCommandError):
-    if isinstance(e, app_commands.errors.CheckFailure):
-        return
-
-    seria = i.client.get_user(410036441129943050)
-    view = DebugView(traceback.format_exc())
-    embed = error_embed(message=f"```py\n{e}\n```").set_author(
-        name="未知錯誤", icon_url=i.user.display_avatar.url
-    )
-    await i.channel.send(
-        content=f"{seria.mention} 系統已將錯誤回報給小雪, 請耐心等待修復", embed=embed, view=view
-    )
-
-
+assert token
 bot.run(token)

@@ -1,7 +1,8 @@
+import calendar
 import datetime
 
+import discord
 from discord.ext import commands, tasks
-import calendar
 
 from utility.utils import default_embed
 
@@ -19,6 +20,7 @@ class Schedule(commands.Cog):
     @tasks.loop(hours=1)
     async def notif_task(self):
         notif_channel = self.bot.get_channel(1075025670981296211)
+        assert isinstance(notif_channel, discord.TextChannel)
         now = datetime.datetime.now()
 
         # every week's monday

@@ -11,13 +11,14 @@ from discord.ui import Button
 from apps.flow import flow_transaction, get_user_flow
 from data.fish.fish_data import fish_data
 from debug import DefaultView
+from dev.model import BotModel
 from utility.utils import ayaaka_embed
 
 
 class FishCog(commands.Cog):
     def __init__(self, bot):
-        self.bot: commands.Bot = bot
-        self.debug_toggle = self.bot.debug_toggle
+        self.bot: BotModel = bot
+        self.debug = self.bot.debug
 
     def generate_fish_embed(self, fish: str, group: bool):  # 製造摸魚embed
         flow = fish_data[fish]["flow"]

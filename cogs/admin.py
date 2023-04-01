@@ -1,19 +1,19 @@
 import importlib
 import io
-import re
 import sys
 from typing import List
 
 import discord
 from discord.ext import commands
 
+from dev.model import BotModel
 from utility.utils import error_embed
 
 
 class AdminCog(commands.Cog):
     def __init__(self, bot):
-        self.bot: commands.Bot = bot
-        self.debug: bool = self.bot.debug_toggle
+        self.bot: BotModel = bot
+        self.debug: bool = self.bot.debug
 
     @commands.command(name="mark")
     async def mark(self, ctx: commands.Context):
@@ -27,6 +27,7 @@ class AdminCog(commands.Cog):
     @commands.is_owner()
     @commands.command(name="cleanup")
     async def cleanup(self, ctx: commands.Context, amount: int):
+        assert isinstance(ctx.channel, discord.TextChannel)
         await ctx.channel.purge(
             limit=amount + 1, check=lambda m: m.author == self.bot.user
         )
@@ -59,7 +60,7 @@ class AdminCog(commands.Cog):
     async def on_message(self, message: discord.Message):
         if message.author.id == self.bot.user.id:
             return
-        if message.guild.id != self.bot.guild_id:
+        if message.guild and message.guild.id != self.bot.guild_id:
             return
 
         if message.channel.id == 1061898394446069852 and any(

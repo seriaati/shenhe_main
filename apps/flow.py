@@ -61,6 +61,8 @@ async def remove_flow_account(user_id: int, pool: asyncpg.Pool) -> None:
         user_id (int): The user's ID.
         pool (asyncpg.Pool): The database pool.
     """
+    flow = await get_user_flow(user_id, pool)
+    await flow_transaction(user_id, flow, pool)
     await pool.execute("DELETE FROM flow_accounts WHERE user_id = $1", user_id)
 
 

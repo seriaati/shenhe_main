@@ -1,173 +1,186 @@
-import aiosqlite
+import random
+
+import discord
 import wavelink
-from discord import (
-    ChannelType,
-    Interaction,
-    Member,
-    NotFound,
-    VoiceChannel,
-    VoiceState,
-    app_commands,
-    utils,
-)
+from discord import app_commands
 from discord.ext import commands
 
-from utility.utils import default_embed, error_embed
+from dev.model import BotModel, DefaultEmbed, ErrorEmbed, Inter
 
 
 def check_in_vc():
-    async def predicate(i: Interaction):
-        result = i.user.voice is not None
-        if not result:
+    async def predicate(i: discord.Interaction) -> bool:
+        assert isinstance(i.user, discord.Member)
+        if i.user.voice is None:
             await i.response.send_message(
-                embed=error_embed().set_author(
-                    name="你必須在語音台裡才能用這個指令", icon_url=i.user.display_avatar.url
-                ),
+                embed=ErrorEmbed("你必須在語音台裡才能使用這個指令"),
                 ephemeral=True,
             )
-        return result
+            return False
+        else:
+            return True
+
+    return app_commands.check(predicate)
+
+
+def check_owner():
+    async def predicate(inter: discord.Interaction) -> bool:
+        i: Inter = inter  # type: ignore
+        assert (
+            isinstance(i.user, discord.Member) and i.user.voice and i.user.voice.channel
+        )
+        owner_id = await i.client.pool.fetchval(
+            "SELECT owner_id FROM voice WHERE channel_id = $1", i.user.voice.channel.id
+        )
+        if owner_id is None or owner_id != i.user.id:
+            await i.response.send_message(
+                embed=ErrorEmbed("錯誤", f"你不是語音台的擁有者\n擁有者: <@{owner_id}>"),
+                ephemeral=True,
+            )
+            return False
+        else:
+            return True
 
     return app_commands.check(predicate)
 
 
 class VoiceCog(commands.GroupCog, name="vc"):
     def __init__(self, bot):
-        self.bot: commands.Bot = bot
+        self.bot: BotModel = bot
         super().__init__()
 
     @commands.Cog.listener()
     async def on_voice_state_update(
-        self, member: Member, before: VoiceState, after: VoiceState
+        self,
+        member: discord.Member,
+        before: discord.VoiceState,
+        after: discord.VoiceState,
     ):
-        make_vc = utils.get(member.guild.channels, name="創建語音台")
-        vc_role = utils.get(member.guild.roles, name="正在使用語音台")
-        old_channel: VoiceChannel = before.channel
-        new_channel: VoiceChannel = after.channel
-        c: aiosqlite.Cursor = await self.bot.db.cursor()
+        guild = member.guild
+        make_vc = guild.get_channel(1061881611450322954)
+        assert make_vc
+        vc_role = guild.get_role(1061955528349188147)
+        assert vc_role
+
+        old = before.channel
+        new = after.channel
+        assert old and new
+
         if (
-            new_channel is None
-            and old_channel is not None
-            and len(old_channel.members) == 1
-            and old_channel.members[0].id == self.bot.user.id
+            new is None
+            and old is not None
+            and len(old.members) == 1
+            and old.members[0].id == self.bot.user.id
         ):
-            make_vc: wavelink.Player = member.guild.voice_client
-            make_vc.queue.clear()
-            await make_vc.stop()
-            await make_vc.disconnect()
-        if new_channel is not None:
+            player: wavelink.Player = member.guild.voice_client  # type: ignore
+            player.queue.clear()
+            await player.stop()
+            await player.disconnect()
+
+        if new is not None:
             await member.add_roles(vc_role)
-        if new_channel == make_vc:
+
+        if new == make_vc:
             member_vc = await member.guild.create_voice_channel(
                 name=f"{member.display_name}的語音台", category=make_vc.category
             )
             await member.move_to(member_vc)
             await member.add_roles(vc_role)
-            await c.execute(
-                "INSERT INTO voice (owner_id, channel_id) VALUES (?, ?)",
-                (member.id, member_vc.id),
+            await self.bot.pool.execute(
+                "INSERT INTO voice (owner_id, channel_id) VALUES ($1, $2)",
+                member.id,
+                member_vc.id,
             )
-        if new_channel is None:
+
+        if new is None:
             await member.remove_roles(vc_role)
-            await c.execute(
-                "SELECT * FROM voice WHERE owner_id = ? AND channel_id = ?",
-                (member.id, old_channel.id),
+            owner = await self.bot.pool.fetchrow(
+                "SELECT * FROM voice WHERE owner_id = $1", member.id
             )
-            owner = await c.fetchone()
-            if owner is not None and len(old_channel.members) != 0:
-                await c.execute(
-                    "UPDATE voice SET owner_id = ? WHERE channel_id = ?",
-                    (old_channel.members[0].id, old_channel.id),
+            if owner is not None and len(old.members) != 0:
+                await self.bot.pool.execute(
+                    "UPDATE voice SET owner_id = $1 WHERE channel_id = $2",
+                    random.choice(old.members).id,
+                    old.id,
                 )
-        if (
-            old_channel is not None
-            and old_channel != make_vc
-            and len(old_channel.members) == 0
-        ):
-            if old_channel.type is ChannelType.stage_voice:
+        if old is not None and old != make_vc and len(old.members) == 0:
+            if old.type is discord.ChannelType.stage_voice:
                 return
             try:
-                await old_channel.delete()
-            except NotFound:
+                await old.delete()
+            except discord.NotFound:
                 pass
-            await c.execute("DELETE FROM voice WHERE channel_id = ?", (old_channel.id,))
-        await self.bot.db.commit()
-
-    async def check_owner(self, channel_id: int, user_id: int):
-        c: aiosqlite.Cursor = await self.bot.db.cursor()
-        await c.execute(
-            "SELECT owner_id FROM voice WHERE channel_id = ?", (channel_id,)
-        )
-        owner_id = await c.fetchone()
-        owner_id = owner_id[0]
-        if user_id == owner_id:
-            return True, None
-        else:
-            return False, error_embed().set_author(
-                name="你不是這個語音台的擁有者", icon_url=self.bot.get_user(user_id).avatar
+            await self.bot.pool.execute(
+                "DELETE FROM voice WHERE channel_id = $1", old.id
             )
 
     @check_in_vc()
+    @check_owner()
     @app_commands.command(name="rename", description="重新命名語音台")
     @app_commands.rename(new="新名稱")
     @app_commands.describe(new="新的語音台名稱")
-    async def vc_rename(self, i: Interaction, new: str):
+    async def vc_rename(self, i: discord.Interaction, new: str):
+        assert isinstance(i.user, discord.Member) and i.user.voice
         current_vc = i.user.voice.channel
-        owner, err_msg = await self.check_owner(current_vc.id, i.user.id)
-        if not owner:
-            return await i.response.send_message(embed=err_msg, ephemeral=True)
+        assert current_vc
         await current_vc.edit(name=new)
         await i.response.send_message(
-            embed=default_embed(message=f"新名稱: {new}").set_author(
-                name="語音台名稱更改成功", icon_url=i.user.display_avatar.url
-            ),
+            embed=DefaultEmbed("成功", f"語音台已經重新命名為 {new}"),
             ephemeral=True,
         )
 
     @check_in_vc()
+    @check_owner()
     @app_commands.command(name="lock", description="鎖上語音台")
-    async def vc_lock(self, i: Interaction):
+    async def vc_lock(self, i: discord.Interaction):
+        assert isinstance(i.user, discord.Member) and i.user.voice
         current_vc = i.user.voice.channel
-        owner, err_msg = await self.check_owner(current_vc.id, i.user.id)
-        if not owner:
-            return await i.response.send_message(embed=err_msg, ephemeral=True)
+        assert current_vc
         for member in current_vc.members:
             await current_vc.set_permissions(member, connect=True)
-        traveler = utils.get(i.guild.roles, name="旅行者")
+
+        assert i.guild
+        traveler = i.guild.get_role(1061880147952812052)
+        assert traveler
         await current_vc.set_permissions(traveler, connect=False)
-        await i.response.send_message(embed=default_embed(f"{current_vc.name}被鎖上了"))
+        await i.response.send_message(
+            embed=DefaultEmbed("成功", "此語音台已被牢牢鎖上 (誰都別想進來！)"), ephemeral=True
+        )
 
     @check_in_vc()
+    @check_owner()
     @app_commands.command(name="unlock", description="解鎖語音台")
-    async def vc_unlock(self, i: Interaction):
+    async def vc_unlock(self, i: discord.Interaction):
+        assert isinstance(i.user, discord.Member) and i.user.voice
         current_vc = i.user.voice.channel
-        owner, err_msg = await self.check_owner(current_vc.id, i.user.id)
-        if not owner:
-            return await i.response.send_message(embed=err_msg, ephemeral=True)
-        traveler = utils.get(i.guild.roles, name="旅行者")
-        await current_vc.set_permissions(traveler, connect=True)
-        await i.response.send_message(embed=default_embed(f"{current_vc.name}的封印被解除了"))
+        assert current_vc and i.guild
+
+        traveler = i.guild.get_role(1061880147952812052)
+        assert traveler
+        await current_vc.set_permissions(traveler, connect=False)
+        await i.response.send_message(
+            embed=DefaultEmbed("成功", "此語音台的封印已被解除"), ephemeral=True
+        )
 
     @check_in_vc()
+    @check_owner()
     @app_commands.command(name="transfer", description="移交房主權")
     @app_commands.rename(new="新房主")
     @app_commands.describe(new="新的房主")
-    async def vc_transfer(self, i: Interaction, new: Member):
+    async def vc_transfer(self, inter: discord.Interaction, new: discord.Member):
+        i: Inter = inter  # type: ignore
+        assert isinstance(i.user, discord.Member) and i.user.voice
         current_vc = i.user.voice.channel
-        owner, err_msg = await self.check_owner(current_vc.id, i.user.id)
-        if not owner:
-            return await i.response.send_message(embed=err_msg, ephemeral=True)
-        c: aiosqlite.Cursor = await self.bot.db.cursor()
-        await c.execute(
-            "UPDATE voice SET owner_id = ? WHERE channel_id = ?",
-            (new.id, current_vc.id),
+        assert current_vc
+        await i.client.pool.execute(
+            "UPDATE voice SET owner_id = $1 WHERE channel_id = $2",
+            new.id,
+            current_vc.id,
         )
-        await self.bot.db.commit()
+
         await i.response.send_message(
             content=f"{i.user.mention} {new.mention}",
-            embed=default_embed(
-                "房主換人啦",
-                f" {i.user.mention} 將 {current_vc.name} 的房主權移交給了 {new.mention}",
-            ),
+            embed=DefaultEmbed("成功", f"{i.user.mention} 已將房主權限移交給 {new.mention}"),
         )
 
 

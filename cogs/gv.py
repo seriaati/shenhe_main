@@ -41,16 +41,6 @@ class GiveAwayView(ui.View):
         self.prize_num = prize_num
         self.extra_info = extra_info
 
-    async def on_error(
-        self,
-        i: discord.Interaction,
-        error: Exception,
-        item: ui.Item[typing.Any],
-    ) -> None:
-        await i.response.send_message(
-            f"```py\n{traceback.format_exc()}\n```", ephemeral=True
-        )
-
     async def update_embed_and_view(self, i: discord.Interaction):
         embed = create_gv_embed(
             self.prize, self.author, self.prize_num, self.extra_info
