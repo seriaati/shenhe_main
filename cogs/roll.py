@@ -12,7 +12,7 @@ from apps.flow import (
     register_flow_account,
 )
 from debug import DefaultView
-from apps.RollApp import RollApp
+from apps.roll import RollApp
 from data.roll.banner import banner
 from utility.utils import default_embed, error_embed, log
 

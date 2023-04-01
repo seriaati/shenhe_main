@@ -5,7 +5,7 @@ import wavelink
 from discord import Interaction, app_commands
 from discord.ext import commands
 from dotenv import load_dotenv
-from apps import musicApp
+from apps import music
 from utility.utils import error_embed
 from wavelink.ext import spotify
 
@@ -78,7 +78,7 @@ class MusicCog(commands.Cog, name="music"):
                     cls=wavelink.Player
                 )
         await i.response.defer()
-        await musicApp.return_music_embeds(i, player)
+        await music.return_music_embeds(i, player)
 
 
 async def setup(bot: commands.Bot) -> None:
