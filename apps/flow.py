@@ -101,6 +101,10 @@ async def free_flow(
         )
         if last_give is not None and last_give.day != now.day:
             await flow_transaction(user_id, 1, pool)
-            await pool.execute(f"UPDATE flow_accounts SET {time_type.value} = $1", now)
+            await pool.execute(
+                f"UPDATE flow_accounts SET {time_type.value} = $1 WHERE user_id = $2",
+                now,
+                user_id,
+            )
             return True
     return False
