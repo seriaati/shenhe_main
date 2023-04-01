@@ -6,22 +6,6 @@ from dev.enum import TimeType
 from utility.utils import get_dt_now, time_in_range
 
 
-async def check_flow_account(user_id: int, pool: asyncpg.Pool) -> bool:
-    """Check if a user has a flow account, if not, create one.
-
-    Args:
-        user_id (int): The user's ID.
-        pool (asyncpg.Pool): The database pool.
-
-    Returns:
-        bool: True if the user has a flow account, False otherwise.
-    """
-    await register_flow_account(user_id, pool)
-    return await pool.fetchval(
-        "SELECT EXISTS(SELECT 1 FROM flow_accounts WHERE user_id = $1)", user_id
-    )
-
-
 async def register_flow_account(user_id: int, pool: asyncpg.Pool) -> None:
     """Register a user's flow account.
 
@@ -47,7 +31,7 @@ async def flow_transaction(user_id: int, amount: int, pool: asyncpg.Pool) -> Non
         amount (int): The amount of flow to transfer.
         pool (asyncpg.Pool): The database pool.
     """
-    await check_flow_account(user_id, pool)
+    await register_flow_account(user_id, pool)
     await pool.execute(
         "UPDATE flow_accounts SET flow = flow + $1 WHERE user_id = $2", amount, user_id
     )
@@ -76,7 +60,7 @@ async def get_user_flow(user_id: int, pool: asyncpg.Pool) -> int:
     Returns:
         int: The user's flow balance.
     """
-    await check_flow_account(user_id, pool)
+    await register_flow_account(user_id, pool)
     return await pool.fetchval(
         "SELECT flow FROM flow_accounts WHERE user_id = $1", user_id
     )
@@ -109,7 +93,7 @@ async def free_flow(
     Returns:
         bool: True if the user got free flow, False otherwise.
     """
-    await check_flow_account(user_id, pool)
+    await register_flow_account(user_id, pool)
     now = get_dt_now()
     if time_in_range(start, end, now.time()):
         last_give: datetime = await pool.fetchval(

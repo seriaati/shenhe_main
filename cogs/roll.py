@@ -6,12 +6,7 @@ from discord import ButtonStyle, Interaction, Member, TextChannel, app_commands
 from discord.ext import commands
 from discord.ui import Button
 
-from apps.flow import (
-    check_flow_account,
-    flow_transaction,
-    get_user_flow,
-    register_flow_account,
-)
+from apps.flow import flow_transaction, get_user_flow, register_flow_account
 from apps.roll import RollApp
 from data.roll.banner import banner
 from dev.model import BaseView
@@ -194,7 +189,7 @@ class RollCog(commands.Cog):
 
     @app_commands.command(name="roll", description="暴幣祈願系統")
     async def roll(self, i: Interaction):
-        check = await check_flow_account(i.user.id, i.client.db)
+        check = await register_flow_account(i.user.id, i.client.db)
         if not check:
             await register_flow_account(i.user.id, i.client.db)
         public = (

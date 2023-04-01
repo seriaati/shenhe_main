@@ -5,7 +5,7 @@ import discord
 from discord import app_commands, ui
 from discord.ext import commands
 
-from apps.flow import check_flow_account, flow_transaction, get_user_flow
+from apps.flow import flow_transaction, get_user_flow, register_flow_account
 from apps.shop import create_shop_item, delete_shop_item, get_item_names
 from dev.enum import ShopAction
 from dev.model import BaseView, DefaultEmbed, ErrorEmbed, Inter
@@ -80,7 +80,7 @@ class ShopCog(commands.Cog):
     @app_commands.command(name="shop", description="暴幣商店")
     async def show(self, inter: discord.Interaction):
         i: Inter = inter  # type: ignore
-        await check_flow_account(i.user.id, i.client.pool)
+        await register_flow_account(i.user.id, i.client.pool)
         rows = await i.client.pool.fetch("SELECT name, flow FROM flow_shop")
         item_str = ""
         item_names = []

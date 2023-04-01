@@ -33,7 +33,7 @@ class FlowCog(commands.Cog, name="flow"):
         if "早午晚" in message.content:
             return
 
-        await flow_app.check_flow_account(user_id, self.bot.pool)
+        await flow_app.register_flow_account(user_id, self.bot.pool)
         if any(keyword in content for keyword in morning_keywords):
             start = time(0, 0, 0)
             end = time(11, 59, 59)
@@ -64,7 +64,7 @@ class FlowCog(commands.Cog, name="flow"):
     @discord.app_commands.rename(member="使用者")
     @discord.app_commands.describe(member="被戳的使用者")
     async def poke(self, i: discord.Interaction, member: discord.Member):
-        await flow_app.check_flow_account(member.id, self.bot.pool)
+        await flow_app.register_flow_account(member.id, self.bot.pool)
 
         success = True if randint(1, 100) <= 50 else False
         flow_num = randint(1, 3)
@@ -105,7 +105,7 @@ class FlowCog(commands.Cog, name="flow"):
     @discord.app_commands.rename(member="使用者")
     @discord.app_commands.describe(member="被給予暴幣的使用者")
     async def give(self, i: discord.Interaction, member: discord.Member, amount: int):
-        await flow_app.check_flow_account(member.id, self.bot.pool)
+        await flow_app.register_flow_account(member.id, self.bot.pool)
         await flow_app.flow_transaction(member.id, amount, self.bot.pool)
         await flow_app.flow_transaction(i.user.id, -amount, self.bot.pool)
         flow_member = await flow_app.get_user_flow(member.id, self.bot.pool)
@@ -128,7 +128,7 @@ class FlowCog(commands.Cog, name="flow"):
     ):
         assert isinstance(i.user, discord.Member)
         member = member or i.user
-        await flow_app.check_flow_account(member.id, self.bot.pool)
+        await flow_app.register_flow_account(member.id, self.bot.pool)
         row = await self.bot.pool.fetchrow(
             "SELECT morning, noon, night FROM flow_accounts WHERE user_id = $1",
             member.id,
@@ -166,7 +166,7 @@ class FlowCog(commands.Cog, name="flow"):
         flow: int,
         private: int = 0,
     ):
-        await flow_app.check_flow_account(member.id, self.bot.pool)
+        await flow_app.register_flow_account(member.id, self.bot.pool)
         await flow_app.flow_transaction(member.id, -flow, self.bot.pool)
 
         embed = DefaultEmbed(
@@ -193,7 +193,7 @@ class FlowCog(commands.Cog, name="flow"):
         flow: int,
         private: int = 0,
     ):
-        await flow_app.check_flow_account(member.id, self.bot.pool)
+        await flow_app.register_flow_account(member.id, self.bot.pool)
         await flow_app.flow_transaction(member.id, -flow, self.bot.pool)
 
         embed = DefaultEmbed(
