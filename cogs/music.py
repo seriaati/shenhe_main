@@ -5,9 +5,10 @@ import wavelink
 from discord import Interaction, app_commands
 from discord.ext import commands
 from dotenv import load_dotenv
+from wavelink.ext import spotify
+
 from apps import music
 from utility.utils import error_embed
-from wavelink.ext import spotify
 
 load_dotenv()
 
@@ -24,7 +25,7 @@ class MusicCog(commands.Cog, name="music"):
         await wavelink.NodePool.create_node(
             bot=self.bot,
             host="127.0.0.1",
-            port=2333,
+            port=7009,
             password=os.getenv("lavalink"),
             spotify_client=spotify.SpotifyClient(
                 client_id=os.getenv("spotify_client"),
