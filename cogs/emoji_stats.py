@@ -27,8 +27,11 @@ class EmojiStatsCog(commands.Cog):
         ):
             return
 
-        # extract emoji IDs from message content with regex
-        emoji_ids: typing.List[str] = re.findall(r"<a?:.*:(\d+)>", message.content)
+        # extract ALL emoji IDs from message content with regex
+        # if there are two emojis with the same ID, count it as two
+        # if there are multiple emojis in the message, extract all of their IDs
+        emoji_ids = re.findall(r"<a?:\w+:(\d+)>", message.content)
+
         for e_id in emoji_ids:
             if e_id not in self.emoji_ids:
                 emoji = self.bot.get_emoji(int(e_id))
