@@ -44,7 +44,9 @@ class EmojiStatsCog(commands.Cog):
                         emoji.name,
                         emoji.animated,
                     )
-                self.emoji_strs.append(e_id)
+                    self.emoji_strs.append(
+                        f"<{'a' if emoji.animated else ''}:{emoji.name}:{emoji.id}>"
+                    )
             else:
                 await self.bot.pool.execute(
                     "UPDATE emoji_stats SET count = count + 1 WHERE emoji_id = $1", e_id
