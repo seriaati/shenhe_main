@@ -66,6 +66,7 @@ class ShenheBot(BotModel):
             command_prefix=prefix,
             intents=intents,
             application_id=application_id,
+            tree_cls=ShenheCommandTree,
         )
 
     async def setup_hook(self) -> None:
