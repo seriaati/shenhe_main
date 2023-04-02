@@ -28,7 +28,7 @@ class EmojiStatsCog(commands.Cog):
             return
 
         # extract emoji IDs from message content with regex
-        emoji_ids = re.findall(r"<a?:.*:(\d+)>", message.content)
+        emoji_ids: typing.List[str] = re.findall(r"<a?:.*:(\d+)>", message.content)
         for e_id in emoji_ids:
             if e_id not in self.emoji_ids:
                 emoji = self.bot.get_emoji(int(e_id))
@@ -39,10 +39,11 @@ class EmojiStatsCog(commands.Cog):
                         emoji.name,
                         emoji.animated,
                     )
-                    self.emoji_ids.append(str(emoji.id))
+                    self.emoji_ids.append(e_id)
             else:
                 await self.bot.pool.execute(
-                    "UPDATE emoji_stats SET count = count + 1 WHERE emoji_id = $1", e_id
+                    "UPDATE emoji_stats SET count = count + 1 WHERE emoji_id = $1",
+                    int(e_id),
                 )
 
     @app_commands.guild_only()
