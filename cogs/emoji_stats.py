@@ -16,12 +16,7 @@ class EmojiStatsCog(commands.Cog):
 
     async def cog_load(self) -> None:
         rows = await self.bot.pool.fetch("SELECT * FROM emoji_stats")
-        self.emoji_strs: typing.List[str] = []
-        for row in rows:
-            name = row["emoji_name"]
-            e_id = row["emoji_id"]
-            animated = row["animated"]
-            self.emoji_strs.append(f"<{'a' if animated else ''}:{name}:{e_id}>")
+        self.emoji_ids: typing.List[str] = [str(r["emoji_id"]) for r in rows]
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
@@ -35,7 +30,7 @@ class EmojiStatsCog(commands.Cog):
         # extract emoji IDs from message content with regex
         emoji_ids = re.findall(r"<a?:.*:(\d+)>", message.content)
         for e_id in emoji_ids:
-            if e_id not in self.emoji_strs:
+            if e_id not in self.emoji_ids:
                 emoji = self.bot.get_emoji(int(e_id))
                 if emoji:
                     await self.bot.pool.execute(
@@ -44,9 +39,7 @@ class EmojiStatsCog(commands.Cog):
                         emoji.name,
                         emoji.animated,
                     )
-                    self.emoji_strs.append(
-                        f"<{'a' if emoji.animated else ''}:{emoji.name}:{emoji.id}>"
-                    )
+                    self.emoji_ids.append(str(emoji.id))
             else:
                 await self.bot.pool.execute(
                     "UPDATE emoji_stats SET count = count + 1 WHERE emoji_id = $1", e_id
