@@ -40,7 +40,7 @@ class EmojiStatsCog(commands.Cog):
                 if emoji:
                     await self.bot.pool.execute(
                         "INSERT INTO emoji_stats (emoji_id, emoji_name, animated) VALUES ($1, $2, $3)",
-                        e_id,
+                        emoji.id,
                         emoji.name,
                         emoji.animated,
                     )
