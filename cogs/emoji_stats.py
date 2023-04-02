@@ -75,7 +75,7 @@ class EmojiStatsCog(commands.Cog):
                 animated = row["animated"]
                 count = row["count"]
                 embed.description += (
-                    f"<{'a' if animated else ''}:{name}:{e_id}> | {count}\n"
+                    f"<{'a' if animated else ''}:{name}:{e_id}> | {count}\n\n"
                 )
             embeds.append(embed)
 
