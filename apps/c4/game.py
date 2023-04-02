@@ -2,54 +2,57 @@ import typing
 
 import discord
 
-from .exceptions import *
+from dev.model import DefaultEmbed
 
 
 class ConnectFour:
     def __init__(
         self,
         players: typing.Tuple[
-            typing.Union[discord.Member, discord.User],
-            typing.Union[discord.Member, discord.User],
+            typing.Union[discord.User, discord.Member],
+            typing.Union[discord.User, discord.Member],
         ],
     ):
-        self.board = [["⚫" for _ in range(7)] for _ in range(6)]
-        self.players = players
+        self.board = [[" " for _ in range(7)] for _ in range(6)]
         self.current_player = "🟡"
+        self.players = players
 
     def get_board(self) -> discord.Embed:
-        embed = discord.Embed(title="遊戲板", description="1️⃣2️⃣3️⃣4️⃣5️⃣6️⃣7️⃣\n")
-        assert embed.description is not None
+        embed = DefaultEmbed("屏風式四子棋")
+        embed.description = ""
         for row in self.board:
-            embed.description += "\n".join(row)
-        embed.description += "\n"
+            embed.description += " ".join(row) + "\n"
+        embed.description += "-------------"
         return embed
 
-    def get_column(self, col: str):
-        if col.isdigit() and 1 <= int(col) <= 7:
-            return int(col) - 1
-        else:
-            raise InvalidColumn
+    def get_column(self):
+        while True:
+            col = input(f"{self.current_player}, choose a column (1-7): ")
+            if col.isdigit() and 1 <= int(col) <= 7:
+                return int(col) - 1
 
     def play(self):
         while True:
-            self.get_board()
+            self.print_board()
             col = self.get_column()
             row = 5
             while row >= 0:
-                if self.board[row][col] == "⚫":
+                if self.board[row][col] == " ":
                     self.board[row][col] = self.current_player
                     break
                 row -= 1
             else:
-                raise ColumnFull
+                print("Column is full, try again")
+                continue
 
             if self.check_win(row, col):
-                self.get_board()
-                raise GameOver(self.current_player)
+                self.print_board()
+                print(f"{self.current_player} wins!")
+                return
             elif self.check_draw():
-                self.get_board()
-                raise Draw
+                self.print_board()
+                print("Draw!")
+                return
 
             self.current_player = "🔵" if self.current_player == "🟡" else "🟡"
 
@@ -62,15 +65,38 @@ class ConnectFour:
         if "".join([self.board[i][col] for i in range(6)]).count(player * 4):
             return True
         # check diagonal
-        for _ in range(3):
-            if "".join([self.board[row + i][col + i] for i in range(4)]).count(
+        if (
+            col <= 3
+            and row <= 2
+            and "".join([self.board[row + i][col + i] for i in range(4)]).count(
                 player * 4
-            ):
-                return True
-            if "".join([self.board[row - i][col + i] for i in range(4)]).count(
+            )
+        ):
+            return True
+        if (
+            col <= 3
+            and row >= 3
+            and "".join([self.board[row - i][col + i] for i in range(4)]).count(
                 player * 4
-            ):
-                return True
+            )
+        ):
+            return True
+        if (
+            col >= 3
+            and row <= 2
+            and "".join([self.board[row + i][col - i] for i in range(4)]).count(
+                player * 4
+            )
+        ):
+            return True
+        if (
+            col >= 3
+            and row >= 3
+            and "".join([self.board[row - i][col - i] for i in range(4)]).count(
+                player * 4
+            )
+        ):
+            return True
         return False
 
     def check_draw(self):
