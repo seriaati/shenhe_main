@@ -1,10 +1,11 @@
-from typing import List, Optional
+from typing import List, Optional, Union
 
 import discord
 from discord import Emoji, ui
 from discord.ext import commands
-import data.constants as constants
 
+import data.constants as constants
+from dev.model import BotModel
 from utility.utils import default_embed
 
 
@@ -12,7 +13,7 @@ class ReactionRole(ui.View):
     def __init__(
         self,
         roles: List[discord.Role],
-        emojis: Optional[List[discord.Emoji]] = None,
+        emojis: Optional[List[Union[discord.Emoji, str]]] = None,
         style: discord.ButtonStyle = discord.ButtonStyle.blurple,
     ):
         super().__init__(timeout=None)
@@ -29,7 +30,7 @@ class RoleButton(ui.Button[ReactionRole]):
         role: discord.Role,
         row: int,
         style: discord.ButtonStyle,
-        emoji: Optional[Emoji] = None,
+        emoji: Optional[Union[discord.Emoji, str]] = None,
     ):
         self.role = role
         super().__init__(
@@ -59,15 +60,16 @@ class RoleButton(ui.Button[ReactionRole]):
 
 
 class ReactionRoles(commands.Cog):
-    def __init__(self, bot: commands.Bot):
-        self.bot = bot
+    def __init__(self, bot):
+        self.bot: BotModel = bot
 
     async def cog_load(self):
         self.bot.loop.create_task(self.add_view_task())
 
     async def add_view_task(self):
         await self.bot.wait_until_ready()
-        guild = self.bot.get_guild(1061877505067327528)
+        guild = self.bot.get_guild(self.bot.guild_id)
+        assert guild
 
         self.notif_role_ids = (
             1075026929448652860,
@@ -121,6 +123,15 @@ class ReactionRoles(commands.Cog):
         )
         self.bot.add_view(self.element_view)
 
+        self.team_ids = (1091879436321816636, 1091650330267234306)
+        self.team_emojis = ("🌾", "🎉")
+        self.team_view = ReactionRole(
+            [guild.get_role(id) for id in self.team_ids],
+            self.team_emojis,
+            style=discord.ButtonStyle.gray,
+        )
+        self.bot.add_view(self.team_view)
+
     @commands.command(name="reacton_roles", aliases=["rr"])
     @commands.is_owner()
     async def reacton_roles(self, ctx: commands.Context, id_type: str):
@@ -138,6 +149,9 @@ class ReactionRoles(commands.Cog):
         elif id_type == "element":
             embed_title = "🪄 元素身份組"
             view = self.element_view
+        elif id_type == "team":
+            embed_title = "🏆 隊伍身份組"
+            view = self.team_view
 
         embed = default_embed(message=embed_description).set_author(name=embed_title)
         await ctx.send(embed=embed, view=view)
