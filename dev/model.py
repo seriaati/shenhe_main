@@ -85,7 +85,8 @@ class BaseView(discord.ui.View):
         /,
     ) -> None:
         logging.error(
-            f"An error occurred while handling {item.__class__.__name__}: {error}"
+            f"An error occurred while handling {item.__class__.__name__}: {error}",
+            exc_info=error,
         )
         embed = ErrorEmbed("錯誤", f"在處理 {item.__class__.__name__} 時發生錯誤: {error}")
         try:
