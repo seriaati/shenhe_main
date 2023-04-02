@@ -3,8 +3,8 @@ from discord import app_commands
 from discord.ext import commands
 
 import apps.c4.game as c4
-from dev.model import ErrorEmbed
 from apps.c4.ui import ConnectFourView
+from dev.model import ErrorEmbed
 
 
 class ConnectFourCog(commands.Cog):
@@ -27,3 +27,7 @@ class ConnectFourCog(commands.Cog):
         game = c4.ConnectFour((i.user, opponent))
         view = ConnectFourView(game)
         await i.response.send_message(embed=game.get_board(), view=view)
+
+
+async def setup(bot: commands.Bot):
+    await bot.add_cog(ConnectFourCog(bot))
