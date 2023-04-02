@@ -13,7 +13,7 @@ class ConnectFour:
             typing.Union[discord.Member, discord.User],
         ],
     ):
-        self.board = [["x" for _ in range(7)] for _ in range(6)]
+        self.board = [["⚫" for _ in range(7)] for _ in range(6)]
         self.players = players
         self.current_player = "🟡"
 
@@ -21,7 +21,7 @@ class ConnectFour:
         embed = discord.Embed(title="遊戲板", description="1️⃣2️⃣3️⃣4️⃣5️⃣6️⃣7️⃣\n")
         assert embed.description is not None
         for row in self.board:
-            embed.description += "|".join(row)
+            embed.description += "\n".join(row)
         embed.description += "\n"
         return embed
 
