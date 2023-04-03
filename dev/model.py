@@ -172,7 +172,7 @@ class GuessNumHistory(BaseModel):
             p1=row["p1"],
             p2=row["p2"],
             p1_win=row["p1_win"],
-            match_time=row["match_time"],
+            match_time=row["time"],
             flow=row["flow"],
         )
 
