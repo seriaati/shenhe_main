@@ -280,7 +280,7 @@ class AddSongModal(ui.Modal):
                     if pos := re.search("&t=", query):
                         query = query[: pos.start()]
                     youtube_track_ = await wavelink.YouTubeTrack.search(
-                        query=query, return_first=True
+                        query, return_first=True
                     )
                     youtube_track: wavelink.YouTubeTrack = youtube_track_  # type: ignore
                     if not player.is_playing():
