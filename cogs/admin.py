@@ -47,12 +47,6 @@ class AdminCog(commands.Cog):
                         embed=error_embed(module.__name__, f"```{e}```"),
                         ephemeral=True,
                     )
-
-        # reload cogs
-        for cog in self.bot.cogs:
-            if "music" in cog or "Jishaku" in cog:
-                continue
-            await self.bot.reload_extension(f"cogs.{cog}")
         await ctx.send("Reloaded")
 
     @commands.is_owner()
