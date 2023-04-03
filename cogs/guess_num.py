@@ -84,12 +84,14 @@ class GuessNumCog(commands.GroupCog, name="gn"):
             await message.reply(embed=model.DefaultEmbed(f"{a}A{b}B", f"第{guess}次猜測"))
 
             if a == 4:
-                await message.reply(
-                    embed=model.DefaultEmbed(
-                        "恭喜答對, 遊戲結束",
-                        f"玩家一: {match.p1_num}\n 玩家二: {match.p2_num}",
-                    )
+                embed = model.DefaultEmbed(
+                    "恭喜答對, 遊戲結束",
+                    f"玩家一: {match.p1_num}\n 玩家二: {match.p2_num}",
                 )
+                if match.flow:
+                    embed.add_field(name="賭注", value=f"{match.flow}暴幣")
+                    embed.set_footer(text="暴幣已經轉入獲勝者的帳戶")
+                await message.reply(embed=embed)
                 if match.flow:
                     await flow_transaction(
                         match.p1, match.flow if is_p1 else -match.flow, self.bot.pool
