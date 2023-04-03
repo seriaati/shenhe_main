@@ -22,7 +22,7 @@ class Dropdown(Select):
 
     async def callback(self, i: Interaction):
         index = 0
-        cogs = ["flow", "other", "vc", "music", "dance", "shop", "find"]
+        cogs = ["flow", "vc", "music", "dance", "shop", "find", "other"]
         for i_, option in enumerate(self.options):
             if option.value == self.values[0]:
                 selected_option = option
