@@ -31,9 +31,9 @@ def return_a_b(answer: str, guess: str) -> tuple[int, int]:
     return a, b
 
 
-class GuessNumCog(commands.Cog):
-    def __init__(self, bot: BotModel):
-        self.bot = bot
+class GuessNumCog(commands.GroupCog, name="gn"):
+    def __init__(self, bot):
+        self.bot: BotModel = bot
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
@@ -96,11 +96,11 @@ class GuessNumCog(commands.Cog):
                 )
                 await message.channel.edit(name="猜數字-已結束", locked=True, archived=True)
 
-    @app_commands.command(name="guess-num", description="猜數字遊戲")
     @app_commands.guild_only()
+    @app_commands.command(name="start", description="猜數字遊戲")
     @app_commands.rename(opponent="對手")
     @app_commands.describe(opponent="猜數字的對手（玩家二）")
-    async def guess_num(self, inter: discord.Interaction, opponent: discord.Member):
+    async def start(self, inter: discord.Interaction, opponent: discord.Member):
         i: Inter = inter  # type: ignore
 
         if opponent.bot:
