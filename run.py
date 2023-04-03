@@ -49,7 +49,7 @@ class ShenheCommandTree(discord.app_commands.CommandTree):
     async def on_error(
         self, i: discord.Interaction, e: discord.app_commands.AppCommandError, /
     ) -> None:
-        logging.error(f"Error in command {i.command}: {type(e)} {e}")
+        logging.error(f"Error in command {i.command}: {type(e)} {e}", exc_info=e)
 
         embed = ErrorEmbed("錯誤", f"```py\n{e}\n```")
         try:
