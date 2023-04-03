@@ -105,5 +105,22 @@ class BaseView(discord.ui.View):
             pass
 
 
+class BaseModal(discord.ui.Modal):
+    async def on_error(
+        self, interaction: discord.Interaction[BotModel], error: Exception, /
+    ) -> None:
+        logging.error(
+            f"An error occurred while handling {self.__class__.__name__}: {error}",
+            exc_info=error,
+        )
+        embed = ErrorEmbed("錯誤", f"在處理 {self.__class__.__name__} 時發生錯誤: {error}")
+        try:
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+        except discord.InteractionResponded:
+            await interaction.followup.send(embed=embed)
+        except Exception:
+            pass
+
+
 class Inter(discord.Interaction):
     client: BotModel
