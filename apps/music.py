@@ -8,7 +8,7 @@ import wavelink
 from discord import ui
 from wavelink.ext import spotify
 
-from dev.model import BaseView, DefaultEmbed, ErrorEmbed
+from dev.model import BaseModal, BaseView, DefaultEmbed, ErrorEmbed
 
 
 def music_deco(func):
@@ -193,7 +193,7 @@ class AddSong(ui.Button):
         await i.response.send_modal(AddSongModal(self.view))
 
 
-class AddSongModal(ui.Modal):
+class AddSongModal(BaseModal):
     query = ui.TextInput(
         label="歌曲連結或關鍵字", placeholder="請輸入歌曲連結或關鍵字", min_length=1, max_length=2000
     )
