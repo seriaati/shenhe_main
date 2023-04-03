@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import os
 
 import discord
@@ -46,6 +47,10 @@ class MusicCog(commands.Cog, name="music"):
             await self.bot.wait_for("wavelink_track_start", timeout=300)
         except asyncio.TimeoutError:
             await player.disconnect()
+
+    @commands.Cog.listener()
+    async def on_wavelink_node_ready(self, node: wavelink.Node) -> None:
+        logging.info(f"Node {node.id} is ready.")
 
     @app_commands.guild_only()
     @app_commands.command(name="music", description="播放音樂")
