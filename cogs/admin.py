@@ -40,7 +40,7 @@ class AdminCog(commands.Cog):
             if module is None:
                 continue
             if module.__name__.startswith(
-                ("apps.", "cogs.", "data.", "dev.", "ui.", "utility.")
+                ("apps.", "data.", "dev.", "ui.", "utility.")
             ):
                 try:
                     importlib.reload(module)
@@ -49,6 +49,12 @@ class AdminCog(commands.Cog):
                         embed=error_embed(module.__name__, f"```{e}```"),
                         ephemeral=True,
                     )
+
+        # reload cogs
+        for cog in self.bot.cogs:
+            if "music" in cog:
+                continue
+            await self.bot.reload_extension(f"cogs.{cog}")
         await ctx.send("Reloaded")
 
     @commands.is_owner()
