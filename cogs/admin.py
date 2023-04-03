@@ -1,7 +1,5 @@
 import importlib
-import io
 import sys
-from typing import List
 
 import discord
 from discord.ext import commands
