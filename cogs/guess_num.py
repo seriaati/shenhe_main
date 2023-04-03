@@ -42,6 +42,7 @@ class GuessNumCog(commands.GroupCog, name="gn"):
             or not message.content.isdigit()
             or not isinstance(message.channel, discord.Thread)
             or "猜數字" not in message.channel.name
+            or len(set(message.content)) != 4
         ):
             return
 
