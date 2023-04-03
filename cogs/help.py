@@ -12,6 +12,7 @@ class Dropdown(Select):
             SelectOption(label="暴幣系統", emoji="🪙"),
             SelectOption(label="語音台", emoji="🎙️"),
             SelectOption(label="音樂系統", emoji="🎵"),
+            SelectOption(label="練舞系統", emoji="🕺"),
             SelectOption(label="商店系統", emoji="🛒"),
             SelectOption(label="尋找系統", emoji="🔍"),
             SelectOption(label="其他", emoji="🙂"),
@@ -21,7 +22,7 @@ class Dropdown(Select):
 
     async def callback(self, i: Interaction):
         index = 0
-        cogs = ["flow", "other", "vc", "music", "shop", "find"]
+        cogs = ["flow", "other", "vc", "music", "dance", "shop", "find"]
         for i_, option in enumerate(self.options):
             if option.value == self.values[0]:
                 selected_option = option
