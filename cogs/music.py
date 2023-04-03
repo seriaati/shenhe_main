@@ -19,10 +19,11 @@ class MusicCog(commands.Cog, name="music"):
     def __init__(self, bot):
         super().__init__()
         self.bot: BotModel = bot
-        if not self.bot.debug:
-            self.bot.loop.create_task(self.connect_nodes())
 
-    async def connect_nodes(self):
+    async def cog_load(self) -> None:
+        self.bot.loop.create_task(self.connect_node())
+
+    async def connect_node(self):
         await self.bot.wait_until_ready()
         password = os.getenv("lavalink")
         client_id = os.getenv("spotify_client")
