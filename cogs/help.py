@@ -10,11 +10,11 @@ class Dropdown(Select):
     def __init__(self, bot: commands.Bot):
         options = [
             SelectOption(label="暴幣系統", emoji="🪙"),
-            SelectOption(label="語音台", emoji="🎙️"),
+            SelectOption(label="猜數字遊戲", emoji="🎲"),
+            SelectOption(label="語音台系統", emoji="🎙️"),
             SelectOption(label="音樂系統", emoji="🎵"),
             SelectOption(label="練舞系統", emoji="🕺"),
             SelectOption(label="商店系統", emoji="🛒"),
-            SelectOption(label="尋找系統", emoji="🔍"),
             SelectOption(label="其他", emoji="🙂"),
         ]
         super().__init__(placeholder="你想要什麼樣的幫助呢?", options=options)
@@ -22,7 +22,7 @@ class Dropdown(Select):
 
     async def callback(self, i: Interaction):
         index = 0
-        cogs = ["flow", "vc", "music", "dance", "shop", "find", "other"]
+        cogs = ("flow", "gn", "vc", "music", "dance", "shop", "find", "other")
         for i_, option in enumerate(self.options):
             if option.value == self.values[0]:
                 selected_option = option
