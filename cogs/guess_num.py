@@ -7,6 +7,7 @@ from discord import app_commands, utils
 from discord.ext import commands
 
 import dev.model as model
+from apps.flow import flow_transaction
 from ui.guess_num import GuessNumView
 from utility.paginator import GeneralPaginator
 from utility.utils import divide_chunks, get_dt_now
@@ -63,18 +64,18 @@ class GuessNumCog(commands.GroupCog, name="gn"):
             return await message.reply(embed=model.ErrorEmbed("現在是輪到玩家二猜測"))
 
         answer = None
-        is_p_one = False
+        is_p1 = False
         guess = "?"
         if message.author.id == match.p1:
             answer = str(match.p2_num)
             guess = match.p1_guess + 1
-            is_p_one = True
+            is_p1 = True
         elif message.author.id == match.p2:
             answer = str(match.p1_num)
             guess = match.p2_guess + 1
 
         if answer:
-            query = "player_one" if is_p_one else "player_two"
+            query = "player_one" if is_p1 else "player_two"
             await self.bot.pool.execute(
                 f"UPDATE guess_num SET {query}_guess = {query}_guess + 1 WHERE channel_id = $1",
                 message.channel.id,
@@ -89,6 +90,16 @@ class GuessNumCog(commands.GroupCog, name="gn"):
                         f"玩家一: {match.p1_num}\n 玩家二: {match.p2_num}",
                     )
                 )
+                if match.flow:
+                    await flow_transaction(
+                        match.p1, match.flow if is_p1 else -match.flow, self.bot.pool
+                    )
+                    await flow_transaction(
+                        match.p2,
+                        match.flow if not is_p1 else -match.flow,
+                        self.bot.pool,
+                    )
+
                 await self.bot.pool.execute(
                     "DELETE FROM guess_num WHERE channel_id = $1", message.channel.id
                 )
@@ -96,22 +107,24 @@ class GuessNumCog(commands.GroupCog, name="gn"):
                     "INSERT INTO gn_history (p1, p2, p1_win, time, flow) VALUES ($1, $2, $3, $4, $5)",
                     match.p1,
                     match.p2,
-                    is_p_one,
+                    is_p1,
                     get_dt_now(),
                     match.flow,
                 )
+
                 await self.bot.pool.execute(
                     "INSERT INTO gn_win_lose (user_id, win, lose) VALUES ($1, $2, $3) ON CONFLICT (user_id) DO UPDATE SET win = gn_win_lose.win + $2, lose = gn_win_lose.lose + $3",
                     match.p1,
-                    1 if is_p_one else 0,
-                    1 if not is_p_one else 0,
+                    1 if is_p1 else 0,
+                    1 if not is_p1 else 0,
                 )
                 await self.bot.pool.execute(
                     "INSERT INTO gn_win_lose (user_id, win, lose) VALUES ($1, $2, $3) ON CONFLICT (user_id) DO UPDATE SET win = gn_win_lose.win + $2, lose = gn_win_lose.lose + $3",
                     match.p2,
-                    1 if not is_p_one else 0,
-                    1 if is_p_one else 0,
+                    1 if not is_p1 else 0,
+                    1 if is_p1 else 0,
                 )
+
                 await message.channel.edit(name="猜數字-已結束", locked=True, archived=True)
 
     @app_commands.guild_only()
