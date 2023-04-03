@@ -1,3 +1,4 @@
+import datetime
 import logging
 import typing
 
@@ -5,6 +6,7 @@ import aiohttp
 import asyncpg
 import discord
 from discord.ext import commands
+from pydantic import BaseModel
 
 
 class BotModel(commands.Bot):
@@ -128,3 +130,62 @@ class BaseModal(discord.ui.Modal):
 
 class Inter(discord.Interaction):
     client: BotModel
+
+
+class GuessNumMatch(BaseModel):
+    p1: int
+    p2: int
+
+    p1_num: typing.Optional[int] = None
+    p2_num: typing.Optional[int] = None
+
+    p1_guess: int
+    p2_guess: int
+
+    channel_id: int
+    flow: typing.Optional[int] = None
+
+    @staticmethod
+    def from_row(row: asyncpg.Record) -> "GuessNumMatch":
+        return GuessNumMatch(
+            p1=row["player_one"],
+            p2=row["player_two"],
+            p1_num=row["player_one_num"],
+            p2_num=row["player_two_num"],
+            p1_guess=row["player_one_guess"],
+            p2_guess=row["player_two_guess"],
+            channel_id=row["channel_id"],
+            flow=row["flow"],
+        )
+
+
+class GuessNumHistory(BaseModel):
+    p1: int
+    p2: int
+    p1_win: bool
+    match_time: datetime.datetime
+    flow: typing.Optional[int]
+
+    @staticmethod
+    def from_row(row: asyncpg.Record) -> "GuessNumHistory":
+        return GuessNumHistory(
+            p1=row["p1"],
+            p2=row["p2"],
+            p1_win=row["p1_win"],
+            match_time=row["match_time"],
+            flow=row["flow"],
+        )
+
+
+class GuessNumPlayer(BaseModel):
+    user_id: int
+    win: int
+    lose: int
+
+    @staticmethod
+    def from_row(row: asyncpg.Record) -> "GuessNumPlayer":
+        return GuessNumPlayer(
+            user_id=row["user_id"],
+            win=row["win"],
+            lose=row["lose"],
+        )

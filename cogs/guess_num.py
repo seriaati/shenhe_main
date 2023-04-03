@@ -1,12 +1,23 @@
 import logging
-from random import randint
+import typing
+import uuid
 
 import discord
-from discord import app_commands
+from discord import app_commands, utils
 from discord.ext import commands
 
-from dev.model import BotModel, DefaultEmbed, ErrorEmbed, Inter
+from dev.model import (
+    BotModel,
+    DefaultEmbed,
+    ErrorEmbed,
+    GuessNumHistory,
+    GuessNumMatch,
+    GuessNumPlayer,
+    Inter,
+)
 from ui.guess_num import GuessNumView
+from utility.paginator import GeneralPaginator
+from utility.utils import divide_chunks, get_dt_now
 
 
 def return_a_b(answer: str, guess: str) -> tuple[int, int]:
@@ -52,29 +63,23 @@ class GuessNumCog(commands.GroupCog, name="gn"):
         )
         if row is None:
             return
+        match = GuessNumMatch.from_row(row)
 
-        p1: int = row["player_one"]
-        p1_num: int = row["player_one_num"]
-        p1_guess: int = row["player_one_guess"]
-        p2: int = row["player_two"]
-        p2_num: int = row["player_two_num"]
-        p2_guess: int = row["player_two_guess"]
-
-        if p2_guess + 1 > p1_guess and message.author.id != p1:
+        if match.p2_guess + 1 > match.p1_guess and message.author.id != match.p1:
             return await message.reply(embed=ErrorEmbed("現在是輪到玩家一猜測"))
-        if p1_guess + 1 > p2_guess + 1 and message.author.id != p2:
+        if match.p1_guess + 1 > match.p2_guess + 1 and message.author.id != match.p2:
             return await message.reply(embed=ErrorEmbed("現在是輪到玩家二猜測"))
 
         answer = None
         is_p_one = False
         guess = "?"
-        if message.author.id == p1:
-            answer = str(p2_num)
-            guess = p1_guess + 1
+        if message.author.id == match.p1:
+            answer = str(match.p2_num)
+            guess = match.p1_guess + 1
             is_p_one = True
-        elif message.author.id == p2:
-            answer = str(p1_num)
-            guess = p2_guess + 1
+        elif message.author.id == match.p2:
+            answer = str(match.p1_num)
+            guess = match.p2_guess + 1
 
         if answer:
             query = "player_one" if is_p_one else "player_two"
@@ -88,20 +93,45 @@ class GuessNumCog(commands.GroupCog, name="gn"):
             if a == 4:
                 await message.reply(
                     embed=DefaultEmbed(
-                        "恭喜答對, 遊戲結束, 資料已刪除",
-                        f"玩家一: {p1_num}\n 玩家二: {p2_num}",
+                        "恭喜答對, 遊戲結束",
+                        f"玩家一: {match.p1_num}\n 玩家二: {match.p2_num}",
                     )
                 )
                 await self.bot.pool.execute(
                     "DELETE FROM guess_num WHERE channel_id = $1", message.channel.id
                 )
+                await self.bot.pool.execute(
+                    "INSERT INTO gn_history (p1, p2, p1_win, time, flow) VALUES ($1, $2, $3, $4, $5)",
+                    match.p1,
+                    match.p2,
+                    is_p_one,
+                    get_dt_now(),
+                    match.flow,
+                )
+                await self.bot.pool.execute(
+                    "INSERT INTO gn_win_lose (user_id, win, lose) VALUES ($1, $2, $3) ON CONFLICT (user_id) DO UPDATE SET win = gn_win_lose.win + $2, lose = gn_win_lose.lose + $3",
+                    match.p1,
+                    1 if is_p_one else 0,
+                    1 if not is_p_one else 0,
+                )
+                await self.bot.pool.execute(
+                    "INSERT INTO gn_win_lose (user_id, win, lose) VALUES ($1, $2, $3) ON CONFLICT (user_id) DO UPDATE SET win = gn_win_lose.win + $2, lose = gn_win_lose.lose + $3",
+                    match.p2,
+                    1 if not is_p_one else 0,
+                    1 if is_p_one else 0,
+                )
                 await message.channel.edit(name="猜數字-已結束", locked=True, archived=True)
 
     @app_commands.guild_only()
     @app_commands.command(name="start", description="猜數字遊戲")
-    @app_commands.rename(opponent="對手")
-    @app_commands.describe(opponent="猜數字的對手（玩家二）")
-    async def start(self, inter: discord.Interaction, opponent: discord.Member):
+    @app_commands.rename(opponent="對手", flow="賭注")
+    @app_commands.describe(opponent="猜數字的對手（玩家二）", flow="要下賭的暴幣數量")
+    async def start(
+        self,
+        inter: discord.Interaction,
+        opponent: discord.Member,
+        flow: typing.Optional[int] = None,
+    ):
         i: Inter = inter  # type: ignore
 
         if opponent.bot:
@@ -114,12 +144,17 @@ class GuessNumCog(commands.GroupCog, name="gn"):
             )
 
         view = GuessNumView()
+        embed = DefaultEmbed(
+            "請雙方設定數字",
+            "點按按鈕即可設定數字，玩家二需等待玩家一設定完畢才可設定數字",
+        )
+        embed.set_footer(text="設定完後請在討論串中猜測數字")
+        embed.add_field(name="玩家一", value=i.user.mention, inline=False)
+        embed.add_field(name="玩家二", value=opponent.mention, inline=False)
+
         await i.response.send_message(
             content=f"{i.user.mention} 邀請 {opponent.mention} 來玩猜數字",
-            embed=DefaultEmbed(
-                "請雙方設定數字",
-                f"點按按鈕即可設定數字，玩家二需等待玩家一設定完畢才可設定數字\n\n玩家一: {i.user.mention}\n玩家二: {opponent.mention}",
-            ).set_footer(text="設定完後請在討論串中猜測數字"),
+            embed=embed,
             view=view,
             allowed_mentions=discord.AllowedMentions(users=True),
         )
@@ -128,16 +163,115 @@ class GuessNumCog(commands.GroupCog, name="gn"):
         assert isinstance(i.user, discord.Member)
         view.authors = (i.user, opponent)
 
-        view.channel = await view.message.create_thread(name=f"猜數字-{randint(100, 999)}")
+        view.channel = await view.message.create_thread(
+            name=f"猜數字-{str(uuid.uuid4())[:4]}"
+        )
         await view.channel.add_user(i.user)
         await view.channel.add_user(opponent)
 
         await i.client.pool.execute(
-            "INSERT INTO guess_num (channel_id, player_one, player_two) VALUES ($1, $2, $3)",
+            "INSERT INTO guess_num (channel_id, player_one, player_two, flow) VALUES ($1, $2, $3, $4)",
             view.channel.id,
             i.user.id,
             opponent.id,
+            flow,
         )
+
+    @app_commands.guild_only()
+    @app_commands.command(name="rules", description="查看猜數字遊戲規則")
+    async def rule(self, inter: discord.Interaction):
+        i: Inter = inter  # type: ignore
+        embed = DefaultEmbed(
+            description="""
+            開始： `/gn start <對手>`
+            雙方各設定一個四位數字，數字之間不可重複，可包含0。
+            例如 1234、5678、9012、3456、7890等等。
+            
+            猜數：在討論串中進行
+            鍵入 __四個數字__ 猜數。
+            如果猜對一個數字且位置相同，則得 **1A**
+            如果猜對一個數字，但是位置不同，則得 **1B**
+            例如，如果答案是1234，而你猜4321，則得到0A4B。
+            """,
+        ).set_author(name="📕 規則")
+
+        await i.response.send_message(embed=embed, ephemeral=True)
+
+    @app_commands.guild_only()
+    @app_commands.command(name="leaderboard", description="查看猜數字遊戲排行榜")
+    async def leaderboard(self, inter: discord.Interaction):
+        i: Inter = inter  # type: ignore
+        await i.response.defer()
+
+        rows = await i.client.pool.fetch("SELECT * FROM gn_win_lose ORDER BY win DESC")
+        all_players: typing.List[GuessNumPlayer] = [
+            GuessNumPlayer.from_row(row) for row in rows
+        ]
+        div_players = divide_chunks(all_players, 10)
+
+        embeds: typing.List[discord.Embed] = []
+        rank = 0
+        player_rank = None
+        for players in div_players:
+            embed = DefaultEmbed()
+            embed.description = ""
+            embed.set_author(name="🏆 猜數字排行榜")
+            for player in players:
+                rank += 1
+                if player == i.user.id:
+                    player_rank = rank
+                user = i.client.get_user(player.user_id) or (
+                    await i.client.fetch_user(player.user_id)
+                )
+                embed.description += f"{rank}. {user.mention} {player.win}勝{player.lose}敗 ({player.win / (player.win + player.lose) * 100:.2f}%)\n)"
+            embeds.append(embed)
+        for embed in embeds:
+            embed.set_footer(text=f"你的排名：{player_rank}")
+
+        await GeneralPaginator(i, embeds).start(followup=True)
+
+    @app_commands.guild_only()
+    @app_commands.rename(member="玩家")
+    @app_commands.describe(member="要查看的玩家")
+    @app_commands.command(name="history", description="查看猜數字對戰紀錄")
+    async def history(
+        self, inter: discord.Interaction, member: typing.Optional[discord.Member] = None
+    ):
+        i: Inter = inter  # type: ignore
+        assert isinstance(i.user, discord.Member)
+        member = member or i.user
+        await i.response.defer()
+
+        rows = await self.bot.pool.fetch(
+            "SELECT * FROM gn_history WHERE match.p1 = $1 OR match.p2 = $1",
+            member.id,
+        )
+        histories: typing.List[GuessNumHistory] = [
+            GuessNumHistory.from_row(row) for row in rows
+        ]
+        div_histories = divide_chunks(histories, 10)
+
+        embeds: typing.List[discord.Embed] = []
+        for histories in div_histories:
+            embed = DefaultEmbed()
+            embed.description = ""
+            embed.set_author(name=f"📜 {member.display_name} 的對戰紀錄")
+            for history in histories:
+                p1 = self.bot.get_user(history.p1) or (
+                    await self.bot.fetch_user(history.p1)
+                )
+                p2 = self.bot.get_user(history.p2) or (
+                    await self.bot.fetch_user(history.p2)
+                )
+                p1_mention = f"**__{p1.mention}__**" if history.p1_win else p1.mention
+                p2_mention = (
+                    f"**__{p2.mention}__**" if not history.p1_win else p2.mention
+                )
+                flow = f"| {history.flow}暴幣" if history.flow else ""
+                embed.description += f"{p1_mention} vs {p2_mention} | {utils.format_dt(history.match_time)} {flow}\n"
+            embeds.append(embed)
+
+        await GeneralPaginator(i, embeds).start(followup=True)
 
 
 async def setup(bot: commands.Bot) -> None:
