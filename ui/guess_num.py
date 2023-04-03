@@ -56,6 +56,10 @@ class GuessNumModal(ui.Modal):
             return await i.response.send_message(
                 embed=ErrorEmbed("請勿輸入數字以外的內容"), ephemeral=True
             )
+        if len(set(self.number.value)) != 4:
+            return await i.response.send_message(
+                embed=ErrorEmbed("數字之間不可重複", "如：1122, 3344"), ephemeral=True
+            )
 
         await i.response.defer(ephemeral=True)
 
