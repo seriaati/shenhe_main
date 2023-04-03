@@ -193,7 +193,7 @@ class GuessNumCog(commands.GroupCog, name="gn"):
     @app_commands.command(name="leaderboard", description="查看猜數字遊戲排行榜")
     async def leaderboard(self, inter: discord.Interaction):
         i: model.Inter = inter  # type: ignore
-        await i.response.defer()
+        await i.response.defer(thinking=False)
 
         rows = await i.client.pool.fetch("SELECT * FROM gn_win_lose ORDER BY win DESC")
         all_players: typing.List[model.GuessNumPlayer] = [
@@ -220,6 +220,11 @@ class GuessNumCog(commands.GroupCog, name="gn"):
         for embed in embeds:
             embed.set_footer(text=f"你的排名：{player_rank}")
 
+        if not embeds:
+            return await i.followup.send(
+                embed=model.ErrorEmbed("錯誤", "目前沒有排行榜資料"), ephemeral=True
+            )
+
         await GeneralPaginator(i, embeds).start(followup=True)
 
     @app_commands.guild_only()
@@ -232,7 +237,7 @@ class GuessNumCog(commands.GroupCog, name="gn"):
         i: model.Inter = inter  # type: ignore
         assert isinstance(i.user, discord.Member)
         member = member or i.user
-        await i.response.defer()
+        await i.response.defer(thinking=False)
 
         rows = await self.bot.pool.fetch(
             "SELECT * FROM gn_history WHERE p1 = $1 OR p2 = $1",
@@ -262,6 +267,11 @@ class GuessNumCog(commands.GroupCog, name="gn"):
                 flow = f"| {history.flow}暴幣" if history.flow else ""
                 embed.description += f"{p1_mention} vs {p2_mention} | {utils.format_dt(history.match_time)} {flow}\n"
             embeds.append(embed)
+
+        if not embeds:
+            return await i.followup.send(
+                embed=model.ErrorEmbed("錯誤", "你目前沒有對戰紀錄"), ephemeral=True
+            )
 
         await GeneralPaginator(i, embeds).start(followup=True)
 
