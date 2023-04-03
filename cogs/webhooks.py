@@ -67,6 +67,8 @@ class WebhookCog(commands.Cog):
             return
         if "twitter.com" not in message.content:
             return
+        if "fxtwitter.com" in message.content:
+            return
 
         webhooks = await message.channel.webhooks()
         if not webhooks:
