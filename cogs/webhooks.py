@@ -76,6 +76,7 @@ class WebhookCog(commands.Cog):
         else:
             webhook = webhooks[0]
 
+        await message.delete()
         await webhook.send(
             content=message.content.replace("twitter.com", "fxtwitter.com"),
             username=message.author.display_name,
