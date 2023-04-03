@@ -81,9 +81,9 @@ class DanceCog(commands.GroupCog, name="dance"):
         await i.response.send_message(embed=embed, ephemeral=True)
 
         await self.bot.pool.execute(
-            "INSERT INTO dance (channel_id, owners) VALUES ($1, $2)",
+            "INSERT INTO dance (channel_id, owner) VALUES ($1, $2)",
             channel.id,
-            [i.user.id],
+            i.user.id,
         )
 
     @dance_check()
