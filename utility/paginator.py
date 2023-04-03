@@ -3,8 +3,10 @@ import typing
 import discord
 from discord import ui
 
+from dev.model import BaseView
 
-class GeneralPaginatorView(ui.View):
+
+class GeneralPaginatorView(BaseView):
     def __init__(
         self,
         embeds: typing.List[discord.Embed],
