@@ -14,7 +14,6 @@ class BotModel(commands.Bot):
     debug: bool = False
     guild_id: int = 1061877505067327528
 
-    repeat: bool = False
     prev: bool = False
 
 
@@ -54,6 +53,12 @@ class BaseView(discord.ui.View):
         super().__init__(timeout=timeout)
         self.message: typing.Optional[discord.Message] = None
         self.author: typing.Optional[typing.Union[discord.User, discord.Member]] = None
+
+    def disable_items(self):
+        """Disable all buttons and selects in the view."""
+        for child in self.children:
+            if isinstance(child, (discord.ui.Button, discord.ui.Select)):
+                child.disabled = True
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         if self.author is None:
