@@ -91,6 +91,7 @@ class AdminCog(commands.Cog):
                 webhook = webhooks[0]
 
             await webhook.send(
+                content=message.content,
                 files=files,
                 username=message.author.display_name,
                 avatar_url=message.author.display_avatar.url,
