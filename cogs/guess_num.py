@@ -210,12 +210,12 @@ class GuessNumCog(commands.GroupCog, name="gn"):
             embed.set_author(name="🏆 猜數字排行榜")
             for player in players:
                 rank += 1
-                if player == i.user.id:
+                if player.user_id == i.user.id:
                     player_rank = rank
                 user = i.client.get_user(player.user_id) or (
                     await i.client.fetch_user(player.user_id)
                 )
-                embed.description += f"{rank}. {user.mention} {player.win}勝{player.lose}敗 ({player.win / (player.win + player.lose) * 100:.2f}%)\n)"
+                embed.description += f"{rank}. {user.mention} {player.win}勝{player.lose}敗 ({player.win / (player.win + player.lose) * 100:.2f}%)\n"
             embeds.append(embed)
         for embed in embeds:
             embed.set_footer(text=f"你的排名：{player_rank}")
@@ -260,10 +260,8 @@ class GuessNumCog(commands.GroupCog, name="gn"):
                 p2 = self.bot.get_user(history.p2) or (
                     await self.bot.fetch_user(history.p2)
                 )
-                p1_mention = f"**__{p1.mention}__**" if history.p1_win else p1.mention
-                p2_mention = (
-                    f"**__{p2.mention}__**" if not history.p1_win else p2.mention
-                )
+                p1_mention = f"{p1.mention} （勝）" if history.p1_win else p1.mention
+                p2_mention = f"{p2.mention} （勝）" if not history.p1_win else p2.mention
                 flow = f"| {history.flow}暴幣" if history.flow else ""
                 embed.description += f"{p1_mention} vs {p2_mention} | {utils.format_dt(history.match_time)} {flow}\n"
             embeds.append(embed)
