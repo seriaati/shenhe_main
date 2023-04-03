@@ -68,6 +68,8 @@ class AdminCog(commands.Cog):
         if message.channel.id == 1061898394446069852 and any(
             not a.is_spoiler() for a in message.attachments
         ):
+            assert isinstance(message.channel, discord.TextChannel)
+
             files: List[discord.File] = []
             await message.delete()
 
@@ -82,8 +84,16 @@ class AdminCog(commands.Cog):
                 else:
                     files.append(await attachment.to_file())
 
-            await message.channel.send(
-                content=f"{message.content}\n(由 <@{message.author.id}> 寄出)", files=files
+            webhooks = await message.channel.webhooks()
+            if not webhooks:
+                webhook = await message.channel.create_webhook(name="Auto-Spoiler")
+            else:
+                webhook = webhooks[0]
+
+            await webhook.send(
+                files=files,
+                username=message.author.display_name,
+                avatar_url=message.author.display_avatar.url,
             )
 
 
