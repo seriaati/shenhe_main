@@ -63,11 +63,12 @@ class DanceCog(commands.GroupCog, name="dance"):
 
         traveler = i.guild.get_role(1061880147952812052)
         assert traveler
-        await channel.set_permissions(
-            traveler, send_messages=False, view_channel=True, read_message_history=True
-        )
+
         await channel.set_permissions(
             i.user, send_messages=True, view_channel=True, read_message_history=True
+        )
+        await channel.set_permissions(
+            traveler, send_messages=False, view_channel=True, read_message_history=True
         )
 
         warn_embed = DefaultEmbed(
