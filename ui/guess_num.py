@@ -1,4 +1,3 @@
-import logging
 import typing
 
 import discord
@@ -39,7 +38,9 @@ class GuessNumView(BaseView):
 
 
 class GuessNumModal(ui.Modal):
-    number = ui.TextInput(placeholder="不可包含0", min_length=4, max_length=4, label="輸入數字")
+    number = ui.TextInput(
+        placeholder="數字之間不可重複", min_length=4, max_length=4, label="輸入數字"
+    )
 
     def __init__(self, is_p1: bool, guess_num_view: GuessNumView):
         super().__init__(title="輸入自己的數字", timeout=60.0)
@@ -48,10 +49,6 @@ class GuessNumModal(ui.Modal):
         self.guess_num_view = guess_num_view
 
     async def on_submit(self, i: Inter, /) -> None:
-        if "0" in self.number.value:
-            return await i.response.send_message(
-                embed=ErrorEmbed("數字不可包含0"), ephemeral=True
-            )
         if not self.number.value.isdigit():
             return await i.response.send_message(
                 embed=ErrorEmbed("請勿輸入數字以外的內容"), ephemeral=True
@@ -105,10 +102,5 @@ class GuessNumModal(ui.Modal):
         if p1_button.disabled and p2_button.disabled:
             await self.guess_num_view.channel.send(
                 content=f"{p1.mention} {p2.mention}",
-                embeds=[
-                    DefaultEmbed("遊戲開始", "玩家一和玩家二都已設定數字\n直接在此頻道輸入任何四位數字即可開始猜測"),
-                    DefaultEmbed(
-                        description="鍵入 __四個數字__ 猜數。\n如果猜對一個數字且位置相同，則得 **1A**\n如果猜對一個數字，但是位置不同，則得 **1B**\n\n例如，如果答案是1234，而你猜4321，則得到0A4B。",
-                    ).set_author(name="📕 規則"),
-                ],
+                embed=DefaultEmbed("遊戲開始", "玩家一和玩家二都已設定數字\n直接在此頻道輸入任何四位數字即可開始猜測"),
             )
