@@ -93,7 +93,9 @@ class BaseView(discord.ui.View):
             f"An error occurred while handling {item.__class__.__name__}: {error}",
             exc_info=error,
         )
-        embed = ErrorEmbed("錯誤", f"在處理 {item.__class__.__name__} 時發生錯誤: {error}")
+        embed = ErrorEmbed(
+            "錯誤", f"在處理 `{item.__class__.__name__}` 時發生錯誤:\n```py\n{error}\n```"
+        )
         try:
             await interaction.response.send_message(
                 embed=embed,
@@ -113,7 +115,9 @@ class BaseModal(discord.ui.Modal):
             f"An error occurred while handling {self.__class__.__name__}: {error}",
             exc_info=error,
         )
-        embed = ErrorEmbed("錯誤", f"在處理 {self.__class__.__name__} 時發生錯誤: {error}")
+        embed = ErrorEmbed(
+            "錯誤", f"在處理 `{self.__class__.__name__}` 時發生錯誤:\n```py\n{error}\n```"
+        )
         try:
             await interaction.response.send_message(embed=embed, ephemeral=True)
         except discord.InteractionResponded:
