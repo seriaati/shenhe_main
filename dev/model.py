@@ -107,7 +107,7 @@ class BaseView(discord.ui.View):
 
 class BaseModal(discord.ui.Modal):
     async def on_error(
-        self, interaction: discord.Interaction[BotModel], error: Exception, /
+        self, interaction: discord.Interaction, error: Exception, /
     ) -> None:
         logging.error(
             f"An error occurred while handling {self.__class__.__name__}: {error}",
