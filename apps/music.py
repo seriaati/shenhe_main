@@ -37,7 +37,6 @@ class MusicView(BaseView):
         self.add_item(Shuffle(not player.queue))
         self.add_item(Disconnect())
         self.add_item(AddSong())
-        self.add_item(Reload())
 
 
 class Resume(ui.Button):
@@ -91,7 +90,7 @@ class Stop(ui.Button):
 
 class Next(ui.Button):
     def __init__(self, disabled: bool):
-        super().__init__(row=1, disabled=disabled, emoji="<:next:1021592457894445086>")
+        super().__init__(row=1, disabled=disabled, emoji="<:right:982588993122238524>")
         self.view: MusicView
 
     async def callback(self, i: discord.Interaction) -> typing.Any:
@@ -105,7 +104,7 @@ class Next(ui.Button):
 
 class Prev(ui.Button):
     def __init__(self, disabled: bool):
-        super().__init__(row=1, disabled=disabled, emoji="<:prev:1021592459458904076>")
+        super().__init__(row=1, disabled=disabled, emoji="<:left:982588994778972171>")
         self.view: MusicView
 
     async def callback(self, i: discord.Interaction) -> typing.Any:
@@ -133,9 +132,7 @@ class Loop(ui.Button):
 
     async def callback(self, i: discord.Interaction) -> typing.Any:
         self.view.player.queue.loop = not self.view.player.queue.loop
-        await return_music_embed(
-            i, self.view.player, repeat=self.view.player.queue.loop
-        )
+        await return_music_embed(i, self.view.player)
 
 
 class Shuffle(ui.Button):
@@ -190,6 +187,7 @@ class AddSong(ui.Button):
             row=3,
             emoji="<:add_song:1021592446477549598>",
         )
+        self.view: MusicView
 
     async def callback(self, i: discord.Interaction) -> typing.Any:
         await i.response.send_modal(AddSongModal(self.view))
@@ -346,15 +344,6 @@ class ChooseSongSelect(ui.Select):
         await return_music_embed(i, player)
 
 
-class Reload(ui.Button):
-    def __init__(self):
-        super().__init__(emoji="<:reload:1021950356135100547>", row=3)
-
-    async def callback(self, i: discord.Interaction) -> typing.Any:
-        await i.response.defer()
-        await return_music_embed(i, i.guild.voice_client)
-
-
 async def get_player_embed(player: wavelink.Player) -> discord.Embed:
     embed = DefaultEmbed()
     current = player.current
@@ -388,11 +377,9 @@ async def get_queue_embed(queue: wavelink.Queue, loop: bool) -> discord.Embed:
     return embed
 
 
-async def return_music_embed(
-    i: discord.Interaction, player: wavelink.Player, repeat: bool = False
-) -> None:
+async def return_music_embed(i: discord.Interaction, player: wavelink.Player) -> None:
     player_embed = await get_player_embed(player)
-    queue_embed = await get_queue_embed(player.queue, repeat)
+    queue_embed = await get_queue_embed(player.queue, player.queue.loop)
     view = MusicView(player)
 
     try:
