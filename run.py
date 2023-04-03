@@ -51,7 +51,7 @@ class ShenheCommandTree(discord.app_commands.CommandTree):
     ) -> None:
         logging.error(f"Error in command {i.command}: {type(e)} {e}")
 
-        embed = ErrorEmbed("錯誤", str(e))
+        embed = ErrorEmbed("錯誤", f"```py\n{e}\n```")
         try:
             await i.response.send_message(embed=embed, ephemeral=True)
         except discord.InteractionResponded:
