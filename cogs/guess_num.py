@@ -6,15 +6,7 @@ import discord
 from discord import app_commands, utils
 from discord.ext import commands
 
-from dev.model import (
-    BotModel,
-    DefaultEmbed,
-    ErrorEmbed,
-    GuessNumHistory,
-    GuessNumMatch,
-    GuessNumPlayer,
-    Inter,
-)
+import dev.model as model
 from ui.guess_num import GuessNumView
 from utility.paginator import GeneralPaginator
 from utility.utils import divide_chunks, get_dt_now
@@ -44,7 +36,7 @@ def return_a_b(answer: str, guess: str) -> tuple[int, int]:
 
 class GuessNumCog(commands.GroupCog, name="gn"):
     def __init__(self, bot):
-        self.bot: BotModel = bot
+        self.bot: model.BotModel = bot
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
@@ -63,12 +55,12 @@ class GuessNumCog(commands.GroupCog, name="gn"):
         )
         if row is None:
             return
-        match = GuessNumMatch.from_row(row)
+        match = model.GuessNumMatch.from_row(row)
 
         if match.p2_guess + 1 > match.p1_guess and message.author.id != match.p1:
-            return await message.reply(embed=ErrorEmbed("現在是輪到玩家一猜測"))
+            return await message.reply(embed=model.ErrorEmbed("現在是輪到玩家一猜測"))
         if match.p1_guess + 1 > match.p2_guess + 1 and message.author.id != match.p2:
-            return await message.reply(embed=ErrorEmbed("現在是輪到玩家二猜測"))
+            return await message.reply(embed=model.ErrorEmbed("現在是輪到玩家二猜測"))
 
         answer = None
         is_p_one = False
@@ -88,11 +80,11 @@ class GuessNumCog(commands.GroupCog, name="gn"):
                 message.channel.id,
             )
             a, b = return_a_b(answer, message.content)
-            await message.reply(embed=DefaultEmbed(f"{a}A{b}B", f"第{guess}次猜測"))
+            await message.reply(embed=model.DefaultEmbed(f"{a}A{b}B", f"第{guess}次猜測"))
 
             if a == 4:
                 await message.reply(
-                    embed=DefaultEmbed(
+                    embed=model.DefaultEmbed(
                         "恭喜答對, 遊戲結束",
                         f"玩家一: {match.p1_num}\n 玩家二: {match.p2_num}",
                     )
@@ -132,19 +124,19 @@ class GuessNumCog(commands.GroupCog, name="gn"):
         opponent: discord.Member,
         flow: typing.Optional[int] = None,
     ):
-        i: Inter = inter  # type: ignore
+        i: model.Inter = inter  # type: ignore
 
         if opponent.bot:
             return await i.response.send_message(
-                embed=ErrorEmbed("錯誤", "對手不能是機器人 （雖然那樣會蠻酷的）"), ephemeral=True
+                embed=model.ErrorEmbed("錯誤", "對手不能是機器人 （雖然那樣會蠻酷的）"), ephemeral=True
             )
         if opponent == i.user:
             return await i.response.send_message(
-                embed=ErrorEmbed("錯誤", "對手不能是自己"), ephemeral=True
+                embed=model.ErrorEmbed("錯誤", "對手不能是自己"), ephemeral=True
             )
 
         view = GuessNumView()
-        embed = DefaultEmbed(
+        embed = model.DefaultEmbed(
             "請雙方設定數字",
             "點按按鈕即可設定數字，玩家二需等待玩家一設定完畢才可設定數字",
         )
@@ -180,8 +172,8 @@ class GuessNumCog(commands.GroupCog, name="gn"):
     @app_commands.guild_only()
     @app_commands.command(name="rules", description="查看猜數字遊戲規則")
     async def rule(self, inter: discord.Interaction):
-        i: Inter = inter  # type: ignore
-        embed = DefaultEmbed(
+        i: model.Inter = inter  # type: ignore
+        embed = model.DefaultEmbed(
             description="""
             開始： `/gn start <對手>`
             雙方各設定一個四位數字，數字之間不可重複，可包含0。
@@ -200,12 +192,12 @@ class GuessNumCog(commands.GroupCog, name="gn"):
     @app_commands.guild_only()
     @app_commands.command(name="leaderboard", description="查看猜數字遊戲排行榜")
     async def leaderboard(self, inter: discord.Interaction):
-        i: Inter = inter  # type: ignore
+        i: model.Inter = inter  # type: ignore
         await i.response.defer()
 
         rows = await i.client.pool.fetch("SELECT * FROM gn_win_lose ORDER BY win DESC")
-        all_players: typing.List[GuessNumPlayer] = [
-            GuessNumPlayer.from_row(row) for row in rows
+        all_players: typing.List[model.GuessNumPlayer] = [
+            model.GuessNumPlayer.from_row(row) for row in rows
         ]
         div_players = divide_chunks(all_players, 10)
 
@@ -213,7 +205,7 @@ class GuessNumCog(commands.GroupCog, name="gn"):
         rank = 0
         player_rank = None
         for players in div_players:
-            embed = DefaultEmbed()
+            embed = model.DefaultEmbed()
             embed.description = ""
             embed.set_author(name="🏆 猜數字排行榜")
             for player in players:
@@ -237,7 +229,7 @@ class GuessNumCog(commands.GroupCog, name="gn"):
     async def history(
         self, inter: discord.Interaction, member: typing.Optional[discord.Member] = None
     ):
-        i: Inter = inter  # type: ignore
+        i: model.Inter = inter  # type: ignore
         assert isinstance(i.user, discord.Member)
         member = member or i.user
         await i.response.defer()
@@ -246,14 +238,14 @@ class GuessNumCog(commands.GroupCog, name="gn"):
             "SELECT * FROM gn_history WHERE match.p1 = $1 OR match.p2 = $1",
             member.id,
         )
-        histories: typing.List[GuessNumHistory] = [
-            GuessNumHistory.from_row(row) for row in rows
+        histories: typing.List[model.GuessNumHistory] = [
+            model.GuessNumHistory.from_row(row) for row in rows
         ]
         div_histories = divide_chunks(histories, 10)
 
         embeds: typing.List[discord.Embed] = []
         for histories in div_histories:
-            embed = DefaultEmbed()
+            embed = model.DefaultEmbed()
             embed.description = ""
             embed.set_author(name=f"📜 {member.display_name} 的對戰紀錄")
             for history in histories:
