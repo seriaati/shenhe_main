@@ -50,7 +50,7 @@ class AdminCog(commands.Cog):
 
         # reload cogs
         for cog in self.bot.cogs:
-            if "music" in cog:
+            if "music" in cog or "jishaku" in cog:
                 continue
             await self.bot.reload_extension(f"cogs.{cog}")
         await ctx.send("Reloaded")
