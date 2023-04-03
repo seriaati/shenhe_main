@@ -83,59 +83,59 @@ class WebhookCog(commands.Cog):
         )
 
     # better reply
-    @commands.Cog.listener("on_message")
-    async def better_reply(self, message: discord.Message):
-        if message.author.id == self.bot.user.id:
-            return
-        if not message.guild:
-            return
-        if message.guild.id != self.bot.guild_id:
-            return
-        if not isinstance(message.channel, discord.TextChannel):
-            return
+    # @commands.Cog.listener("on_message")
+    # async def better_reply(self, message: discord.Message):
+    #     if message.author.id == self.bot.user.id:
+    #         return
+    #     if not message.guild:
+    #         return
+    #     if message.guild.id != self.bot.guild_id:
+    #         return
+    #     if not isinstance(message.channel, discord.TextChannel):
+    #         return
 
-        if message.reference and isinstance(
-            message.reference.resolved, discord.Message
-        ):
-            ref = message.reference.resolved
-            if ref.author.bot:
-                real_author = discord.utils.get(
-                    message.guild.members,
-                    display_name=ref.author.name,
-                )
-                if real_author is None:
-                    real_author = ref.author
-            else:
-                real_author = ref.author
+    #     if message.reference and isinstance(
+    #         message.reference.resolved, discord.Message
+    #     ):
+    #         ref = message.reference.resolved
+    #         if ref.author.bot:
+    #             real_author = discord.utils.get(
+    #                 message.guild.members,
+    #                 display_name=ref.author.name,
+    #             )
+    #             if real_author is None:
+    #                 real_author = ref.author
+    #         else:
+    #             real_author = ref.author
 
-            if isinstance(real_author, discord.Member):
-                roles = [r for r in real_author.roles if "神之眼" in r.name]
-            else:
-                roles = []
-            embed = discord.Embed(
-                color=roles[0].color if roles else None,
-                description=ref.content,
-                timestamp=ref.created_at,
-            )
-            embed.set_author(
-                name=real_author.display_name, icon_url=real_author.display_avatar.url
-            )
+    #         if isinstance(real_author, discord.Member):
+    #             roles = [r for r in real_author.roles if "神之眼" in r.name]
+    #         else:
+    #             roles = []
+    #         embed = discord.Embed(
+    #             color=roles[0].color if roles else None,
+    #             description=ref.content,
+    #             timestamp=ref.created_at,
+    #         )
+    #         embed.set_author(
+    #             name=real_author.display_name, icon_url=real_author.display_avatar.url
+    #         )
 
-            await message.delete()
+    #         await message.delete()
 
-            webhooks = await message.channel.webhooks()
-            if not webhooks:
-                webhook = await message.channel.create_webhook(name="Better-Reply")
-            else:
-                webhook = webhooks[0]
+    #         webhooks = await message.channel.webhooks()
+    #         if not webhooks:
+    #             webhook = await message.channel.create_webhook(name="Better-Reply")
+    #         else:
+    #             webhook = webhooks[0]
 
-            await webhook.send(
-                content=message.content + f" <@{real_author.id}>",
-                embed=embed,
-                username=message.author.display_name,
-                avatar_url=message.author.display_avatar.url,
-                allowed_mentions=discord.AllowedMentions(users=True),
-            )
+    #         await webhook.send(
+    #             content=message.content + f" <@{real_author.id}>",
+    #             embed=embed,
+    #             username=message.author.display_name,
+    #             avatar_url=message.author.display_avatar.url,
+    #             allowed_mentions=discord.AllowedMentions(users=True),
+    #         )
 
 
 async def setup(bot: commands.Bot) -> None:
