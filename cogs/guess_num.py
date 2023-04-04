@@ -257,7 +257,7 @@ class GuessNumCog(commands.GroupCog, name="gn"):
         await i.response.defer(thinking=False)
 
         rows = await self.bot.pool.fetch(
-            "SELECT * FROM gn_history WHERE p1 = $1 OR p2 = $1",
+            "SELECT * FROM gn_history WHERE p1 = $1 OR p2 = $1 ORDER by time DESC",
             member.id,
         )
         histories: typing.List[model.GuessNumHistory] = [
