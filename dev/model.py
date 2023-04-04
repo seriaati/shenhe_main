@@ -136,8 +136,8 @@ class GuessNumMatch(BaseModel):
     p1: int
     p2: int
 
-    p1_num: typing.Optional[int] = None
-    p2_num: typing.Optional[int] = None
+    p1_num: typing.Optional[str] = None
+    p2_num: typing.Optional[str] = None
 
     p1_guess: int
     p2_guess: int
