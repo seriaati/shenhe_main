@@ -222,7 +222,7 @@ class GuessNumCog(commands.GroupCog, name="gn"):
             model.GuessNumPlayer.from_row(row) for row in rows
         ]
         # sort by win_rate attribute, desc
-        all_players.sort(key=lambda x: x.win_rate, reverse=True)
+        all_players = sorted(all_players, key=lambda x: x.win_rate, reverse=True)
         div_players = divide_chunks(all_players, 10)
 
         embeds: typing.List[discord.Embed] = []
