@@ -1,4 +1,3 @@
-import logging
 import typing
 import uuid
 
@@ -7,7 +6,7 @@ from discord import app_commands, utils
 from discord.ext import commands
 
 import dev.model as model
-from apps.flow import flow_transaction
+from apps.flow import flow_transaction, get_user_flow
 from ui.guess_num import GuessNumView
 from utility.paginator import GeneralPaginator
 from utility.utils import divide_chunks, get_dt_now
@@ -140,6 +139,13 @@ class GuessNumCog(commands.GroupCog, name="gn"):
     ):
         i: model.Inter = inter  # type: ignore
 
+        user_flow = await get_user_flow(i.user.id, self.bot.pool)
+        if flow and flow > user_flow:
+            return await i.response.send_message(
+                embed=model.ErrorEmbed("你擁有的暴幣不足以承擔這個賭注", f"所需暴幣: {flow}"),
+                ephemeral=True,
+            )
+
         if opponent.bot:
             return await i.response.send_message(
                 embed=model.ErrorEmbed("錯誤", "對手不能是機器人 （雖然那樣會蠻酷的）"), ephemeral=True
@@ -211,10 +217,12 @@ class GuessNumCog(commands.GroupCog, name="gn"):
         i: model.Inter = inter  # type: ignore
         await i.response.defer(thinking=False)
 
-        rows = await i.client.pool.fetch("SELECT * FROM gn_win_lose ORDER BY win DESC")
+        rows = await i.client.pool.fetch("SELECT * FROM gn_win_lose")
         all_players: typing.List[model.GuessNumPlayer] = [
             model.GuessNumPlayer.from_row(row) for row in rows
         ]
+        # sort by win_rate attribute, desc
+        all_players.sort(key=lambda x: x.win_rate, reverse=True)
         div_players = divide_chunks(all_players, 10)
 
         embeds: typing.List[discord.Embed] = []
@@ -228,10 +236,8 @@ class GuessNumCog(commands.GroupCog, name="gn"):
                 rank += 1
                 if player.user_id == i.user.id:
                     player_rank = rank
-                user = i.client.get_user(player.user_id) or (
-                    await i.client.fetch_user(player.user_id)
-                )
-                embed.description += f"{rank}. {user.mention} {player.win}勝{player.lose}敗 ({player.win / (player.win + player.lose) * 100:.2f}%)\n"
+
+                embed.description += f"{rank}. <@{player.user_id}> {player.win}勝{player.lose}敗 ({player.win / (player.win + player.lose) * 100:.2f}%)\n"
             embeds.append(embed)
         for embed in embeds:
             embed.set_footer(text=f"你的排名：{player_rank}")
@@ -267,7 +273,6 @@ class GuessNumCog(commands.GroupCog, name="gn"):
         embeds: typing.List[discord.Embed] = []
         for histories in div_histories:
             embed = model.DefaultEmbed()
-            embed.description = ""
             embed.set_author(name=f"📜 {member.display_name} 的對戰紀錄")
             for history in histories:
                 p1 = self.bot.get_user(history.p1) or (
@@ -276,10 +281,18 @@ class GuessNumCog(commands.GroupCog, name="gn"):
                 p2 = self.bot.get_user(history.p2) or (
                     await self.bot.fetch_user(history.p2)
                 )
-                p1_mention = f"{p1.mention} （勝）" if history.p1_win else p1.mention
-                p2_mention = f"{p2.mention} （勝）" if not history.p1_win else p2.mention
-                flow = f"| **{history.flow}暴幣**" if history.flow else ""
-                embed.description += f"{p1_mention} vs {p2_mention} | {utils.format_dt(history.match_time)} {flow}\n"
+                p1_name = (
+                    f"{p1.display_name} （勝）" if history.p1_win else p1.display_name
+                )
+                p2_name = (
+                    f"{p2.display_name} （勝）" if not history.p1_win else p2.display_name
+                )
+                flow = f"賭注: **{history.flow}暴幣**" if history.flow else ""
+                embed.add_field(
+                    name=f"{p1_name} vs {p2_name}",
+                    value=f"{utils.format_dt(history.match_time)}\n{flow}",
+                    inline=False,
+                )
             embeds.append(embed)
 
         if not embeds:
