@@ -278,7 +278,7 @@ class GuessNumCog(commands.GroupCog, name="gn"):
                 )
                 p1_mention = f"{p1.mention} （勝）" if history.p1_win else p1.mention
                 p2_mention = f"{p2.mention} （勝）" if not history.p1_win else p2.mention
-                flow = f"| {history.flow}暴幣" if history.flow else ""
+                flow = f"| **{history.flow}暴幣**" if history.flow else ""
                 embed.description += f"{p1_mention} vs {p2_mention} | {utils.format_dt(history.match_time)} {flow}\n"
             embeds.append(embed)
 
