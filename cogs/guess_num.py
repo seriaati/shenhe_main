@@ -1,3 +1,4 @@
+import asyncio
 import typing
 import uuid
 
@@ -86,6 +87,7 @@ class GuessNumCog(commands.GroupCog, name="gn"):
                     "恭喜答對, 遊戲結束",
                     f"玩家一: {match.p1_num}\n 玩家二: {match.p2_num}",
                 )
+                embed.set_footer(text="此討論串將在十分鐘後關閉")
                 if match.flow:
                     embed.add_field(name="賭注", value=f"{match.flow}暴幣")
                     embed.set_footer(text="暴幣已經轉入獲勝者的帳戶")
@@ -125,6 +127,7 @@ class GuessNumCog(commands.GroupCog, name="gn"):
                     1 if is_p1 else 0,
                 )
 
+                await asyncio.sleep(600.0)
                 await message.channel.delete()
 
     @app_commands.guild_only()
