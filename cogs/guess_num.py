@@ -202,7 +202,7 @@ class GuessNumCog(commands.GroupCog, name="gn"):
             """,
         ).set_author(name="📕 規則")
 
-        await i.response.send_message(embed=embed, ephemeral=True)
+        await i.response.send_message(embed=embed)
 
     @app_commands.guild_only()
     @app_commands.command(name="leaderboard", description="查看猜數字遊戲排行榜")
