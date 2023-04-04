@@ -6,7 +6,7 @@ import aiohttp
 import asyncpg
 import discord
 from discord.ext import commands
-from pydantic import BaseModel
+from pydantic import BaseModel, validator
 
 
 class BotModel(commands.Bot):
@@ -181,6 +181,7 @@ class GuessNumPlayer(BaseModel):
     user_id: int
     win: int
     lose: int
+    win_rate: float
 
     @staticmethod
     def from_row(row: asyncpg.Record) -> "GuessNumPlayer":
@@ -188,4 +189,11 @@ class GuessNumPlayer(BaseModel):
             user_id=row["user_id"],
             win=row["win"],
             lose=row["lose"],
+            win_rate=0,
         )
+
+    @validator("win_rate", pre=True, always=True)
+    def calc_win_rate(cls, _, values):
+        if values["win"] == 0 and values["lose"] == 0:
+            return 0
+        return values["win"] / (values["win"] + values["lose"])
