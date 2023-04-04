@@ -260,7 +260,7 @@ class GuessNumCog(commands.GroupCog, name="gn"):
         self, inter: discord.Interaction, member: typing.Optional[discord.Member] = None
     ):
         i: model.Inter = inter  # type: ignore
-        assert isinstance(i.user, discord.Member)
+        assert isinstance(i.user, discord.Member) and i.guild
         member = member or i.user
         await i.response.defer(thinking=False)
 
@@ -278,12 +278,9 @@ class GuessNumCog(commands.GroupCog, name="gn"):
             embed = model.DefaultEmbed()
             embed.set_author(name=f"📜 {member.display_name} 的對戰紀錄")
             for history in histories:
-                p1 = self.bot.get_user(history.p1) or (
-                    await self.bot.fetch_user(history.p1)
-                )
-                p2 = self.bot.get_user(history.p2) or (
-                    await self.bot.fetch_user(history.p2)
-                )
+                p1 = i.guild.get_member(history.p1)
+                p2 = i.guild.get_member(history.p2)
+                assert p1 and p2
                 p1_name = (
                     f"{p1.display_name} （勝）" if history.p1_win else p1.display_name
                 )
