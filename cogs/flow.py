@@ -68,6 +68,11 @@ class FlowCog(commands.Cog, name="flow"):
 
         success = True if randint(1, 2) == 1 else False
         flow_num = randint(1, 3)
+        flow_user = await flow_app.get_user_flow(i.user.id, self.bot.pool)
+        if flow_user < 0:
+            return await i.response.send_message(
+                embed=ErrorEmbed("你的暴幣不足 (小於0)"), ephemeral=True
+            )
         flow_member = await flow_app.get_user_flow(member.id, self.bot.pool)
         if flow_member < 0:
             return await i.response.send_message(
