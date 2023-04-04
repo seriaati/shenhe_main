@@ -7,10 +7,11 @@ from dev.model import BaseView, DefaultEmbed, ErrorEmbed, Inter
 
 
 class GuessNumView(BaseView):
-    def __init__(self):
+    def __init__(self, embed: discord.Embed):
         super().__init__(timeout=600.0)
         self.channel: discord.Thread
         self.authors: typing.Tuple[discord.Member, discord.Member]
+        self.embed = embed
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         if interaction.user in self.authors:
@@ -42,11 +43,11 @@ class GuessNumModal(ui.Modal):
         placeholder="數字之間不可重複", min_length=4, max_length=4, label="輸入數字"
     )
 
-    def __init__(self, is_p1: bool, guess_num_view: GuessNumView):
+    def __init__(self, is_p1: bool, gn_view: GuessNumView):
         super().__init__(title="輸入自己的數字", timeout=60.0)
 
         self.is_p1 = is_p1
-        self.guess_num_view = guess_num_view
+        self.gn_view = gn_view
 
     async def on_submit(self, i: Inter, /) -> None:
         if not self.number.value.isdigit():
@@ -60,14 +61,14 @@ class GuessNumModal(ui.Modal):
 
         await i.response.defer(ephemeral=True)
 
-        p1 = self.guess_num_view.authors[0]
-        p2 = self.guess_num_view.authors[1]
-        if self.is_p1 and i.user.id != self.guess_num_view.authors[0].id:
+        p1 = self.gn_view.authors[0]
+        p2 = self.gn_view.authors[1]
+        if self.is_p1 and i.user.id != self.gn_view.authors[0].id:
             return await i.followup.send(
                 embed=ErrorEmbed("你不是玩家一", f"{p1.mention} 是玩家一（遊戲發起者）"),
                 ephemeral=True,
             )
-        elif not self.is_p1 and i.user.id != self.guess_num_view.authors[1].id:
+        elif not self.is_p1 and i.user.id != self.gn_view.authors[1].id:
             return await i.followup.send(
                 embed=ErrorEmbed("你不是玩家二", f"{p2.mention} 是玩家二"),
                 ephemeral=True,
@@ -76,15 +77,15 @@ class GuessNumModal(ui.Modal):
         query = "player_one" if self.is_p1 else "player_two"
         await i.client.pool.execute(
             f"UPDATE guess_num SET {query}_num = $1 WHERE channel_id = $2",
-            int(self.number.value),
-            self.guess_num_view.channel.id,
+            self.number.value,
+            self.gn_view.channel.id,
         )
 
         p1_button: ui.Button = discord.utils.get(
-            self.guess_num_view.children, custom_id="player_one"  # type: ignore
+            self.gn_view.children, custom_id="player_one"  # type: ignore
         )
         p2_button: ui.Button = discord.utils.get(
-            self.guess_num_view.children, custom_id="player_two"  # type: ignore
+            self.gn_view.children, custom_id="player_two"  # type: ignore
         )
         assert p1_button and p2_button
         if self.is_p1:
@@ -93,14 +94,31 @@ class GuessNumModal(ui.Modal):
         else:
             p2_button.disabled = True
 
-        assert self.guess_num_view.message
-        await self.guess_num_view.message.edit(view=self.guess_num_view)
+        assert self.gn_view.message
+        await self.gn_view.message.edit(view=self.gn_view)
+
+        embed = self.gn_view.embed
+        if self.is_p1:
+            embed.set_field_at(
+                0,
+                name="玩家一",
+                value=f"{p1.mention} - **設定完成**",
+                inline=False,
+            )
+        else:
+            embed.set_field_at(
+                1,
+                name="玩家二",
+                value=f"{p2.mention} - **設定完成**",
+                inline=False,
+            )
+        await i.edit_original_response(embed=embed)
 
         await i.followup.send(
             embed=DefaultEmbed("設定成功", f"你的數字為 {self.number.value}"), ephemeral=True
         )
         if p1_button.disabled and p2_button.disabled:
-            await self.guess_num_view.channel.send(
+            await self.gn_view.channel.send(
                 content=f"{p1.mention} {p2.mention}",
                 embed=DefaultEmbed("遊戲開始", "玩家一和玩家二都已設定數字\n直接在此頻道輸入任何四位數字即可開始猜測"),
             )

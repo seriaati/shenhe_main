@@ -65,11 +65,11 @@ class GuessNumCog(commands.GroupCog, name="gn"):
         is_p1 = False
         guess = "?"
         if message.author.id == match.p1:
-            answer = str(match.p2_num)
+            answer = match.p2_num
             guess = match.p1_guess + 1
             is_p1 = True
         elif message.author.id == match.p2:
-            answer = str(match.p1_num)
+            answer = match.p1_num
             guess = match.p2_guess + 1
 
         if answer:
@@ -155,16 +155,19 @@ class GuessNumCog(commands.GroupCog, name="gn"):
                 embed=model.ErrorEmbed("錯誤", "對手不能是自己"), ephemeral=True
             )
 
-        view = GuessNumView()
         embed = model.DefaultEmbed(
             "請雙方設定數字",
             "點按按鈕即可設定數字，玩家二需等待玩家一設定完畢才可設定數字",
         )
         embed.set_footer(text="設定完後請在討論串中猜測數字")
-        embed.add_field(name="玩家一", value=i.user.mention, inline=False)
-        embed.add_field(name="玩家二", value=opponent.mention, inline=False)
+        embed.add_field(name="玩家一", value=f"{i.user.mention} - *設定中...*", inline=False)
+        embed.add_field(
+            name="玩家二", value=f"{opponent.mention} - *設定中...*", inline=False
+        )
         if flow:
             embed.add_field(name="賭注", value=f"{flow} 暴幣", inline=False)
+
+        view = GuessNumView(embed)
 
         await i.response.send_message(
             content=f"{i.user.mention} 邀請 {opponent.mention} 來玩猜數字",
