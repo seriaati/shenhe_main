@@ -70,6 +70,7 @@ class VoiceCog(commands.GroupCog, name="vc"):
             and old is not None
             and len(old.members) == 1
             and old.members[0].id == self.bot.user.id
+            and member.guild.voice_client
         ):
             player: wavelink.Player = member.guild.voice_client  # type: ignore
             player.queue.clear()
@@ -156,7 +157,7 @@ class VoiceCog(commands.GroupCog, name="vc"):
 
         traveler = i.guild.get_role(1061880147952812052)
         assert traveler
-        await current_vc.set_permissions(traveler, connect=False)
+        await current_vc.set_permissions(traveler, connect=True)
         await i.response.send_message(
             embed=DefaultEmbed("成功", "此語音台的封印已被解除"), ephemeral=True
         )
