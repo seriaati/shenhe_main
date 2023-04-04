@@ -18,22 +18,21 @@ class AcceptRules(BaseView):
     async def accept_rules(self, i: discord.Interaction, _: ui.Button):
         assert i.guild
 
-        role = i.guild.get_role(1061954849534644335)
-        channel = i.guild.get_channel(1061946990927290370)
-        assert role is not None and channel is not None
+        traveler = i.guild.get_role(1061880147952812052)
+        assert traveler is not None
 
         assert isinstance(i.user, discord.Member)
-        if role in i.user.roles:
+        if traveler in i.user.roles:
             return await i.response.send_message(
                 embed=DefaultEmbed("您已同意過上述規則了", "不須再次同意"),
                 ephemeral=True,
             )
 
-        await i.user.add_roles(role)
         await i.response.send_message(
-            embed=DefaultEmbed("✅ 您已同意上述規則", f"請至 {channel.mention} 輸入你的 UID"),
+            embed=DefaultEmbed("✅ 您已同意上述規則", "歡迎來到往生堂團隊！"),
             ephemeral=True,
         )
+        await i.user.add_roles(traveler)
 
 
 class Welcome(BaseView):

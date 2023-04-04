@@ -1,6 +1,5 @@
 import logging
 import random
-import re
 
 import discord
 from discord.ext import commands
@@ -19,44 +18,6 @@ class WelcomeCog(commands.Cog):
         self.bot.add_view(self.accept_view)
 
     @commands.Cog.listener()
-    async def on_message(self, message: discord.Message):
-        if message.author.id == self.bot.user.id:
-            return
-
-        guild = self.bot.get_guild(self.bot.guild_id)
-        assert guild
-        uid_channel = guild.get_channel(1061946990927290370)
-        assert uid_channel
-        if message.channel.id == uid_channel.id:
-            uid = re.findall(r"\d+", message.content)
-            if len(uid) == 0:
-                return
-            uid = uid[0]
-            if len(uid) != 9:
-                return await message.channel.send(
-                    content=message.author.mention,
-                    embed=model.ErrorEmbed().set_author(
-                        name="UID 長度需為9位數", icon_url=message.author.avatar
-                    ),
-                )
-            if uid[0] != "9":
-                return await message.channel.send(
-                    content=message.author.mention,
-                    embed=model.ErrorEmbed().set_author(
-                        name="你不是台港澳服玩家", icon_url=message.author.avatar
-                    ),
-                )
-            await message.channel.send(
-                content=message.author.mention,
-                embed=model.DefaultEmbed(description=f"UID: {uid}").set_author(
-                    name="UID 設置成功", icon_url=message.author.avatar
-                ),
-            )
-            traveler = guild.get_role(1061880147952812052)
-            assert traveler and isinstance(message.author, discord.Member)
-            await message.author.add_roles(traveler)
-
-    @commands.Cog.listener()
     async def on_member_remove(self, member: discord.Member):
         if member.guild.id != self.bot.guild_id:
             return
@@ -72,7 +33,7 @@ class WelcomeCog(commands.Cog):
         traveler = before.guild.get_role(1061880147952812052)
         if traveler not in before.roles and traveler in after.roles:
             await register_flow_account(after.id, self.bot.pool)
-            public = before.guild.get_channel(1061881312790720602)
+            public = after.guild.get_channel(1061881312790720602)
             assert isinstance(public, discord.TextChannel)
             view = Welcome(after)
             welcome_str = random.choice(welcome_strs)
