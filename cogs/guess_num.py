@@ -125,7 +125,7 @@ class GuessNumCog(commands.GroupCog, name="gn"):
                     1 if is_p1 else 0,
                 )
 
-                await message.channel.edit(name="猜數字-已結束", locked=True, archived=True)
+                await message.channel.delete()
 
     @app_commands.guild_only()
     @app_commands.command(name="start", description="猜數字遊戲")
