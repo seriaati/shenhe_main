@@ -31,7 +31,6 @@ def return_a_b(answer: str, guess: str) -> tuple[int, int]:
                 a += 1
             else:
                 b += 1
-    logging.info(f"Answer: {answer}, Guess: {guess}, A: {a}, B: {b}")
     return a, b
 
 
