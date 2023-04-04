@@ -158,6 +158,8 @@ class GuessNumCog(commands.GroupCog, name="gn"):
         embed.set_footer(text="設定完後請在討論串中猜測數字")
         embed.add_field(name="玩家一", value=i.user.mention, inline=False)
         embed.add_field(name="玩家二", value=opponent.mention, inline=False)
+        if flow:
+            embed.add_field(name="賭注", value=f"{flow} 暴幣", inline=False)
 
         await i.response.send_message(
             content=f"{i.user.mention} 邀請 {opponent.mention} 來玩猜數字",
