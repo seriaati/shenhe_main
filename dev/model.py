@@ -192,7 +192,7 @@ class GuessNumPlayer(BaseModel):
             win_rate=0,
         )
 
-    @validator("win_rate", pre=True, always=True)
+    @validator("win_rate", pre=True, always=True, allow_reuse=True)
     def calc_win_rate(cls, _, values):
         if values["win"] == 0 and values["lose"] == 0:
             return 0
