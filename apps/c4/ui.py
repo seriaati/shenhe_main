@@ -111,8 +111,13 @@ class ConnectFourView(BaseView):
 
 
 class ColumnButton(ui.Button):
-    def __init__(self, column: int, row: int):
-        super().__init__(style=discord.ButtonStyle.blurple, label=str(column), row=row)
+    def __init__(
+        self,
+        column: int,
+        row: int,
+        style: discord.ButtonStyle = discord.ButtonStyle.blurple,
+    ):
+        super().__init__(style=style, label=str(column), row=row)
         self.column = column
         self.view: ConnectFourView
 
@@ -126,12 +131,14 @@ class ColumnButton(ui.Button):
                 break
         game.play(self.column - 1, color)
 
-        for item in self.view.children:
-            if isinstance(item, ColumnButton):
-                if player == list(game.players.values())[0]:
-                    item.style = discord.ButtonStyle.blurple
-                else:
-                    item.style = discord.ButtonStyle.green
+        self.view.clear_items()
+        style = (
+            discord.ButtonStyle.blurple
+            if player == list(game.players.values())[0]
+            else discord.ButtonStyle.green
+        )
+        for column in range(1, 8):
+            self.view.add_item(ColumnButton(column, column // 5, style))
         await i.response.edit_message(embed=game.get_board(), view=self.view)
 
 
@@ -150,8 +157,7 @@ class ColorSelectView(BaseView):
         if i.user in (self.p1, self.p2):
             return True
         else:
-            await i.response.edit_message(view=self)
-            await i.followup.send(
+            await i.response.send_message(
                 embed=ErrorEmbed("錯誤", "你不是這個遊戲的玩家之一"), ephemeral=True
             )
             return False
