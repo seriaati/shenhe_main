@@ -92,4 +92,4 @@ class ConnectFour:
         return False
 
     def check_draw(self):
-        return all([cell != " " for row in self.board for cell in row])
+        return all([cell != "⚫ " for row in self.board for cell in row])
