@@ -68,7 +68,7 @@ class ConnectFourView(BaseView):
             INSERT INTO game_win_lose
             (user_id, win, lose, game)
             VALUES ($1, $2, $3, 'connect_four')
-            ON CONFLICT (user_id)
+            ON CONFLICT (user_id, game)
             DO UPDATE SET
                 win = game_win_lose.win + $2, lose = game_win_lose.lose + $3
             """,
@@ -81,7 +81,7 @@ class ConnectFourView(BaseView):
             INSERT INTO game_win_lose
             (user_id, win, lose, game)
             VALUES ($1, $2, $3, 'connect_four')
-            ON CONFLICT (user_id)
+            ON CONFLICT (user_id, game)
             DO UPDATE SET
                 win = game_win_lose.win + $2, lose = game_win_lose.lose + $3
             """,
