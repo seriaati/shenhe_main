@@ -80,6 +80,8 @@ class ColorSelectView(BaseView):
         self.p2_color: typing.Optional[str] = None
         self.embed: discord.Embed
 
+        self.add_item(ColorSelect())
+
     async def interaction_check(self, i: discord.Interaction) -> bool:
         if i.user in (self.p1, self.p2):
             return True
