@@ -126,12 +126,18 @@ class ColorSelect(ui.Select):
         if i.user.id == view.p1.id:
             view.p1_color = self.values[0]
             embed.set_field_at(
-                0, name="玩家一", value=f"{view.p1.mention} ({view.p1_color})"
+                0,
+                name="玩家一",
+                value=f"{view.p1.mention} - {view.p1_color}",
+                inline=False,
             )
         elif i.user.id == view.p2.id:
             view.p2_color = self.values[0]
             embed.set_field_at(
-                1, name="玩家二", value=f"{view.p2.mention} ({view.p2_color})"
+                1,
+                name="玩家二",
+                value=f"{view.p2.mention} - {view.p2_color}",
+                inline=False,
             )
 
         await i.response.edit_message(embed=embed, view=view)
