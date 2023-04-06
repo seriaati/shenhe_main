@@ -144,24 +144,28 @@ class ColorSelectView(BaseView):
         if i.user in (self.p1, self.p2):
             return True
         else:
-            await i.response.send_message(
+            await i.response.edit_message(view=self)
+            await i.followup.send(
                 embed=ErrorEmbed("錯誤", "你不是這個遊戲的玩家之一"), ephemeral=True
             )
             return False
 
 
 class ColorSelect(ui.Select):
-    def __init__(self):
+    def __init__(self, selected: typing.Optional[str] = None):
+        options = [
+            discord.SelectOption(label="紅色", value="🔴", emoji="🔴"),
+            discord.SelectOption(label="黃色", value="🟡", emoji="🟡"),
+            discord.SelectOption(label="綠色", value="🟢", emoji="🟢"),
+            discord.SelectOption(label="藍色", value="🔵", emoji="🔵"),
+            discord.SelectOption(label="紫色", value="🟣", emoji="🟣"),
+            discord.SelectOption(label="白色", value="⚪", emoji="⚪"),
+        ]
+        selected_option = discord.utils.get(options, value=selected)
+        options.remove(selected_option)
         super().__init__(
             placeholder="選擇你的棋子顏色",
-            options=[
-                discord.SelectOption(label="紅色", value="🔴", emoji="🔴"),
-                discord.SelectOption(label="黃色", value="🟡", emoji="🟡"),
-                discord.SelectOption(label="綠色", value="🟢", emoji="🟢"),
-                discord.SelectOption(label="藍色", value="🔵", emoji="🔵"),
-                discord.SelectOption(label="紫色", value="🟣", emoji="🟣"),
-                discord.SelectOption(label="白色", value="⚪", emoji="⚪"),
-            ],
+            options=options,
         )
         self.view: ColorSelectView
 
@@ -189,6 +193,10 @@ class ColorSelect(ui.Select):
                 value=f"{view.p1.mention} - {view.p1_color}",
                 inline=False,
             )
+
+            view.clear_items()
+            view.add_item(ColorSelect(self.values[0]))
+
         elif i.user.id == view.p2.id:
             view.p2_color = self.values[0] + " "
             embed.set_field_at(
@@ -201,6 +209,8 @@ class ColorSelect(ui.Select):
         await i.response.edit_message(embed=embed, view=view)
 
         if view.p1_color is not None and view.p2_color is not None:
+            self.disabled = True
+            await i.edit_original_response(view=view)
             message = await i.original_response()
             thread = await message.create_thread(name=f"四子棋-{str(uuid4())[:4]}")
             game = ConnectFour({view.p1_color: view.p1, view.p2_color: view.p2})
