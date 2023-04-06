@@ -33,3 +33,8 @@ welcome_strs = (
     "你也是偽裝成萌新的大佬嗎?",
     "七七喜歡你~",
 )
+
+fix_embeds = {
+    "twitter.com": "fxtwitter.com",
+    "pixiv.net": "phixiv.net",
+}

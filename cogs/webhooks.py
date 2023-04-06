@@ -5,7 +5,8 @@ from typing import List
 import discord
 from discord.ext import commands
 
-from dev.model import BotModel, DefaultEmbed
+from data.constants import fix_embeds
+from dev.model import BotModel
 
 
 class WebhookCog(commands.Cog):
@@ -52,7 +53,7 @@ class WebhookCog(commands.Cog):
                 avatar_url=message.author.display_avatar.url,
             )
 
-    # use fxtwitter to send tweet
+    # use fxtwitter and phixiv to send tweet
     @commands.Cog.listener("on_message")
     async def use_fxtwitter(self, message: discord.Message):
         if message.author.id == self.bot.user.id:
@@ -65,23 +66,24 @@ class WebhookCog(commands.Cog):
         # check if message.content contains a URL using regex
         if not re.search(r"(https?://[^\s]+)", message.content):
             return
-        if "twitter.com" not in message.content:
-            return
-        if "fxtwitter.com" in message.content:
-            return
 
-        webhooks = await message.channel.webhooks()
-        if not webhooks:
-            webhook = await message.channel.create_webhook(name="FxTwitter")
-        else:
-            webhook = webhooks[0]
+        for website, fix in fix_embeds.items():
+            if website in message.content and fix not in message.content:
+                if website == "pixiv.net" and message.channel.id == 1061898394446069852:
+                    return
 
-        await message.delete()
-        await webhook.send(
-            content=message.content.replace("twitter.com", "fxtwitter.com"),
-            username=message.author.display_name,
-            avatar_url=message.author.display_avatar.url,
-        )
+                webhooks = await message.channel.webhooks()
+                if not webhooks:
+                    webhook = await message.channel.create_webhook(name="Fix Embed")
+                else:
+                    webhook = webhooks[0]
+
+                await message.delete()
+                await webhook.send(
+                    content=message.content.replace(website, fix),
+                    username=message.author.display_name,
+                    avatar_url=message.author.display_avatar.url,
+                )
 
 
 async def setup(bot: commands.Bot) -> None:
