@@ -39,6 +39,7 @@ class ConnectFourCog(commands.Cog):
             view=view,
         )
         view.message = await i.original_response()
+        view.embed = embed
 
 
 async def setup(bot: commands.Bot):
