@@ -134,7 +134,7 @@ class ColumnButton(ui.Button):
         self.view.clear_items()
         style = (
             discord.ButtonStyle.blurple
-            if player == list(game.players.values())[0]
+            if player != list(game.players.values())[0]
             else discord.ButtonStyle.green
         )
         for column in range(1, 8):
