@@ -2,9 +2,8 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-import apps.c4.game as c4
-from apps.c4.ui import ConnectFourView
-from dev.model import ErrorEmbed
+from apps.c4.ui import ColorSelectView
+from dev.model import DefaultEmbed, ErrorEmbed
 
 
 class ConnectFourCog(commands.Cog):
@@ -13,23 +12,30 @@ class ConnectFourCog(commands.Cog):
 
     @app_commands.guild_only()
     @app_commands.rename(opponent="對手")
-    @app_commands.command(name="connect-four", description="開始一場屏風式四子棋遊戲")
+    @app_commands.command(name="c4", description="開始一場屏風式四子棋遊戲")
     async def connect_four(self, i: discord.Interaction, opponent: discord.Member):
-        # if i.user == opponent:
-        #     return await i.response.send_message(
-        #         embed=ErrorEmbed("你不能和自己對戰"), ephemeral=True
-        #     )
-        # if opponent.bot:
-        #     return await i.response.send_message(
-        #         embed=ErrorEmbed("你不能和機器人對戰"), ephemeral=True
-        #     )
+        assert isinstance(i.user, discord.Member)
+        if i.user == opponent:
+            return await i.response.send_message(
+                embed=ErrorEmbed("你不能和自己對戰"), ephemeral=True
+            )
+        if opponent.bot:
+            return await i.response.send_message(
+                embed=ErrorEmbed("你不能和機器人對戰"), ephemeral=True
+            )
 
-        game = c4.ConnectFour((i.user, opponent))
-        view = ConnectFourView(game)
+        embed = DefaultEmbed(
+            f"{i.user.display_name} 邀請 {opponent.display_name} 來玩屏風式四子棋"
+        )
+        embed.add_field(name="玩家一", value=f"{i.user.mention} - *正在選擇顏色*", inline=False)
+        embed.add_field(
+            name="玩家二", value=f"{opponent.mention} - *正在選擇顏色*", inline=False
+        )
+
         await i.response.send_message(
-            content=f"🟡 {i.user.mention}\n🔵 {opponent.mention}",
-            embed=game.get_board(),
-            view=view,
+            content=f"{i.user.mention} {opponent.mention}",
+            embed=embed,
+            view=ColorSelectView(i.user, opponent),
         )
 
 

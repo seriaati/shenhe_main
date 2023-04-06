@@ -9,26 +9,29 @@ from dev.model import DefaultEmbed
 class ConnectFour:
     def __init__(
         self,
-        players: typing.Tuple[
-            typing.Union[discord.User, discord.Member],
-            typing.Union[discord.User, discord.Member],
-        ],
+        players: typing.Dict[str, discord.Member],
     ):
         self.board = [["⚫ " for _ in range(7)] for _ in range(6)]
-        self.current_player = "🟡 "
         self.players = players
 
+        keys = list(players.keys())
+        self.p1_color = keys[0]
+        self.p2_color = keys[1]
+        self.current_player = self.p1_color
+
+        values = list(players.values())
+        self.p1 = values[0]
+        self.p2 = values[1]
+
     def get_board(self) -> discord.Embed:
-        embed = DefaultEmbed(
-            f"屏風式四子棋 | {self.players[0].display_name} vs {self.players[1].display_name}"
-        )
+        embed = DefaultEmbed("屏風式四子棋")
         embed.description = ""
         for row in self.board:
             embed.description += "".join(row) + "\n"
         embed.description += "1️⃣ 2️⃣ 3️⃣ 4️⃣ 5️⃣ 6️⃣ 7️⃣"
         embed.set_footer(text=f"現在是 {self.current_player} 的回合")
-        member = self.players[0] if self.current_player == "🟡 " else self.players[1]
-        embed.set_author(name=member.display_name, icon_url=member.display_avatar.url)
+        embed.set_author(name=f"{self.p1.display_name} vs {self.p2.display_name}")
+
         return embed
 
     def play(self, col: int):
@@ -46,7 +49,9 @@ class ConnectFour:
         elif self.check_draw():
             raise Draw
 
-        self.current_player = "🔵 " if self.current_player == "🟡 " else "🟡 "
+        self.current_player = (
+            self.p2_color if self.current_player == self.p1_color else self.p1_color
+        )
 
     def check_win(self, row, col):
         player = self.board[row][col]
