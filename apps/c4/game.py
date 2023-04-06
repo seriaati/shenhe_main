@@ -24,7 +24,7 @@ class ConnectFour:
         )
         embed.description = ""
         for row in self.board:
-            embed.description += " ".join(row) + "\n"
+            embed.description += "".join(row) + "\n"
         embed.description += "1️⃣ 2️⃣ 3️⃣ 4️⃣ 5️⃣ 6️⃣ 7️⃣"
         embed.set_footer(text=f"現在是 {self.current_player} 的回合")
         member = self.players[0] if self.current_player == "🟡 " else self.players[1]
