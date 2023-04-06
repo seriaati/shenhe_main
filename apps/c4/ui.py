@@ -95,7 +95,7 @@ class ColorSelectView(BaseView):
 class ColorSelect(ui.Select):
     def __init__(self):
         super().__init__(
-            placeholder="選擇你的顏色",
+            placeholder="選擇你的棋子顏色",
             options=[
                 discord.SelectOption(label="紅色", value="🔴 ", emoji="🔴"),
                 discord.SelectOption(label="黃色", value="🟡 ", emoji="🟡"),
@@ -113,7 +113,11 @@ class ColorSelect(ui.Select):
             return await i.response.send_message(
                 embed=ErrorEmbed("錯誤", "請等待玩家一選擇顏色"), ephemeral=True
             )
-        elif view.p2_color is None and i.user.id != view.p2.id:
+        if (
+            view.p1_color is not None
+            and view.p2_color is None
+            and i.user.id != view.p2.id
+        ):
             return await i.response.send_message(
                 embed=ErrorEmbed("錯誤", "現在已經輪到玩家二選擇顏色"), ephemeral=True
             )
