@@ -90,6 +90,7 @@ class ReactionRoles(commands.Cog):
             1085188645872472135,
             1085192699533074503,
             1085188654537920633,
+            1093481186761912320,
         )
         self.game_view = ReactionRole(
             [guild.get_role(id) for id in self.game_role_ids],
