@@ -42,122 +42,126 @@ class GameCog(commands.GroupCog, name="game"):
     @commands.Cog.listener(name="on_message")
     async def sticky_message(self, message: discord.Message):
         if (
-            message.author.bot
-            or not isinstance(message.channel, discord.Thread)
-            or "四子棋" not in message.channel.name
+            not message.author.bot
+            and isinstance(message.channel, discord.Thread)
+            and "四子棋" in message.channel.name
         ):
-            return
+            row = await self.bot.pool.fetchrow(
+                "SELECT * FROM connect_four WHERE channel_id = $1", message.channel.id
+            )
+            if row is None:
+                return
+            match = model.ConnectFourMatch.from_row(row)
 
-        row = await self.bot.pool.fetchrow(
-            "SELECT * FROM connect_four WHERE channel_id = $1", message.channel.id
-        )
-        if row is None:
-            return
-        match = model.ConnectFourMatch.from_row(row)
+            if match.sticky_id is not None:
+                sticky = await message.channel.fetch_message(match.sticky_id)
+                await sticky.delete()
 
-        if match.sticky_id is not None:
-            sticky = await message.channel.fetch_message(match.sticky_id)
-            await sticky.delete()
-
-        content = f"[點我回到遊戲]({match.board_link})"
-        await message.channel.send(content)
-        await self.bot.pool.execute(
-            "UPDATE connect_four SET sticky_id = $1 WHERE channel_id = $2",
-            message.id,
-            message.channel.id,
-        )
+            content = f"[點我回到遊戲]({match.board_link})"
+            sticky = await message.channel.send(content)
+            await self.bot.pool.execute(
+                "UPDATE connect_four SET sticky_id = $1 WHERE channel_id = $2",
+                sticky.id,
+                message.channel.id,
+            )
 
     @commands.Cog.listener(name="on_message")
     async def guess_num(self, message: discord.Message):
         if (
-            message.author.bot
-            or not message.content.isdigit()
-            or not isinstance(message.channel, discord.Thread)
-            or "猜數字" not in message.channel.name
-            or len(set(message.content)) != 4
+            not message.author.bot
+            and message.content.isdigit()
+            and isinstance(message.channel, discord.Thread)
+            and "猜數字" in message.channel.name
+            and len(set(message.content)) != 4
         ):
-            return
-
-        row = await self.bot.pool.fetchrow(
-            "SELECT * FROM guess_num WHERE channel_id = $1 AND player_one_num IS NOT NULL AND player_two_num IS NOT NULL",
-            message.channel.id,
-        )
-        if row is None:
-            return
-        match = model.GuessNumMatch.from_row(row)
-
-        if match.p2_guess + 1 > match.p1_guess and message.author.id != match.p1:
-            return await message.reply(embed=model.ErrorEmbed("現在是輪到玩家一猜測"))
-        if match.p1_guess + 1 > match.p2_guess + 1 and message.author.id != match.p2:
-            return await message.reply(embed=model.ErrorEmbed("現在是輪到玩家二猜測"))
-
-        answer = None
-        is_p1 = False
-        guess = "?"
-        if message.author.id == match.p1:
-            answer = match.p2_num
-            guess = match.p1_guess + 1
-            is_p1 = True
-        elif message.author.id == match.p2:
-            answer = match.p1_num
-            guess = match.p2_guess + 1
-
-        if answer:
-            query = "player_one" if is_p1 else "player_two"
-            await self.bot.pool.execute(
-                f"UPDATE guess_num SET {query}_guess = {query}_guess + 1 WHERE channel_id = $1",
+            row = await self.bot.pool.fetchrow(
+                "SELECT * FROM guess_num WHERE channel_id = $1 AND player_one_num IS NOT NULL AND player_two_num IS NOT NULL",
                 message.channel.id,
             )
-            a, b = return_a_b(answer, message.content)
-            await message.reply(embed=model.DefaultEmbed(f"{a}A{b}B", f"第{guess}次猜測"))
+            if row is None:
+                return
+            match = model.GuessNumMatch.from_row(row)
 
-            if a == 4:
-                embed = model.DefaultEmbed(
-                    "恭喜答對, 遊戲結束",
-                    f"玩家一: {match.p1_num}\n 玩家二: {match.p2_num}",
+            if match.p2_guess + 1 > match.p1_guess and message.author.id != match.p1:
+                return await message.reply(embed=model.ErrorEmbed("現在是輪到玩家一猜測"))
+            if (
+                match.p1_guess + 1 > match.p2_guess + 1
+                and message.author.id != match.p2
+            ):
+                return await message.reply(embed=model.ErrorEmbed("現在是輪到玩家二猜測"))
+
+            answer = None
+            is_p1 = False
+            guess = "?"
+            if message.author.id == match.p1:
+                answer = match.p2_num
+                guess = match.p1_guess + 1
+                is_p1 = True
+            elif message.author.id == match.p2:
+                answer = match.p1_num
+                guess = match.p2_guess + 1
+
+            if answer:
+                query = "player_one" if is_p1 else "player_two"
+                await self.bot.pool.execute(
+                    f"UPDATE guess_num SET {query}_guess = {query}_guess + 1 WHERE channel_id = $1",
+                    message.channel.id,
                 )
-                embed.set_footer(text="此討論串將在十分鐘後關閉")
-                if match.flow:
-                    embed.add_field(name="賭注", value=f"{match.flow}暴幣")
-                    embed.set_footer(text="暴幣已經轉入獲勝者的帳戶")
-                await message.reply(embed=embed)
-                if match.flow:
-                    await flow_transaction(
-                        match.p1, match.flow if is_p1 else -match.flow, self.bot.pool
+                a, b = return_a_b(answer, message.content)
+                await message.reply(
+                    embed=model.DefaultEmbed(f"{a}A{b}B", f"第{guess}次猜測")
+                )
+
+                if a == 4:
+                    embed = model.DefaultEmbed(
+                        "恭喜答對, 遊戲結束",
+                        f"玩家一: {match.p1_num}\n 玩家二: {match.p2_num}",
                     )
-                    await flow_transaction(
+                    embed.set_footer(text="此討論串將在十分鐘後關閉")
+                    if match.flow:
+                        embed.add_field(name="賭注", value=f"{match.flow}暴幣")
+                        embed.set_footer(text="暴幣已經轉入獲勝者的帳戶")
+                    await message.reply(embed=embed)
+                    if match.flow:
+                        await flow_transaction(
+                            match.p1,
+                            match.flow if is_p1 else -match.flow,
+                            self.bot.pool,
+                        )
+                        await flow_transaction(
+                            match.p2,
+                            match.flow if not is_p1 else -match.flow,
+                            self.bot.pool,
+                        )
+
+                    await self.bot.pool.execute(
+                        "DELETE FROM guess_num WHERE channel_id = $1",
+                        message.channel.id,
+                    )
+                    await self.bot.pool.execute(
+                        "INSERT INTO game_history (p1, p2, p1_win, time, flow, game) VALUES ($1, $2, $3, $4, $5, 'guess_num')",
+                        match.p1,
                         match.p2,
-                        match.flow if not is_p1 else -match.flow,
-                        self.bot.pool,
+                        is_p1,
+                        get_dt_now(),
+                        match.flow,
                     )
 
-                await self.bot.pool.execute(
-                    "DELETE FROM guess_num WHERE channel_id = $1", message.channel.id
-                )
-                await self.bot.pool.execute(
-                    "INSERT INTO game_history (p1, p2, p1_win, time, flow, game) VALUES ($1, $2, $3, $4, $5, 'guess_num')",
-                    match.p1,
-                    match.p2,
-                    is_p1,
-                    get_dt_now(),
-                    match.flow,
-                )
+                    await self.bot.pool.execute(
+                        "INSERT INTO game_win_lose (user_id, win, lose, game) VALUES ($1, $2, $3, 'guess_num') ON CONFLICT (user_id) DO UPDATE SET win = game_win_lose.win + $2, lose = game_win_lose.lose + $3",
+                        match.p1,
+                        1 if is_p1 else 0,
+                        1 if not is_p1 else 0,
+                    )
+                    await self.bot.pool.execute(
+                        "INSERT INTO game_win_lose (user_id, win, lose, game) VALUES ($1, $2, $3, 'guess_num') ON CONFLICT (user_id) DO UPDATE SET win = game_win_lose.win + $2, lose = game_win_lose.lose + $3",
+                        match.p2,
+                        1 if not is_p1 else 0,
+                        1 if is_p1 else 0,
+                    )
 
-                await self.bot.pool.execute(
-                    "INSERT INTO game_win_lose (user_id, win, lose, game) VALUES ($1, $2, $3, 'guess_num') ON CONFLICT (user_id) DO UPDATE SET win = game_win_lose.win + $2, lose = game_win_lose.lose + $3",
-                    match.p1,
-                    1 if is_p1 else 0,
-                    1 if not is_p1 else 0,
-                )
-                await self.bot.pool.execute(
-                    "INSERT INTO game_win_lose (user_id, win, lose, game) VALUES ($1, $2, $3, 'guess_num') ON CONFLICT (user_id) DO UPDATE SET win = game_win_lose.win + $2, lose = game_win_lose.lose + $3",
-                    match.p2,
-                    1 if not is_p1 else 0,
-                    1 if is_p1 else 0,
-                )
-
-                await asyncio.sleep(600.0)
-                await message.channel.delete()
+                    await asyncio.sleep(600.0)
+                    await message.channel.delete()
 
     @app_commands.guild_only()
     @app_commands.command(name="start", description="開始一個小遊戲")
