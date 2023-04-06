@@ -237,6 +237,8 @@ class GameCog(commands.GroupCog, name="game"):
             embed.add_field(
                 name="玩家二", value=f"{opponent.mention} - *正在選擇顏色*", inline=False
             )
+            if flow:
+                embed.add_field(name="賭注", value=f"{flow} 暴幣", inline=False)
 
             view = ColorSelectView(i.user, opponent, embed, flow)
             await i.response.send_message(
