@@ -281,9 +281,12 @@ class GuessNumCog(commands.GroupCog, name="gn"):
             embed = model.DefaultEmbed()
             embed.set_author(name=f"📜 {member.display_name} 的對戰紀錄")
             for history in histories:
-                p1 = i.guild.get_member(history.p1)
-                p2 = i.guild.get_member(history.p2)
-                assert p1 and p2
+                p1 = i.guild.get_member(history.p1) or await i.guild.fetch_member(
+                    history.p1
+                )
+                p2 = i.guild.get_member(history.p2) or await i.guild.fetch_member(
+                    history.p2
+                )
                 p1_name = (
                     f"{p1.display_name} （勝）" if history.p1_win else p1.display_name
                 )
