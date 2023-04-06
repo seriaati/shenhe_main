@@ -19,7 +19,6 @@ class AcceptRules(BaseView):
         assert i.guild
 
         traveler = i.guild.get_role(1061880147952812052)
-        assert traveler is not None
 
         assert isinstance(i.user, discord.Member)
         if traveler in i.user.roles:
@@ -29,10 +28,13 @@ class AcceptRules(BaseView):
             )
 
         await i.response.send_message(
-            embed=DefaultEmbed("✅ 您已同意上述規則", "歡迎來到往生堂團隊！"),
+            embed=DefaultEmbed("✅ 您已同意上述規則", "請至 <#1093484799278190673> 輸入 UID"),
             ephemeral=True,
         )
-        await i.user.add_roles(traveler)
+        unlock_uid = i.guild.get_role(1093484835349221397)
+        if unlock_uid is None:
+            raise ValueError("Unlock UID Role not found")
+        await i.user.add_roles(unlock_uid)
 
 
 class Welcome(BaseView):

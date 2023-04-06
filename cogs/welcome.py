@@ -18,6 +18,34 @@ class WelcomeCog(commands.Cog):
         self.bot.add_view(self.accept_view)
 
     @commands.Cog.listener()
+    async def on_message(self, message: discord.Message):
+        if (
+            message.guild is None
+            or message.author.bot
+            or message.guild.id != self.bot.guild_id
+            or message.channel.id != 1093484799278190673
+            or not message.content.isdigit()
+            or not isinstance(message.author, discord.Member)
+        ):
+            return
+
+        uid = message.content
+        if len(uid) != 9:
+            return await message.reply(
+                embed=model.ErrorEmbed("UID 是一個 9 位數的數字"), delete_after=10
+            )
+        if not uid.startswith("9"):
+            return await message.reply(
+                embed=model.ErrorEmbed("UID 開頭必須是 9"), delete_after=10
+            )
+
+        await message.reply(embed=model.DefaultEmbed("UID 正確", f"UID: {uid}"))
+        traveler = message.guild.get_role(1061880147952812052)
+        if traveler is None:
+            raise ValueError("Traveler role not found")
+        await message.author.add_roles(traveler)
+
+    @commands.Cog.listener()
     async def on_member_remove(self, member: discord.Member):
         if member.guild.id != self.bot.guild_id:
             return
