@@ -238,7 +238,7 @@ class ColorSelect(ui.Select):
             )
 
             await i.client.pool.execute(
-                "INSERT INTO connect_four (channel_id, message_link) VALUES ($1, $2)",
+                "INSERT INTO connect_four (channel_id, board_link) VALUES ($1, $2)",
                 thread.id,
                 board.jump_url,
             )
