@@ -14,8 +14,8 @@ class ConnectFour:
             typing.Union[discord.User, discord.Member],
         ],
     ):
-        self.board = [[" " for _ in range(7)] for _ in range(6)]
-        self.current_player = "🟡"
+        self.board = [["⚫ " for _ in range(7)] for _ in range(6)]
+        self.current_player = "🟡 "
         self.players = players
 
     def get_board(self) -> discord.Embed:
@@ -24,17 +24,17 @@ class ConnectFour:
         )
         embed.description = ""
         for row in self.board:
-            embed.description += "⚫ ".join(row) + "\n"
+            embed.description += " ".join(row) + "\n"
         embed.description += "1️⃣ 2️⃣ 3️⃣ 4️⃣ 5️⃣ 6️⃣ 7️⃣"
         embed.set_footer(text=f"現在是 {self.current_player} 的回合")
-        member = self.players[0] if self.current_player == "🟡" else self.players[1]
+        member = self.players[0] if self.current_player == "🟡 " else self.players[1]
         embed.set_author(name=member.display_name, icon_url=member.display_avatar.url)
         return embed
 
     def play(self, col: int):
         row = 5
         while row >= 0:
-            if self.board[row][col] == " ":
+            if self.board[row][col] == "⚫ ":
                 self.board[row][col] = self.current_player
                 break
             row -= 1
@@ -46,7 +46,7 @@ class ConnectFour:
         elif self.check_draw():
             raise Draw
 
-        self.current_player = "🔵" if self.current_player == "🟡" else "🟡"
+        self.current_player = "🔵 " if self.current_player == "🟡 " else "🟡 "
 
     def check_win(self, row, col):
         player = self.board[row][col]
