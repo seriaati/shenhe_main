@@ -32,11 +32,13 @@ class ConnectFourCog(commands.Cog):
             name="玩家二", value=f"{opponent.mention} - *正在選擇顏色*", inline=False
         )
 
+        view = ColorSelectView(i.user, opponent)
         await i.response.send_message(
             content=f"{i.user.mention} {opponent.mention}",
             embed=embed,
-            view=ColorSelectView(i.user, opponent),
+            view=view,
         )
+        view.message = await i.original_response()
 
 
 async def setup(bot: commands.Bot):
