@@ -1,4 +1,4 @@
-from discord import Interaction, SelectOption, app_commands
+from discord import Interaction, SelectOption, app_commands, utils
 from discord.ext import commands
 from discord.ui import Select
 
@@ -9,37 +9,33 @@ from utility.utils import default_embed
 class Dropdown(Select):
     def __init__(self, bot: commands.Bot):
         options = [
-            SelectOption(label="暴幣系統", emoji="🪙"),
-            SelectOption(label="猜數字遊戲", emoji="🎲"),
-            SelectOption(label="語音台系統", emoji="🎙️"),
-            SelectOption(label="音樂系統", emoji="🎵"),
-            SelectOption(label="練舞系統", emoji="🕺"),
-            SelectOption(label="商店系統", emoji="🛒"),
-            SelectOption(label="其他", emoji="🙂"),
+            SelectOption(label="暴幣系統", emoji="🪙", value="flow"),
+            SelectOption(label="猜數字遊戲", emoji="🎲", value="gn"),
+            SelectOption(label="語音台系統", emoji="🎙️", value="vc"),
+            SelectOption(label="音樂系統", emoji="🎵", value="music"),
+            SelectOption(label="練舞系統", emoji="🕺", value="dance"),
+            SelectOption(label="商店系統", emoji="🛒", value="shop"),
+            SelectOption(label="其他", emoji="🙂", value="other"),
         ]
         super().__init__(placeholder="你想要什麼樣的幫助呢?", options=options)
         self.bot = bot
 
     async def callback(self, i: Interaction):
-        index = 0
-        cogs = ("flow", "gn", "vc", "music", "dance", "shop", "find", "other")
-        for i_, option in enumerate(self.options):
-            if option.value == self.values[0]:
-                selected_option = option
-                index = i_
-                break
-        command_cog = self.bot.get_cog(cogs[index])
-        if command_cog is None:
-            raise ValueError(f"Cog {cogs[index]} not found")
-        commands = command_cog.__cog_app_commands__
-        is_group = command_cog.__cog_is_app_commands_group__
-        group_name = command_cog.__cog_group_name__
+        selected = utils.get(self.options, value=self.values[0])
+        if selected is None:
+            raise ValueError(f"Option {self.values[0]} not found")
+        cog = self.bot.get_cog(self.values[0])
+        if cog is None:
+            raise ValueError(f"Cog {self.values[0]} not found")
+        commands = cog.__cog_app_commands__
+        is_group = cog.__cog_is_app_commands_group__
+        group_name = cog.__cog_group_name__
         app_commands = await self.bot.tree.fetch_commands()
         app_command_dict = {}
         for app_command in app_commands:
             app_command_dict[app_command.name] = app_command.id
 
-        embed = default_embed(f"{selected_option.emoji} {selected_option.label}")
+        embed = default_embed(f"{selected.emoji} {selected.label}")
         for command in commands:
             value = command.description
             if is_group:
