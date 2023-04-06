@@ -37,7 +37,7 @@ class ConnectFourView(BaseView):
     ) -> None:
         if isinstance(error, ColumnFull):
             await i.response.edit_message(embed=self.game.get_board())
-            await i.followup.send(embed=ErrorEmbed("錯誤", "這一列已經滿了"), ephemeral=True)
+            await i.followup.send(embed=ErrorEmbed("這一列已經滿了"), ephemeral=True)
         elif isinstance(error, GameOver):
             await i.response.edit_message(embed=self.game.get_board(), view=None)
             await i.followup.send(
@@ -49,6 +49,12 @@ class ConnectFourView(BaseView):
         elif isinstance(error, Draw):
             await i.response.edit_message(embed=self.game.get_board(), view=None)
             await i.followup.send(embed=DefaultEmbed("平手"))
+        elif isinstance(error, NotYourTurn):
+            await i.response.edit_message(embed=self.game.get_board())
+            await i.followup.send(
+                embed=ErrorEmbed("現在不是你的回合", f"現在是 {self.game.current_player} 的回合"),
+                ephemeral=True,
+            )
         else:
             logging.error(
                 f"An error occurred while handling {item.__class__.__name__}: {error}",
@@ -68,6 +74,7 @@ class ColumnButton(ui.Button):
     async def callback(self, i: discord.Interaction):
         game = self.view.game
 
+        color = ""
         for color, player in game.players.items():
             if i.user == player:
                 break
