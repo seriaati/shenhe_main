@@ -161,8 +161,9 @@ class ColorSelect(ui.Select):
             discord.SelectOption(label="紫色", value="🟣", emoji="🟣"),
             discord.SelectOption(label="白色", value="⚪", emoji="⚪"),
         ]
-        selected_option = discord.utils.get(options, value=selected)
-        options.remove(selected_option)
+        if selected:
+            selected_option = discord.utils.get(options, value=selected)
+            options.remove(selected_option)
         super().__init__(
             placeholder="選擇你的棋子顏色",
             options=options,
