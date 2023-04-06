@@ -43,25 +43,44 @@ class ConnectFourView(BaseView):
     ) -> None:
         game = self.game
         await pool.execute(
-            "INSERT INTO game_history (p1, p2, p1_win, time, flow, game) VALUES ($1, $2, $3, $4, $5, 'connect_four')",
+            """
+            INSERT INTO game_history
+            (p1, p2, p1_win,
+            time, flow, game)
+            VALUES ($1, $2, $3, $4, $5, 'connect_four')
+            """,
             game.p1,
             game.p2,
             winner or (winner == game.p1_color),
             get_dt_now(),
-            game.flow,
+            self.flow,
         )
 
     async def add_win_lose(self, pool: asyncpg.Pool, winner: str) -> None:
         game = self.game
         p1_win = winner == game.p1_color
         await pool.execute(
-            "INSERT INTO game_win_lose (user_id, win, lose, game) VALUES ($1, $2, $3, 'guess_num') ON CONFLICT (user_id) DO UPDATE SET win = game_win_lose.win + $2, lose = game_win_lose.lose + $3",
+            """
+            INSERT INTO game_win_lose
+            (user_id, win, lose, game)
+            VALUES ($1, $2, $3, 'connect_four')
+            ON CONFLICT (user_id)
+            DO UPDATE SET
+                win = game_win_lose.win + $2, lose = game_win_lose.lose + $3
+            """,
             game.p1,
             1 if p1_win else 0,
             1 if not p1_win else 0,
         )
         await pool.execute(
-            "INSERT INTO game_win_lose (user_id, win, lose, game) VALUES ($1, $2, $3, 'guess_num') ON CONFLICT (user_id) DO UPDATE SET win = game_win_lose.win + $2, lose = game_win_lose.lose + $3",
+            """
+            INSERT INTO game_win_lose
+            (user_id, win, lose, game)
+            VALUES ($1, $2, $3, 'connect_four')
+            ON CONFLICT (user_id)
+            DO UPDATE SET
+                win = game_win_lose.win + $2, lose = game_win_lose.lose + $3
+            """,
             game.p2,
             0 if p1_win else 1,
             0 if not p1_win else 1,

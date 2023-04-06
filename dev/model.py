@@ -159,16 +159,16 @@ class GuessNumMatch(BaseModel):
         )
 
 
-class GuessNumHistory(BaseModel):
+class GameHistory(BaseModel):
     p1: int
     p2: int
-    p1_win: bool
+    p1_win: typing.Optional[bool]
     match_time: datetime.datetime
     flow: typing.Optional[int]
 
     @staticmethod
-    def from_row(row: asyncpg.Record) -> "GuessNumHistory":
-        return GuessNumHistory(
+    def from_row(row: asyncpg.Record) -> "GameHistory":
+        return GameHistory(
             p1=row["p1"],
             p2=row["p2"],
             p1_win=row["p1_win"],
@@ -177,15 +177,15 @@ class GuessNumHistory(BaseModel):
         )
 
 
-class GuessNumPlayer(BaseModel):
+class GamePlayer(BaseModel):
     user_id: int
     win: int
     lose: int
     win_rate: float
 
     @staticmethod
-    def from_row(row: asyncpg.Record) -> "GuessNumPlayer":
-        return GuessNumPlayer(
+    def from_row(row: asyncpg.Record) -> "GamePlayer":
+        return GamePlayer(
             user_id=row["user_id"],
             win=row["win"],
             lose=row["lose"],

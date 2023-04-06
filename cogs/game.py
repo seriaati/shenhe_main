@@ -13,6 +13,8 @@ from ui.guess_num import GuessNumView
 from utility.paginator import GeneralPaginator
 from utility.utils import divide_chunks, get_dt_now
 
+game_name = {GameType.GUESS_NUM: "猜數字", GameType.CONNECT_FOUR: "屏風式四子棋"}
+
 
 def return_a_b(answer: str, guess: str) -> tuple[int, int]:
     """a: 猜對位置, b: 猜對數字
@@ -276,7 +278,7 @@ class GameCog(commands.GroupCog, name="game"):
                 description="""
                 • 雙方必須輪流把一枚己棋投入開口，讓棋子因地心引力落下在底部或其他棋子上。
                 • 當己方4枚棋子以縱、橫、斜方向連成一線時獲勝。
-                • 棋盤滿棋時，無任何連成4子，則平手。[1]
+                • 棋盤滿棋時，無任何連成4子，則平手。
                 """
             )
         embed.set_author(name="📕 規則")
@@ -297,42 +299,41 @@ class GameCog(commands.GroupCog, name="game"):
         i: model.Inter = inter  # type: ignore
         await i.response.defer()
 
-        if game is GameType.GUESS_NUM:
-            rows = await i.client.pool.fetch(
-                "SELECT * FROM game_win_lose WHERE game = 'guess_num'"
+        rows = await i.client.pool.fetch(
+            "SELECT * FROM game_win_lose WHERE game = $1", game.value
+        )
+        all_players: typing.List[model.GamePlayer] = [
+            model.GamePlayer.from_row(row) for row in rows
+        ]
+
+        # sort by win_rate attribute, desc
+        all_players = sorted(all_players, key=lambda x: x.win_rate, reverse=True)
+        div_players = divide_chunks(all_players, 10)
+
+        embeds: typing.List[discord.Embed] = []
+        rank = 0
+        player_rank = None
+        for players in div_players:
+            embed = model.DefaultEmbed()
+            embed.description = ""
+
+            embed.set_author(name=f"🏆 {game_name.get(game, '未知遊戲')}排行榜")
+            for player in players:
+                rank += 1
+                if player.user_id == i.user.id:
+                    player_rank = rank
+
+                embed.description += f"{rank}. <@{player.user_id}> {player.win}勝{player.lose}敗 ({player.win / (player.win + player.lose) * 100:.2f}%)\n"
+            embeds.append(embed)
+        for embed in embeds:
+            embed.set_footer(text=f"你的排名：{player_rank}")
+
+        if not embeds:
+            return await i.followup.send(
+                embed=model.ErrorEmbed("錯誤", "目前該遊戲沒有排行榜資料"), ephemeral=True
             )
-            all_players: typing.List[model.GuessNumPlayer] = [
-                model.GuessNumPlayer.from_row(row) for row in rows
-            ]
-            # sort by win_rate attribute, desc
-            all_players = sorted(all_players, key=lambda x: x.win_rate, reverse=True)
-            div_players = divide_chunks(all_players, 10)
 
-            embeds: typing.List[discord.Embed] = []
-            rank = 0
-            player_rank = None
-            for players in div_players:
-                embed = model.DefaultEmbed()
-                embed.description = ""
-                embed.set_author(name="🏆 猜數字排行榜")
-                for player in players:
-                    rank += 1
-                    if player.user_id == i.user.id:
-                        player_rank = rank
-
-                    embed.description += f"{rank}. <@{player.user_id}> {player.win}勝{player.lose}敗 ({player.win / (player.win + player.lose) * 100:.2f}%)\n"
-                embeds.append(embed)
-            for embed in embeds:
-                embed.set_footer(text=f"你的排名：{player_rank}")
-
-            if not embeds:
-                return await i.followup.send(
-                    embed=model.ErrorEmbed("錯誤", "目前沒有排行榜資料"), ephemeral=True
-                )
-
-            await GeneralPaginator(i, embeds).start(followup=True)
-        elif game is GameType.CONNECT_FOUR:
-            await i.followup.send(embed=model.ErrorEmbed("施工中"))
+        await GeneralPaginator(i, embeds).start(followup=True)
 
     @app_commands.guild_only()
     @app_commands.command(name="history", description="查看猜數字對戰紀錄")
@@ -353,29 +354,35 @@ class GameCog(commands.GroupCog, name="game"):
         i: model.Inter = inter  # type: ignore
         assert isinstance(i.user, discord.Member) and i.guild
         member = member or i.user
-        await i.response.defer(thinking=False)
+        await i.response.defer()
 
-        if game is GameType.GUESS_NUM:
-            rows = await self.bot.pool.fetch(
-                "SELECT * FROM game_history WHERE (p1 = $1 OR p2 = $1) AND game = 'guess_num' ORDER by time DESC",
-                member.id,
+        rows = await self.bot.pool.fetch(
+            "SELECT * FROM game_history WHERE (p1 = $1 OR p2 = $1) AND game = $2 ORDER by time DESC",
+            member.id,
+            game.value,
+        )
+        histories: typing.List[model.GameHistory] = [
+            model.GameHistory.from_row(row) for row in rows
+        ]
+        div_histories = divide_chunks(histories, 10)
+
+        embeds: typing.List[discord.Embed] = []
+        for histories in div_histories:
+            embed = model.DefaultEmbed()
+            embed.set_author(
+                name=f"📜 {member.display_name} 的 {game_name.get(game, '未知遊戲')}對戰紀錄"
             )
-            histories: typing.List[model.GuessNumHistory] = [
-                model.GuessNumHistory.from_row(row) for row in rows
-            ]
-            div_histories = divide_chunks(histories, 10)
-
-            embeds: typing.List[discord.Embed] = []
-            for histories in div_histories:
-                embed = model.DefaultEmbed()
-                embed.set_author(name=f"📜 {member.display_name} 的對戰紀錄")
-                for history in histories:
-                    p1 = i.guild.get_member(history.p1) or await i.guild.fetch_member(
-                        history.p1
-                    )
-                    p2 = i.guild.get_member(history.p2) or await i.guild.fetch_member(
-                        history.p2
-                    )
+            for history in histories:
+                p1 = i.guild.get_member(history.p1) or await i.guild.fetch_member(
+                    history.p1
+                )
+                p2 = i.guild.get_member(history.p2) or await i.guild.fetch_member(
+                    history.p2
+                )
+                if history.p1_win is None:
+                    p1_name = f"{p1.display_name} （平）"
+                    p2_name = f"{p2.display_name} （平）"
+                else:
                     p1_name = (
                         f"{p1.display_name} （勝）" if history.p1_win else p1.display_name
                     )
@@ -384,22 +391,20 @@ class GameCog(commands.GroupCog, name="game"):
                         if not history.p1_win
                         else p2.display_name
                     )
-                    flow = f"賭注: **{history.flow}暴幣**" if history.flow else ""
-                    embed.add_field(
-                        name=f"{p1_name} vs {p2_name}",
-                        value=f"{utils.format_dt(history.match_time)}\n{flow}",
-                        inline=False,
-                    )
-                embeds.append(embed)
-
-            if not embeds:
-                return await i.followup.send(
-                    embed=model.ErrorEmbed("錯誤", "你目前沒有對戰紀錄"), ephemeral=True
+                flow = f"賭注: **{history.flow}暴幣**" if history.flow else ""
+                embed.add_field(
+                    name=f"{p1_name} vs {p2_name}",
+                    value=f"{utils.format_dt(history.match_time)}\n{flow}",
+                    inline=False,
                 )
+            embeds.append(embed)
 
-            await GeneralPaginator(i, embeds).start(followup=True)
-        elif game is GameType.CONNECT_FOUR:
-            await i.followup.send(embed=model.ErrorEmbed("施工中"))
+        if not embeds:
+            return await i.followup.send(
+                embed=model.ErrorEmbed("錯誤", "你目前在該遊戲沒有對戰紀錄"), ephemeral=True
+            )
+
+        await GeneralPaginator(i, embeds).start(followup=True)
 
 
 async def setup(bot: commands.Bot) -> None:
