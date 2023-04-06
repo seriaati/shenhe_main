@@ -10,7 +10,7 @@ class Dropdown(Select):
     def __init__(self, bot: commands.Bot):
         options = [
             SelectOption(label="暴幣系統", emoji="🪙", value="flow"),
-            SelectOption(label="猜數字遊戲", emoji="🎲", value="gn"),
+            SelectOption(label="小遊戲系統", emoji="��🏓", value="game"),
             SelectOption(label="語音台系統", emoji="🎙️", value="vc"),
             SelectOption(label="音樂系統", emoji="🎵", value="music"),
             SelectOption(label="練舞系統", emoji="🕺", value="dance"),
