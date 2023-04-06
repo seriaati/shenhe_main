@@ -16,7 +16,7 @@ from .game import ConnectFour
 
 class ConnectFourView(BaseView):
     def __init__(self, game: ConnectFour):
-        super().__init__(timeout=60.0)
+        super().__init__(timeout=None)
         self.game = game
 
         for column in range(1, 8):
@@ -77,18 +77,20 @@ class ConnectFourView(BaseView):
             await i.response.send_message(embed=ErrorEmbed("這一列已經滿了"), ephemeral=True)
         elif isinstance(error, GameOver):
             await i.response.edit_message(embed=self.game.get_board(), view=None)
-            await i.followup.send(
-                embed=DefaultEmbed(
-                    "遊戲結束",
-                    f"獲勝者: {error.winner} {self.game.players[error.winner].mention}",
-                )
+
+            embed = DefaultEmbed(
+                "遊戲結束",
+                f"獲勝者: {error.winner} {self.game.players[error.winner].mention}",
             )
+            embed.set_author(name="討論串將會在十分鐘後刪除")
+            await i.followup.send(embed=embed)
 
             await self.add_history(i.client.pool, error.winner)
             await self.add_win_lose(i.client.pool, error.winner)
             await self.delete_thread(i)
         elif isinstance(error, Draw):
             await i.response.edit_message(embed=self.game.get_board(), view=None)
+
             embed = DefaultEmbed("平手")
             embed.set_footer(text="討論串將會在十分鐘後刪除")
             await i.followup.send(embed=embed)
@@ -183,7 +185,7 @@ class ColorSelect(ui.Select):
         )
         self.view: ColorSelectView
 
-    async def callback(self, i: discord.Interaction) -> typing.Any:
+    async def callback(self, i: Inter) -> typing.Any:
         view = self.view
         if view.p1_color is None and i.user.id != view.p1.id:
             return await i.response.send_message(
@@ -227,9 +229,16 @@ class ColorSelect(ui.Select):
             await i.edit_original_response(view=view)
             message = await i.original_response()
             thread = await message.create_thread(name=f"四子棋-{str(uuid4())[:4]}")
+
             game = ConnectFour({view.p1_color: view.p1, view.p2_color: view.p2})
             view = ConnectFourView(game)
-            await thread.send(
+            board = await thread.send(
                 embed=game.get_board(),
                 view=view,
+            )
+
+            await i.client.pool.execute(
+                "INSERT INTO connect_four (channel_id, message_link) VALUES ($1, $2)",
+                thread.id,
+                board.jump_url,
             )

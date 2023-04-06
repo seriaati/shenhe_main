@@ -197,3 +197,17 @@ class GuessNumPlayer(BaseModel):
         if values["win"] == 0 and values["lose"] == 0:
             return 0
         return values["win"] / (values["win"] + values["lose"])
+
+
+class ConnectFourMatch(BaseModel):
+    channel_id: int
+    board_link: str
+    sticky_id: typing.Optional[int] = None
+
+    @staticmethod
+    def from_row(row: asyncpg.Record) -> "ConnectFourMatch":
+        return ConnectFourMatch(
+            channel_id=row["channel_id"],
+            board_link=row["board_link"],
+            sticky_id=row["sticky_id"],
+        )

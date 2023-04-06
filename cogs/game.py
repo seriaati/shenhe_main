@@ -39,8 +39,37 @@ class GameCog(commands.GroupCog, name="game"):
     def __init__(self, bot):
         self.bot: model.BotModel = bot
 
-    @commands.Cog.listener()
-    async def on_message(self, message: discord.Message):
+    @commands.Cog.listener(name="on_message")
+    async def sticky_message(self, message: discord.Message):
+        if (
+            message.author.bot
+            or not message.content.isdigit()
+            or not isinstance(message.channel, discord.Thread)
+            or "四子棋" not in message.channel.name
+        ):
+            return
+
+        row = await self.bot.pool.fetchrow(
+            "SELECT * FROM connect_four WHERE channel_id = $1", message.channel.id
+        )
+        if row is None:
+            return
+        match = model.ConnectFourMatch.from_row(row)
+
+        if match.sticky_id is not None:
+            sticky = await message.channel.fetch_message(match.sticky_id)
+            await sticky.delete()
+
+        content = f"[點我回到遊戲]({match.board_link})"
+        await message.channel.send(content)
+        await self.bot.pool.execute(
+            "UPDATE connect_four SET sticky_id = $1 WHERE channel_id = $2",
+            message.id,
+            message.channel.id,
+        )
+
+    @commands.Cog.listener(name="on_message")
+    async def guess_num(self, message: discord.Message):
         if (
             message.author.bot
             or not message.content.isdigit()
