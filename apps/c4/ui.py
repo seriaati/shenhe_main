@@ -97,13 +97,12 @@ class ColorSelect(ui.Select):
         super().__init__(
             placeholder="選擇你的顏色",
             options=[
-                discord.SelectOption(label="紅色", value="🔴 "),
-                discord.SelectOption(label="黃色", value="🟡 "),
-                discord.SelectOption(label="綠色", value="🟢 "),
-                discord.SelectOption(label="藍色", value="🔵 "),
-                discord.SelectOption(label="紫色", value="🟣 "),
-                discord.SelectOption(label="白色", value="⚪ "),
-                discord.SelectOption(label="棕色", value="🟤 "),
+                discord.SelectOption(label="紅色", value="🔴 ", emoji="🔴"),
+                discord.SelectOption(label="黃色", value="🟡 ", emoji="🟡"),
+                discord.SelectOption(label="綠色", value="🟢 ", emoji="🟢"),
+                discord.SelectOption(label="藍色", value="🔵 ", emoji="🔵"),
+                discord.SelectOption(label="紫色", value="🟣 ", emoji="🟣"),
+                discord.SelectOption(label="白色", value="⚪ ", emoji="⚪"),
             ],
         )
         self.view: ColorSelectView
