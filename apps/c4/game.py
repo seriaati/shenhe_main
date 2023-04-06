@@ -2,7 +2,7 @@ import typing
 
 import discord
 
-from apps.c4.exceptions import ColumnFull, Draw, GameOver
+from apps.c4.exceptions import ColumnFull, Draw, GameOver, NotYourTurn
 from dev.model import DefaultEmbed
 
 
@@ -34,7 +34,10 @@ class ConnectFour:
 
         return embed
 
-    def play(self, col: int):
+    def play(self, col: int, color: str):
+        if color != self.current_player:
+            raise NotYourTurn
+
         row = 5
         while row >= 0:
             if self.board[row][col] == "⚫ ":

@@ -13,3 +13,7 @@ class GameOver(Exception):
 
 class Draw(Exception):
     pass
+
+
+class NotYourTurn(Exception):
+    pass

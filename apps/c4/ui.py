@@ -67,7 +67,11 @@ class ColumnButton(ui.Button):
 
     async def callback(self, i: discord.Interaction):
         game = self.view.game
-        game.play(self.column - 1)
+
+        for color, player in game.players.items():
+            if i.user == player:
+                break
+        game.play(self.column - 1, color)
         await i.response.edit_message(embed=game.get_board())
 
 
