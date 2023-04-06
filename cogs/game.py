@@ -236,8 +236,7 @@ class GameCog(commands.GroupCog, name="game"):
                 name="玩家二", value=f"{opponent.mention} - *正在選擇顏色*", inline=False
             )
 
-            view = ColorSelectView(i.user, opponent)
-            view.embed = embed
+            view = ColorSelectView(i.user, opponent, embed, flow)
             await i.response.send_message(
                 content=f"{i.user.mention} {opponent.mention}",
                 embed=embed,

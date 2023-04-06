@@ -7,6 +7,7 @@ import asyncpg
 import discord
 from discord import ui
 
+from apps.flow import flow_transaction
 from dev.model import BaseView, DefaultEmbed, ErrorEmbed, Inter
 from utility.utils import get_dt_now
 
@@ -15,9 +16,10 @@ from .game import ConnectFour
 
 
 class ConnectFourView(BaseView):
-    def __init__(self, game: ConnectFour):
+    def __init__(self, game: ConnectFour, flow: typing.Optional[int] = None):
         super().__init__(timeout=None)
         self.game = game
+        self.flow = flow
 
         for column in range(1, 8):
             self.add_item(ColumnButton(column, column // 5))
@@ -78,12 +80,18 @@ class ConnectFourView(BaseView):
         elif isinstance(error, GameOver):
             await i.response.edit_message(embed=self.game.get_board(), view=None)
 
+            winner = self.game.players[error.winner]
+            loser = [p for p in self.game.players.values() if p != winner][0]
             embed = DefaultEmbed(
                 "遊戲結束",
-                f"獲勝者: {error.winner} {self.game.players[error.winner].mention}",
+                f"獲勝者: {error.winner} {winner.mention}",
             )
             embed.set_author(name="討論串將會在十分鐘後刪除")
             await i.followup.send(embed=embed)
+
+            if self.flow:
+                await flow_transaction(winner.id, self.flow, i.client.pool)
+                await flow_transaction(loser.id, -self.flow, i.client.pool)
 
             await self.add_history(i.client.pool, error.winner)
             await self.add_win_lose(i.client.pool, error.winner)
@@ -145,13 +153,21 @@ class ColumnButton(ui.Button):
 
 
 class ColorSelectView(BaseView):
-    def __init__(self, p1: discord.Member, p2: discord.Member):
+    def __init__(
+        self,
+        p1: discord.Member,
+        p2: discord.Member,
+        embed: discord.Embed,
+        flow: typing.Optional[int] = None,
+    ):
         super().__init__(timeout=600.0)
         self.p1 = p1
         self.p2 = p2
         self.p1_color: typing.Optional[str] = None
         self.p2_color: typing.Optional[str] = None
-        self.embed: discord.Embed
+
+        self.embed = embed
+        self.flow = flow
 
         self.add_item(ColorSelect())
 
@@ -231,7 +247,7 @@ class ColorSelect(ui.Select):
             thread = await message.create_thread(name=f"四子棋-{str(uuid4())[:4]}")
 
             game = ConnectFour({view.p1_color: view.p1, view.p2_color: view.p2})
-            view = ConnectFourView(game)
+            view = ConnectFourView(game, self.view.flow)
             board = await thread.send(
                 embed=game.get_board(),
                 view=view,
