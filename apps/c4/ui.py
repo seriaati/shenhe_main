@@ -42,6 +42,10 @@ class ConnectFourView(BaseView):
         self, pool: asyncpg.Pool, winner: typing.Optional[str] = None
     ) -> None:
         game = self.game
+        if winner is None:
+            p1_win = None
+        else:
+            p1_win = winner == game.p1_color
         await pool.execute(
             """
             INSERT INTO game_history
@@ -49,9 +53,9 @@ class ConnectFourView(BaseView):
             time, flow, game)
             VALUES ($1, $2, $3, $4, $5, 'connect_four')
             """,
-            game.p1,
-            game.p2,
-            winner or (winner == game.p1_color),
+            game.p1.id,
+            game.p2.id,
+            p1_win,
             get_dt_now(),
             self.flow,
         )
@@ -68,7 +72,7 @@ class ConnectFourView(BaseView):
             DO UPDATE SET
                 win = game_win_lose.win + $2, lose = game_win_lose.lose + $3
             """,
-            game.p1,
+            game.p1.id,
             1 if p1_win else 0,
             1 if not p1_win else 0,
         )
@@ -81,7 +85,7 @@ class ConnectFourView(BaseView):
             DO UPDATE SET
                 win = game_win_lose.win + $2, lose = game_win_lose.lose + $3
             """,
-            game.p2,
+            game.p2.id,
             0 if p1_win else 1,
             0 if not p1_win else 1,
         )
@@ -105,7 +109,7 @@ class ConnectFourView(BaseView):
                 "遊戲結束",
                 f"獲勝者: {error.winner} {winner.mention}",
             )
-            embed.set_author(name="討論串將會在十分鐘後刪除")
+            embed.set_footer(text="討論串將會在十分鐘後刪除")
             await i.followup.send(embed=embed)
 
             if self.flow:
