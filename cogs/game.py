@@ -57,8 +57,10 @@ class GameCog(commands.GroupCog, name="game"):
                 sticky = await message.channel.fetch_message(match.sticky_id)
                 await sticky.delete()
 
-            content = f"[點我回到遊戲]({match.board_link})"
-            sticky = await message.channel.send(content)
+            description = f"[點我回到遊戲]({match.board_link})"
+            sticky = await message.channel.send(
+                embed=model.DefaultEmbed(description=description)
+            )
             await self.bot.pool.execute(
                 "UPDATE connect_four SET sticky_id = $1 WHERE channel_id = $2",
                 sticky.id,
