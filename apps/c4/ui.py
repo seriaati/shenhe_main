@@ -34,14 +34,13 @@ class ConnectFourView(BaseView):
         item: discord.ui.Item[typing.Any],
         /,
     ) -> None:
+        await i.response.edit_message(embed=self.game.get_board())
         if isinstance(error, ColumnFull):
-            await i.response.send_message(
-                embed=ErrorEmbed("錯誤", "這一列已經滿了"), ephemeral=True
-            )
+            await i.followup.send(embed=ErrorEmbed("錯誤", "這一列已經滿了"), ephemeral=True)
         elif isinstance(error, GameOver):
-            await i.response.send_message(embed=DefaultEmbed("遊戲結束"))
+            await i.followup.send(embed=DefaultEmbed("遊戲結束", f"獲勝者: {error.winner}"))
         elif isinstance(error, Draw):
-            await i.response.send_message(embed=DefaultEmbed("平手"))
+            await i.followup.send(embed=DefaultEmbed("平手"))
         else:
             logging.error(
                 f"An error occurred while handling {item.__class__.__name__}: {error}",
