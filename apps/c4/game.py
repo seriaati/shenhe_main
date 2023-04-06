@@ -10,6 +10,7 @@ class ConnectFour:
     def __init__(
         self,
         players: typing.Dict[str, discord.Member],
+        flow: typing.Optional[int] = None,
     ):
         self.board = [["⚫ " for _ in range(7)] for _ in range(6)]
         self.players = players
@@ -22,6 +23,8 @@ class ConnectFour:
         values = list(players.values())
         self.p1 = values[0]
         self.p2 = values[1]
+
+        self.flow = flow
 
     def get_board(self) -> discord.Embed:
         embed = DefaultEmbed("屏風式四子棋")

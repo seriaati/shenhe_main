@@ -10,3 +10,8 @@ class TimeType(Enum):
 class ShopAction(Enum):
     DELETE = "delete"
     BUY = "buy"
+
+
+class GameType(Enum):
+    GUESS_NUM = "guess_num"
+    CONNECT_FOUR = "connect_four"

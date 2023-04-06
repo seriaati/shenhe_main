@@ -1,4 +1,5 @@
 import typing
+import uuid
 
 import discord
 from discord import ui
@@ -7,11 +8,17 @@ from dev.model import BaseView, DefaultEmbed, ErrorEmbed, Inter
 
 
 class GuessNumView(BaseView):
-    def __init__(self, embed: discord.Embed):
+    def __init__(
+        self,
+        embed: discord.Embed,
+        authors: typing.Tuple[discord.Member, discord.Member],
+        flow: typing.Optional[int] = None,
+    ):
         super().__init__(timeout=600.0)
         self.channel: discord.Thread
-        self.authors: typing.Tuple[discord.Member, discord.Member]
         self.embed = embed
+        self.authors: typing.Tuple[discord.Member, discord.Member] = authors
+        self.flow = flow
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         if interaction.user in self.authors:
@@ -118,7 +125,20 @@ class GuessNumModal(ui.Modal):
             embed=DefaultEmbed("設定成功", f"你的數字為 {self.number.value}"), ephemeral=True
         )
         if p1_button.disabled and p2_button.disabled:
-            await self.gn_view.channel.send(
+            thread = await self.gn_view.message.create_thread(
+                name=f"猜數字-{str(uuid.uuid4())[:4]}"
+            )
+            await thread.add_user(p1)
+            await thread.add_user(p2)
+            await i.client.pool.execute(
+                "INSERT INTO guess_num (channel_id, player_one, player_two, flow) VALUES ($1, $2, $3, $4)",
+                self.gn_view.channel.id,
+                p1.id,
+                p2.id,
+                self.gn_view.flow,
+            )
+
+            await thread.send(
                 content=f"{p1.mention} {p2.mention}",
                 embed=DefaultEmbed("遊戲開始", "玩家一和玩家二都已設定數字\n直接在此頻道輸入任何四位數字即可開始猜測"),
             )
