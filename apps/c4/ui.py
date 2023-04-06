@@ -59,4 +59,6 @@ class ColumnButton(ui.Button):
         self.view: ConnectFourView
 
     async def callback(self, i: discord.Interaction):
-        pass
+        game = self.view.game
+        game.play(self.column - 1)
+        await i.response.edit_message(embed=game.get_board())
