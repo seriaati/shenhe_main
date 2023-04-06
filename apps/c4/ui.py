@@ -97,12 +97,12 @@ class ColorSelect(ui.Select):
         super().__init__(
             placeholder="選擇你的棋子顏色",
             options=[
-                discord.SelectOption(label="紅色", value="🔴 ", emoji="🔴"),
-                discord.SelectOption(label="黃色", value="🟡 ", emoji="🟡"),
-                discord.SelectOption(label="綠色", value="🟢 ", emoji="🟢"),
-                discord.SelectOption(label="藍色", value="🔵 ", emoji="🔵"),
-                discord.SelectOption(label="紫色", value="🟣 ", emoji="🟣"),
-                discord.SelectOption(label="白色", value="⚪ ", emoji="⚪"),
+                discord.SelectOption(label="紅色", value="🔴", emoji="🔴"),
+                discord.SelectOption(label="黃色", value="🟡", emoji="🟡"),
+                discord.SelectOption(label="綠色", value="🟢", emoji="🟢"),
+                discord.SelectOption(label="藍色", value="🔵", emoji="🔵"),
+                discord.SelectOption(label="紫色", value="🟣", emoji="🟣"),
+                discord.SelectOption(label="白色", value="⚪", emoji="⚪"),
             ],
         )
         self.view: ColorSelectView
@@ -124,7 +124,7 @@ class ColorSelect(ui.Select):
 
         embed = view.embed
         if i.user.id == view.p1.id:
-            view.p1_color = self.values[0]
+            view.p1_color = self.values[0] + " "
             embed.set_field_at(
                 0,
                 name="玩家一",
@@ -132,7 +132,7 @@ class ColorSelect(ui.Select):
                 inline=False,
             )
         elif i.user.id == view.p2.id:
-            view.p2_color = self.values[0]
+            view.p2_color = self.values[0] + " "
             embed.set_field_at(
                 1,
                 name="玩家二",
