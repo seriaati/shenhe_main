@@ -43,7 +43,6 @@ class GameCog(commands.GroupCog, name="game"):
     async def sticky_message(self, message: discord.Message):
         if (
             message.author.bot
-            or not message.content.isdigit()
             or not isinstance(message.channel, discord.Thread)
             or "四子棋" not in message.channel.name
         ):
