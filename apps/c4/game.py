@@ -19,11 +19,16 @@ class ConnectFour:
         self.players = players
 
     def get_board(self) -> discord.Embed:
-        embed = DefaultEmbed("屏風式四子棋")
+        embed = DefaultEmbed(
+            f"屏風式四子棋 | {self.players[0].display_name} vs {self.players[1].display_name}"
+        )
         embed.description = ""
         for row in self.board:
             embed.description += " ".join(row) + "\n"
-        embed.description += "-------------"
+        embed.description += "1️⃣2️⃣3️⃣4️⃣5️⃣6️⃣7️⃣"
+        embed.set_footer(text=f"現在是 {self.current_player} 的回合")
+        member = self.players[0] if self.current_player == "🟡" else self.players[1]
+        embed.set_author(name=member.display_name, icon_url=member.display_avatar.url)
         return embed
 
     def play(self, col: int):
