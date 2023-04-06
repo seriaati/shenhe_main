@@ -15,10 +15,12 @@ class GuessNumView(BaseView):
         flow: typing.Optional[int] = None,
     ):
         super().__init__(timeout=600.0)
-        self.channel: discord.Thread
         self.embed = embed
         self.authors: typing.Tuple[discord.Member, discord.Member] = authors
         self.flow = flow
+
+        self.p1_num: typing.Optional[str] = None
+        self.p2_num: typing.Optional[str] = None
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         if interaction.user in self.authors:
@@ -81,13 +83,6 @@ class GuessNumModal(ui.Modal):
                 ephemeral=True,
             )
 
-        query = "player_one" if self.is_p1 else "player_two"
-        await i.client.pool.execute(
-            f"UPDATE guess_num SET {query}_num = $1 WHERE channel_id = $2",
-            self.number.value,
-            self.gn_view.channel.id,
-        )
-
         p1_button: ui.Button = discord.utils.get(
             self.gn_view.children, custom_id="player_one"  # type: ignore
         )
@@ -131,11 +126,18 @@ class GuessNumModal(ui.Modal):
             await thread.add_user(p1)
             await thread.add_user(p2)
             await i.client.pool.execute(
-                "INSERT INTO guess_num (channel_id, player_one, player_two, flow) VALUES ($1, $2, $3, $4)",
-                self.gn_view.channel.id,
+                """
+                INSERT INTO guess_num
+                (channel_id, player_one, player_two,
+                flow, player_onw_num, player_two_num)
+                VALUES ($1, $2, $3, $4)
+                """,
+                thread.id,
                 p1.id,
                 p2.id,
                 self.gn_view.flow,
+                self.gn_view.p1_num,
+                self.gn_view.p2_num,
             )
 
             await thread.send(
