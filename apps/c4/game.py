@@ -27,12 +27,13 @@ class ConnectFour:
         self.flow = flow
 
     def get_board(self) -> discord.Embed:
-        embed = DefaultEmbed("屏風式四子棋")
+        embed = DefaultEmbed(f"現在是 {self.current_player} 的回合")
         embed.description = ""
         for row in self.board:
             embed.description += "".join(row) + "\n"
         embed.description += "1️⃣ 2️⃣ 3️⃣ 4️⃣ 5️⃣ 6️⃣ 7️⃣"
-        embed.set_footer(text=f"現在是 {self.current_player} 的回合")
+
+        embed.set_footer(text="點擊下方按鈕來選擇要下的位置")
         embed.set_author(name=f"{self.p1.display_name} vs {self.p2.display_name}")
 
         return embed

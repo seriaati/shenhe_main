@@ -74,8 +74,7 @@ class ConnectFourView(BaseView):
     ) -> None:
         i: Inter = inter  # type: ignore
         if isinstance(error, ColumnFull):
-            await i.response.edit_message(embed=self.game.get_board())
-            await i.followup.send(embed=ErrorEmbed("這一列已經滿了"), ephemeral=True)
+            await i.response.send_message(embed=ErrorEmbed("這一列已經滿了"), ephemeral=True)
         elif isinstance(error, GameOver):
             await i.response.edit_message(embed=self.game.get_board(), view=None)
             await i.followup.send(
@@ -97,8 +96,7 @@ class ConnectFourView(BaseView):
             await self.add_history(i.client.pool)
             await self.delete_thread(i)
         elif isinstance(error, NotYourTurn):
-            await i.response.edit_message(embed=self.game.get_board())
-            await i.followup.send(
+            await i.response.send_message(
                 embed=ErrorEmbed("現在不是你的回合", f"現在是 {self.game.current_player} 的回合"),
                 ephemeral=True,
             )
@@ -122,11 +120,19 @@ class ColumnButton(ui.Button):
         game = self.view.game
 
         color = ""
+        player = None
         for color, player in game.players.items():
             if i.user == player:
                 break
         game.play(self.column - 1, color)
-        await i.response.edit_message(embed=game.get_board())
+
+        for item in self.view.children:
+            if isinstance(item, ColumnButton):
+                if player == list(game.players.values())[0]:
+                    item.style = discord.ButtonStyle.blurple
+                else:
+                    item.style = discord.ButtonStyle.green
+        await i.response.edit_message(embed=game.get_board(), view=self.view)
 
 
 class ColorSelectView(BaseView):
@@ -161,9 +167,10 @@ class ColorSelect(ui.Select):
             discord.SelectOption(label="紫色", value="🟣", emoji="🟣"),
             discord.SelectOption(label="白色", value="⚪", emoji="⚪"),
         ]
-        if selected:
-            selected_option = discord.utils.get(options, value=selected)
+        selected_option = discord.utils.get(options, value=selected)
+        if selected_option is not None:
             options.remove(selected_option)
+
         super().__init__(
             placeholder="選擇你的棋子顏色",
             options=options,
