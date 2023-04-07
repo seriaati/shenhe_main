@@ -142,6 +142,19 @@ class FlowCog(commands.Cog, name="flow"):
     @app_commands.rename(member="使用者")
     @app_commands.describe(member="被給予暴幣的使用者")
     async def give(self, i: discord.Interaction, member: discord.Member, amount: int):
+        flow_user = await flow_app.get_balance(i.user.id, self.bot.pool)
+        if flow_user < amount:
+            return await i.response.send_message(
+                embed=ErrorEmbed(
+                    "錯誤",
+                    f"""
+                    使用者 {i.user.mention} 的當前暴幣數量不足
+                    {i.user.mention} 的暴幣: {flow_user}
+                    """,
+                ),
+                ephemeral=True,
+            )
+
         await flow_app.flow_transaction(member.id, amount, self.bot.pool)
         await flow_app.flow_transaction(i.user.id, -amount, self.bot.pool)
 
@@ -155,7 +168,7 @@ class FlowCog(commands.Cog, name="flow"):
         {member.mention} | **{flow_member}** (+{amount})
         """
         embed = DefaultEmbed(f"{i.user.display_name} 💵 {member.display_name}", message)
-        await i.response.send_message(embed=embed)
+        await i.response.send_message(embed=embed, content=f"{member.mention}")
 
     @app_commands.guild_only()
     @app_commands.command(name="acc", description="查看暴幣帳號")
