@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import typing
 
 import discord
@@ -45,6 +46,8 @@ class GameCog(commands.GroupCog, name="game"):
     async def on_message(self, message: discord.Message):
         if message.author.bot or not isinstance(message.channel, discord.Thread):
             return
+        logging.info(f"Message: {message.content}")
+
         if "四子棋" in message.channel.name:
             row = await self.bot.pool.fetchrow(
                 "SELECT * FROM connect_four WHERE channel_id = $1", message.channel.id
