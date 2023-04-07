@@ -247,7 +247,7 @@ class FlowCog(commands.Cog, name="flow"):
         private: int = 0,
     ):
         await flow_app.register_account(member.id, self.bot.pool)
-        await flow_app.flow_transaction(member.id, -flow, self.bot.pool)
+        await flow_app.flow_transaction(member.id, flow, self.bot.pool)
 
         embed = DefaultEmbed(
             "已成功施展摩拉克斯的力量",
