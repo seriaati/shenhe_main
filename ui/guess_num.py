@@ -130,7 +130,7 @@ class GuessNumModal(ui.Modal):
                 INSERT INTO guess_num
                 (channel_id, player_one, player_two,
                 flow, player_one_num, player_two_num)
-                VALUES ($1, $2, $3, $4)
+                VALUES ($1, $2, $3, $4, $5, $6)
                 """,
                 thread.id,
                 p1.id,
