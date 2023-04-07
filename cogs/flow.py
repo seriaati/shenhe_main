@@ -138,7 +138,7 @@ class FlowCog(commands.Cog, name="flow"):
 
     @flow_check()
     @app_commands.guild_only()
-    @app_commands.command(name="give", description="給予暴幣")
+    @app_commands.command(name="give", description="給予其他使用者暴幣")
     @app_commands.rename(member="使用者")
     @app_commands.describe(member="被給予暴幣的使用者")
     async def give(self, i: discord.Interaction, member: discord.Member, amount: int):
@@ -189,7 +189,7 @@ class FlowCog(commands.Cog, name="flow"):
         embed.set_author(name="暴幣帳號", icon_url=member.avatar)
         await i.response.send_message(embed=embed)
 
-    @app_commands.command(name="take", description="將一個使用者的 暴幣轉回銀行")
+    @app_commands.command(name="take", description="將一個使用者的暴幣轉回銀行")
     @app_commands.rename(member="使用者", flow="要拿取的暴幣數量", private="私人訊息")
     @app_commands.describe(private="是否要顯示給使用者看 (預設為是)")
     @app_commands.choices(
@@ -211,7 +211,7 @@ class FlowCog(commands.Cog, name="flow"):
 
         embed = DefaultEmbed(
             "已成功施展「反」摩拉克斯的力量",
-            f"{i.user.mention} 從 {member.mention} 的帳戶裡拿走了 {flow} 枚 暴幣",
+            f"{i.user.mention} 從 {member.mention} 的帳戶裡拿走了 {flow} 枚暴幣",
         )
         ephemeral = True if private == 1 else False
         await i.response.send_message(embed=embed, ephemeral=ephemeral)
@@ -243,7 +243,7 @@ class FlowCog(commands.Cog, name="flow"):
         ephemeral = True if private == 1 else False
         await i.response.send_message(embed=embed, ephemeral=ephemeral)
 
-    @app_commands.command(name="total", description="查看目前群組帳號及銀行 暴幣分配情況")
+    @app_commands.command(name="total", description="查看目前群組帳號及銀行暴幣分配情況")
     async def total(self, i: discord.Interaction):
         bank = await flow_app.get_bank(self.bot.pool)
         acc_count = await self.bot.pool.fetchval("SELECT COUNT(*) FROM flow_accounts")
@@ -255,7 +255,7 @@ class FlowCog(commands.Cog, name="flow"):
         await i.response.send_message(embed=embed)
 
     @app_commands.guild_only()
-    @app_commands.command(name="flow_leaderboard", description="查看 暴幣排行榜")
+    @app_commands.command(name="flow-leaderboard", description="查看暴幣排行榜")
     async def flow_leaderboard(self, inter: discord.Interaction):
         i: Inter = inter  # type: ignore
         assert i.guild is not None
