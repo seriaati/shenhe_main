@@ -73,6 +73,7 @@ class GameCog(commands.GroupCog, name="game"):
             and message.content.isdigit()
             and len(set(message.content)) != 4
         ):
+            logging.info("猜數字")
             row = await self.bot.pool.fetchrow(
                 "SELECT * FROM guess_num WHERE channel_id = $1 AND player_one_num IS NOT NULL AND player_two_num IS NOT NULL",
                 message.channel.id,
@@ -80,6 +81,7 @@ class GameCog(commands.GroupCog, name="game"):
             if row is None:
                 return
             match = model.GuessNumMatch.from_row(row)
+            logging.info(match)
 
             if match.p2_guess + 1 > match.p1_guess and message.author.id != match.p1:
                 return await message.reply(embed=model.ErrorEmbed("現在是輪到玩家一猜測"))
