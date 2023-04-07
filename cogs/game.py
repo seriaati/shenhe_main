@@ -147,13 +147,13 @@ class GameCog(commands.GroupCog, name="game"):
                     )
 
                     await self.bot.pool.execute(
-                        "INSERT INTO game_win_lose (user_id, win, lose, game) VALUES ($1, $2, $3, 'guess_num') ON CONFLICT (user_id) DO UPDATE SET win = game_win_lose.win + $2, lose = game_win_lose.lose + $3",
+                        "INSERT INTO game_win_lose (user_id, win, lose, game) VALUES ($1, $2, $3, 'guess_num') ON CONFLICT (user_id, game) DO UPDATE SET win = game_win_lose.win + $2, lose = game_win_lose.lose + $3",
                         match.p1,
                         1 if is_p1 else 0,
                         1 if not is_p1 else 0,
                     )
                     await self.bot.pool.execute(
-                        "INSERT INTO game_win_lose (user_id, win, lose, game) VALUES ($1, $2, $3, 'guess_num') ON CONFLICT (user_id) DO UPDATE SET win = game_win_lose.win + $2, lose = game_win_lose.lose + $3",
+                        "INSERT INTO game_win_lose (user_id, win, lose, game) VALUES ($1, $2, $3, 'guess_num') ON CONFLICT (user_id, game) DO UPDATE SET win = game_win_lose.win + $2, lose = game_win_lose.lose + $3",
                         match.p2,
                         1 if not is_p1 else 0,
                         1 if is_p1 else 0,
