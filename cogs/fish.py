@@ -8,7 +8,7 @@ from discord import ButtonStyle, Interaction, Message, Thread
 from discord.ext import commands
 from discord.ui import Button
 
-from apps.flow import flow_transaction, get_user_flow
+from apps.flow import flow_transaction, get_balance
 from data.fish.fish_data import fish_data
 from dev.model import BaseView, BotModel
 from utility.utils import ayaaka_embed
@@ -112,7 +112,7 @@ class FishCog(commands.Cog):
 
             embed.add_field(
                 name="目前暴幣",
-                value=f"{await get_user_flow(i.user.id, self.db)} 暴幣",
+                value=f"{await get_balance(i.user.id, self.db)} 暴幣",
                 inline=False,
             )
             embed.set_thumbnail(url=image_url)

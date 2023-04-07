@@ -13,6 +13,47 @@ from utility.paginator import GeneralPaginator
 from utility.utils import divide_chunks
 
 
+def flow_check():
+    async def predicate(inter: discord.Interaction) -> bool:
+        i: Inter = inter  # type: ignore
+        member = i.namespace.member
+        if member is not None:
+            member: discord.Member
+            await flow_app.register_account(member.id, i.client.pool)
+            member_flow = await flow_app.get_balance(member.id, i.client.pool)
+            if member_flow < 0:
+                await i.response.send_message(
+                    embed=ErrorEmbed(
+                        "錯誤",
+                        f"""
+                        使用者 {member.mention} 的當前暴幣數量不足
+                        {member.mention} 的暴幣: {member_flow}
+                        """,
+                    ),
+                    ephemeral=True,
+                )
+                return False
+
+        await flow_app.register_account(i.user.id, i.client.pool)
+        user_flow = await flow_app.get_balance(i.user.id, i.client.pool)
+        if user_flow < 0:
+            await i.response.send_message(
+                embed=ErrorEmbed(
+                    "錯誤",
+                    f"""
+                    使用者 {i.user.mention} 的當前暴幣數量不足
+                    {i.user.mention} 的暴幣: {user_flow}
+                    """,
+                ),
+                ephemeral=True,
+            )
+            return False
+
+        return True
+
+    return app_commands.check(predicate)
+
+
 class FlowCog(commands.Cog, name="flow"):
     def __init__(self, bot) -> None:
         self.bot: BotModel = bot
@@ -33,7 +74,7 @@ class FlowCog(commands.Cog, name="flow"):
         if "早午晚" in message.content:
             return
 
-        await flow_app.register_flow_account(user_id, self.bot.pool)
+        await flow_app.register_account(user_id, self.bot.pool)
         if any(keyword in content for keyword in morning_keywords):
             start = time(0, 0, 0)
             end = time(11, 59, 59)
@@ -59,27 +100,15 @@ class FlowCog(commands.Cog, name="flow"):
             if gave:
                 await message.add_reaction("<:night:982608497290125366>")
 
-    @discord.app_commands.checks.cooldown(1, 900, key=lambda i: (i.guild_id, i.user.id))
-    @discord.app_commands.command(name="poke", description="戳戳")
-    @discord.app_commands.rename(member="使用者")
-    @discord.app_commands.describe(member="被戳的使用者")
+    @flow_check()
+    @app_commands.guild_only()
+    @app_commands.checks.cooldown(1, 900, key=lambda i: (i.guild_id, i.user.id))
+    @app_commands.command(name="poke", description="戳戳")
+    @app_commands.rename(member="使用者")
+    @app_commands.describe(member="被戳的使用者")
     async def poke(self, i: discord.Interaction, member: discord.Member):
-        await flow_app.register_flow_account(member.id, self.bot.pool)
-
         success = True if randint(1, 2) == 1 else False
         flow_num = randint(1, 3)
-        flow_user = await flow_app.get_user_flow(i.user.id, self.bot.pool)
-        if flow_user < 0:
-            return await i.response.send_message(
-                embed=ErrorEmbed("你的暴幣不足 (小於0)"), ephemeral=True
-            )
-        flow_member = await flow_app.get_user_flow(member.id, self.bot.pool)
-        if flow_member < 0:
-            return await i.response.send_message(
-                embed=ErrorEmbed("對方的暴幣不足 (小於0)"), ephemeral=True
-            )
-        if success and flow_member < flow_num:
-            flow_num = flow_member
 
         await flow_app.flow_transaction(
             member.id, -flow_num if success else flow_num, self.bot.pool
@@ -87,8 +116,9 @@ class FlowCog(commands.Cog, name="flow"):
         await flow_app.flow_transaction(
             i.user.id, flow_num if success else -flow_num, self.bot.pool
         )
-        flow_member = await flow_app.get_user_flow(member.id, self.bot.pool)
-        flow_user = await flow_app.get_user_flow(i.user.id, self.bot.pool)
+        flow_member = await flow_app.get_balance(member.id, self.bot.pool)
+        flow_user = await flow_app.get_balance(i.user.id, self.bot.pool)
+
         if success:
             message = f"""
             {i.user.mention} 戳到了 {member.mention}
@@ -106,23 +136,18 @@ class FlowCog(commands.Cog, name="flow"):
         embed = DefaultEmbed(f"{i.user.display_name} 👉 {member.display_name}", message)
         await i.response.send_message(embed=embed)
 
-    @poke.error
-    async def poke_error(self, i: discord.Interaction, error):
-        if isinstance(error, app_commands.CommandOnCooldown):
-            await i.response.send_message(content="十五分鐘最多戳一次哦", ephemeral=True)
-        else:
-            await self.bot.tree.on_error(i, error)
-
-    @discord.app_commands.guild_only()
-    @discord.app_commands.command(name="give", description="給予暴幣")
-    @discord.app_commands.rename(member="使用者")
-    @discord.app_commands.describe(member="被給予暴幣的使用者")
+    @flow_check()
+    @app_commands.guild_only()
+    @app_commands.command(name="give", description="給予暴幣")
+    @app_commands.rename(member="使用者")
+    @app_commands.describe(member="被給予暴幣的使用者")
     async def give(self, i: discord.Interaction, member: discord.Member, amount: int):
-        await flow_app.register_flow_account(member.id, self.bot.pool)
         await flow_app.flow_transaction(member.id, amount, self.bot.pool)
         await flow_app.flow_transaction(i.user.id, -amount, self.bot.pool)
-        flow_member = await flow_app.get_user_flow(member.id, self.bot.pool)
-        flow_user = await flow_app.get_user_flow(i.user.id, self.bot.pool)
+
+        flow_member = await flow_app.get_balance(member.id, self.bot.pool)
+        flow_user = await flow_app.get_balance(i.user.id, self.bot.pool)
+
         message = f"""
         {i.user.mention} 給了 {member.mention} {amount} 暴幣
         
@@ -132,27 +157,29 @@ class FlowCog(commands.Cog, name="flow"):
         embed = DefaultEmbed(f"{i.user.display_name} 💵 {member.display_name}", message)
         await i.response.send_message(embed=embed)
 
-    @discord.app_commands.guild_only()
-    @discord.app_commands.command(name="acc", description="查看暴幣帳號")
-    @discord.app_commands.rename(member="使用者")
-    @discord.app_commands.describe(member="查看其他使用者的暴幣帳號")
+    @app_commands.guild_only()
+    @app_commands.command(name="acc", description="查看暴幣帳號")
+    @app_commands.rename(member="使用者")
+    @app_commands.describe(member="查看其他使用者的暴幣帳號")
     async def acc(
         self, i: discord.Interaction, member: Optional[discord.Member] = None
     ):
         assert isinstance(i.user, discord.Member)
         member = member or i.user
-        await flow_app.register_flow_account(member.id, self.bot.pool)
+
+        await flow_app.register_account(member.id, self.bot.pool)
         row = await self.bot.pool.fetchrow(
             "SELECT morning, noon, night FROM flow_accounts WHERE user_id = $1",
             member.id,
         )
-        flow = await flow_app.get_user_flow(member.id, self.bot.pool)
+        flow = await flow_app.get_balance(member.id, self.bot.pool)
+
         value = ""
-        emojis = [
+        emojis = (
             "<:morning:982608491426508810>",
             "<:noon:982608493313929246>",
             "<:night:982608497290125366>",
-        ]
+        )
         data = (row["morning"], row["noon"], row["night"])
         for index in range(3):
             formated_time = data[index].strftime("%Y-%m-%d %H:%M:%S")
@@ -162,16 +189,16 @@ class FlowCog(commands.Cog, name="flow"):
         embed.set_author(name="暴幣帳號", icon_url=member.avatar)
         await i.response.send_message(embed=embed)
 
-    @discord.app_commands.command(name="take", description="將一個使用者的 暴幣轉回銀行")
-    @discord.app_commands.rename(member="使用者", flow="要拿取的暴幣數量", private="私人訊息")
+    @app_commands.command(name="take", description="將一個使用者的 暴幣轉回銀行")
+    @app_commands.rename(member="使用者", flow="要拿取的暴幣數量", private="私人訊息")
     @app_commands.describe(private="是否要顯示給使用者看 (預設為是)")
-    @discord.app_commands.choices(
+    @app_commands.choices(
         private=[
             app_commands.Choice(name="是", value=1),
             app_commands.Choice(name="否", value=0),
         ]
     )
-    @discord.app_commands.checks.has_permissions(manage_guild=True)
+    @app_commands.checks.has_permissions(manage_guild=True)
     async def take(
         self,
         i: discord.Interaction,
@@ -179,7 +206,7 @@ class FlowCog(commands.Cog, name="flow"):
         flow: int,
         private: int = 0,
     ):
-        await flow_app.register_flow_account(member.id, self.bot.pool)
+        await flow_app.register_account(member.id, self.bot.pool)
         await flow_app.flow_transaction(member.id, -flow, self.bot.pool)
 
         embed = DefaultEmbed(
@@ -189,16 +216,16 @@ class FlowCog(commands.Cog, name="flow"):
         ephemeral = True if private == 1 else False
         await i.response.send_message(embed=embed, ephemeral=ephemeral)
 
-    @discord.app_commands.command(name="make", description="從銀行轉出暴幣給某位使用者")
-    @discord.app_commands.rename(member="使用者", flow="要給予的暴幣數量", private="私人訊息")
+    @app_commands.command(name="make", description="從銀行轉出暴幣給某位使用者")
+    @app_commands.rename(member="使用者", flow="要給予的暴幣數量", private="私人訊息")
     @app_commands.describe(private="是否要顯示給使用者看 (預設為是)")
-    @discord.app_commands.choices(
+    @app_commands.choices(
         private=[
             app_commands.Choice(name="是", value=1),
             app_commands.Choice(name="否", value=0),
         ]
     )
-    @discord.app_commands.checks.has_permissions(manage_guild=True)
+    @app_commands.checks.has_permissions(manage_guild=True)
     async def make(
         self,
         i: discord.Interaction,
@@ -206,7 +233,7 @@ class FlowCog(commands.Cog, name="flow"):
         flow: int,
         private: int = 0,
     ):
-        await flow_app.register_flow_account(member.id, self.bot.pool)
+        await flow_app.register_account(member.id, self.bot.pool)
         await flow_app.flow_transaction(member.id, -flow, self.bot.pool)
 
         embed = DefaultEmbed(
@@ -216,9 +243,9 @@ class FlowCog(commands.Cog, name="flow"):
         ephemeral = True if private == 1 else False
         await i.response.send_message(embed=embed, ephemeral=ephemeral)
 
-    @discord.app_commands.command(name="total", description="查看目前群組帳號及銀行 暴幣分配情況")
+    @app_commands.command(name="total", description="查看目前群組帳號及銀行 暴幣分配情況")
     async def total(self, i: discord.Interaction):
-        bank = await flow_app.get_blank_flow(self.bot.pool)
+        bank = await flow_app.get_bank(self.bot.pool)
         acc_count = await self.bot.pool.fetchval("SELECT COUNT(*) FROM flow_accounts")
         flow_sum = await self.bot.pool.fetchval("SELECT SUM(flow) FROM flow_accounts")
         embed = DefaultEmbed(
@@ -227,8 +254,8 @@ class FlowCog(commands.Cog, name="flow"):
         )
         await i.response.send_message(embed=embed)
 
-    @discord.app_commands.guild_only()
-    @discord.app_commands.command(name="flow_leaderboard", description="查看 暴幣排行榜")
+    @app_commands.guild_only()
+    @app_commands.command(name="flow_leaderboard", description="查看 暴幣排行榜")
     async def flow_leaderboard(self, inter: discord.Interaction):
         i: Inter = inter  # type: ignore
         assert i.guild is not None
@@ -246,7 +273,7 @@ class FlowCog(commands.Cog, name="flow"):
                 discord_user = i.guild.get_member(row["user_id"])
                 if discord_user is None:
                     user_name = "(已離開伺服器)"
-                    await flow_app.remove_flow_account(row["user_id"], i.client.pool)
+                    await flow_app.remove_account(row["user_id"], i.client.pool)
                 else:
                     user_name = discord_user.display_name
                 embed.description += f"{rank}. {user_name} | {row['flow']}\n"

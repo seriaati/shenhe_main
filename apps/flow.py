@@ -8,7 +8,7 @@ from dev.enum import TimeType
 from utility.utils import get_dt_now, time_in_range
 
 
-async def register_flow_account(user_id: int, pool: asyncpg.Pool) -> None:
+async def register_account(user_id: int, pool: asyncpg.Pool) -> None:
     """Register a user's flow account.
 
     Args:
@@ -36,14 +36,14 @@ async def flow_transaction(user_id: int, amount: int, pool: asyncpg.Pool) -> Non
         pool (asyncpg.Pool): The database pool.
     """
     logging.info(f"Transferring {amount} flow to {user_id}")
-    await register_flow_account(user_id, pool)
+    await register_account(user_id, pool)
     await pool.execute(
         "UPDATE flow_accounts SET flow = flow + $1 WHERE user_id = $2", amount, user_id
     )
     await pool.execute("UPDATE bank SET flow = flow - $1", amount)
 
 
-async def remove_flow_account(user_id: int, pool: asyncpg.Pool) -> None:
+async def remove_account(user_id: int, pool: asyncpg.Pool) -> None:
     """Remove a user's flow account.
 
     Args:
@@ -51,12 +51,12 @@ async def remove_flow_account(user_id: int, pool: asyncpg.Pool) -> None:
         pool (asyncpg.Pool): The database pool.
     """
     logging.info(f"Removing flow account for {user_id}")
-    flow = await get_user_flow(user_id, pool)
+    flow = await get_balance(user_id, pool)
     await flow_transaction(user_id, flow, pool)
     await pool.execute("DELETE FROM flow_accounts WHERE user_id = $1", user_id)
 
 
-async def get_user_flow(user_id: int, pool: asyncpg.Pool) -> int:
+async def get_balance(user_id: int, pool: asyncpg.Pool) -> int:
     """Get a user's flow balance.
 
     Args:
@@ -66,13 +66,13 @@ async def get_user_flow(user_id: int, pool: asyncpg.Pool) -> int:
     Returns:
         int: The user's flow balance.
     """
-    await register_flow_account(user_id, pool)
+    await register_account(user_id, pool)
     return await pool.fetchval(
         "SELECT flow FROM flow_accounts WHERE user_id = $1", user_id
     )
 
 
-async def get_blank_flow(pool: asyncpg.Pool) -> int:
+async def get_bank(pool: asyncpg.Pool) -> int:
     """Get the amount of flow in the bank.
 
     Args:
@@ -99,7 +99,7 @@ async def free_flow(
     Returns:
         bool: True if the user got free flow, False otherwise.
     """
-    await register_flow_account(user_id, pool)
+    await register_account(user_id, pool)
     now = get_dt_now()
     if time_in_range(start, end, now.time()):
         last_give: Optional[datetime] = await pool.fetchval(

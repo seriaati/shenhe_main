@@ -82,7 +82,10 @@ class BaseView(discord.ui.View):
             for child in self.children:
                 if isinstance(child, (discord.ui.Button, discord.ui.Select)):
                     child.disabled = True
-            await self.message.edit(view=self)
+            try:
+                await self.message.edit(view=self)
+            except Exception:
+                pass
 
     async def on_error(
         self,

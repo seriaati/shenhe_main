@@ -6,7 +6,7 @@ from discord import ButtonStyle, Interaction, Member, TextChannel, app_commands
 from discord.ext import commands
 from discord.ui import Button
 
-from apps.flow import flow_transaction, get_user_flow, register_flow_account
+from apps.flow import flow_transaction, get_balance, register_account
 from apps.roll import RollApp
 from data.roll.banner import banner
 from dev.model import BaseView
@@ -100,7 +100,7 @@ class RollCog(commands.Cog):
             )
 
         async def callback(self, i: Interaction):
-            user_flow = await get_user_flow(i.user.id, i.client.db)
+            user_flow = await get_balance(i.user.id, i.client.db)
             if user_flow < banner["one_pull_price"]:
                 return await i.response.send_message(
                     embed=error_embed(
@@ -120,7 +120,7 @@ class RollCog(commands.Cog):
             )
 
         async def callback(self, i: Interaction):
-            user_flow = await get_user_flow(i.user.id, i.client.db)
+            user_flow = await get_balance(i.user.id, i.client.db)
             if user_flow < 10 * banner["one_pull_price"]:
                 return await i.response.send_message(
                     embed=error_embed(
@@ -164,7 +164,7 @@ class RollCog(commands.Cog):
             await asyncio.sleep(sleep_time)
             embed = default_embed(
                 "抽卡結果",
-                result + f"\n目前 暴幣: {await get_user_flow(i.user.id, i.client.db)}",
+                result + f"\n目前 暴幣: {await get_balance(i.user.id, i.client.db)}",
             )
             await i.followup.send(embed=embed, ephemeral=True)
             embed = default_embed(banner["name"]).set_image(url=banner["icon"])
@@ -189,9 +189,9 @@ class RollCog(commands.Cog):
 
     @app_commands.command(name="roll", description="暴幣祈願系統")
     async def roll(self, i: Interaction):
-        check = await register_flow_account(i.user.id, i.client.db)
+        check = await register_account(i.user.id, i.client.db)
         if not check:
-            await register_flow_account(i.user.id, i.client.db)
+            await register_account(i.user.id, i.client.db)
         public = (
             i.client.get_channel(916951131022843964)
             if not self.bot.debug

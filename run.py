@@ -49,9 +49,12 @@ class ShenheCommandTree(discord.app_commands.CommandTree):
     async def on_error(
         self, i: discord.Interaction, e: discord.app_commands.AppCommandError, /
     ) -> None:
-        logging.error(f"Error in command {i.command}: {type(e)} {e}", exc_info=e)
+        if isinstance(e, discord.app_commands.CommandOnCooldown):
+            embed = ErrorEmbed("錯誤", f"指令冷卻中，請等待 {e.retry_after:.2f} 秒")
+        else:
+            logging.error(f"Error in command {i.command}: {type(e)} {e}", exc_info=e)
+            embed = ErrorEmbed("錯誤", f"```py\n{e}\n```")
 
-        embed = ErrorEmbed("錯誤", f"```py\n{e}\n```")
         try:
             await i.response.send_message(embed=embed, ephemeral=True)
         except discord.InteractionResponded:

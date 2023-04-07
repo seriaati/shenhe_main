@@ -7,7 +7,7 @@ from discord.ext import commands
 
 import dev.model as model
 from apps.c4.ui import ColorSelectView
-from apps.flow import flow_transaction, get_user_flow
+from apps.flow import flow_transaction, get_balance
 from dev.enum import GameType
 from ui.guess_num import GuessNumView
 from utility.paginator import GeneralPaginator
@@ -187,7 +187,7 @@ class GameCog(commands.GroupCog, name="game"):
         i: model.Inter = inter  # type: ignore
         assert isinstance(i.user, discord.Member)
 
-        user_flow = await get_user_flow(i.user.id, self.bot.pool)
+        user_flow = await get_balance(i.user.id, self.bot.pool)
         if flow and flow > user_flow:
             return await i.response.send_message(
                 embed=model.ErrorEmbed("你擁有的暴幣不足以承擔這個賭注", f"所需暴幣: {flow}"),

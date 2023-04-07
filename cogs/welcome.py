@@ -5,7 +5,7 @@ import discord
 from discord.ext import commands
 
 import dev.model as model
-from apps.flow import register_flow_account, remove_flow_account
+from apps.flow import register_account, remove_account
 from data.constants import welcome_strs
 from ui.welcome import AcceptRules, Welcome
 from utility.utils import default_embed
@@ -51,7 +51,7 @@ class WelcomeCog(commands.Cog):
             return
 
         logging.info(f"discord.Member {member} left the server")
-        await remove_flow_account(member.id, self.bot.pool)
+        await remove_account(member.id, self.bot.pool)
 
     @commands.Cog.listener()
     async def on_member_update(self, before: discord.Member, after: discord.Member):
@@ -60,7 +60,7 @@ class WelcomeCog(commands.Cog):
 
         traveler = before.guild.get_role(1061880147952812052)
         if traveler not in before.roles and traveler in after.roles:
-            await register_flow_account(after.id, self.bot.pool)
+            await register_account(after.id, self.bot.pool)
             public = after.guild.get_channel(1061881312790720602)
             assert isinstance(public, discord.TextChannel)
             view = Welcome(after)
