@@ -51,6 +51,8 @@ class ShenheCommandTree(discord.app_commands.CommandTree):
     ) -> None:
         if isinstance(e, discord.app_commands.CommandOnCooldown):
             embed = ErrorEmbed("錯誤", f"指令冷卻中，請等待 {e.retry_after:.2f} 秒")
+        elif isinstance(e, discord.app_commands.CheckFailure):
+            return
         else:
             logging.error(f"Error in command {i.command}: {type(e)} {e}", exc_info=e)
             embed = ErrorEmbed("錯誤", f"```py\n{e}\n```")
