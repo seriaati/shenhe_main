@@ -41,13 +41,11 @@ class GameCog(commands.GroupCog, name="game"):
     def __init__(self, bot):
         self.bot: model.BotModel = bot
 
-    @commands.Cog.listener(name="on_message")
-    async def sticky_message(self, message: discord.Message):
-        if (
-            not message.author.bot
-            and isinstance(message.channel, discord.Thread)
-            and "四子棋" in message.channel.name
-        ):
+    @commands.Cog.listener()
+    async def on_message(self, message: discord.Message):
+        if message.author.bot or not isinstance(message.channel, discord.Thread):
+            return
+        if "四子棋" in message.channel.name:
             row = await self.bot.pool.fetchrow(
                 "SELECT * FROM connect_four WHERE channel_id = $1", message.channel.id
             )
@@ -68,14 +66,9 @@ class GameCog(commands.GroupCog, name="game"):
                 sticky.id,
                 message.channel.id,
             )
-
-    @commands.Cog.listener(name="on_message")
-    async def guess_num(self, message: discord.Message):
-        if (
-            not message.author.bot
+        elif (
+            "猜數字" in message.channel.name
             and message.content.isdigit()
-            and isinstance(message.channel, discord.Thread)
-            and "猜數字" in message.channel.name
             and len(set(message.content)) != 4
         ):
             row = await self.bot.pool.fetchrow(
