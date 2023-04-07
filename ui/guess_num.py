@@ -91,9 +91,11 @@ class GuessNumModal(ui.Modal):
         )
         assert p1_button and p2_button
         if self.is_p1:
+            self.gn_view.p1_num = self.number.value
             p1_button.disabled = True
             p2_button.disabled = False
         else:
+            self.gn_view.p2_num = self.number.value
             p2_button.disabled = True
 
         assert self.gn_view.message
