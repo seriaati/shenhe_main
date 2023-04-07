@@ -68,7 +68,7 @@ fish_data = {
         "flow_chance": None,
         "type_0": False,
         "cute": True,
-        "verb": ["咬掉ㄐㄐ了", "咬ㄐㄐ了","咬了一下ㄐㄐ","咬了一口ㄐㄐ","咬掉整個ㄐㄐ"],
+        "verb": ["咬掉ㄐㄐ了", "咬ㄐㄐ了", "咬了一下ㄐㄐ", "咬了一口ㄐㄐ", "咬掉整個ㄐㄐ"],
         "image_url": "https://ih1.redbubble.net/image.975603087.0490/st,small,507x507-pad,600x600,f8f8f8.jpg",
     },
     "心海": {
