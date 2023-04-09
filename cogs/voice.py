@@ -137,12 +137,12 @@ class VoiceCog(commands.GroupCog, name="vc"):
         current_vc = i.user.voice.channel
         assert current_vc
         for member in current_vc.members:
-            await current_vc.set_permissions(member, connect=True)
+            await current_vc.set_permissions(member, connect=True, view_channel=True)
 
         assert i.guild
         traveler = i.guild.get_role(1061880147952812052)
         assert traveler
-        await current_vc.set_permissions(traveler, connect=False)
+        await current_vc.set_permissions(traveler, connect=False, view_channel=False)
         await i.response.send_message(
             embed=DefaultEmbed("成功", "此語音台已被牢牢鎖上 (誰都別想進來！)"), ephemeral=True
         )
@@ -157,7 +157,7 @@ class VoiceCog(commands.GroupCog, name="vc"):
 
         traveler = i.guild.get_role(1061880147952812052)
         assert traveler
-        await current_vc.set_permissions(traveler, connect=True)
+        await current_vc.set_permissions(traveler, connect=True, view_channel=True)
         await i.response.send_message(
             embed=DefaultEmbed("成功", "此語音台的封印已被解除"), ephemeral=True
         )
