@@ -71,6 +71,7 @@ class GameCog(commands.GroupCog, name="game"):
         elif (
             "猜數字" in message.channel.name
             and message.content.isdigit()
+            and len(message.content) == 4
             and len(set(message.content)) == 4
         ):
             row = await self.bot.pool.fetchrow(
