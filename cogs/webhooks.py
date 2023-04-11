@@ -16,7 +16,7 @@ class WebhookCog(commands.Cog):
     # auto spoiler
     @commands.Cog.listener("on_message")
     async def auto_spoiler(self, message: discord.Message):
-        if message.author.id == self.bot.user.id:
+        if message.author.bot:
             return
         if message.guild and message.guild.id != self.bot.guild_id:
             return
@@ -56,7 +56,7 @@ class WebhookCog(commands.Cog):
     # use fxtwitter and phixiv to send tweet
     @commands.Cog.listener("on_message")
     async def use_fxtwitter(self, message: discord.Message):
-        if message.author.id == self.bot.user.id:
+        if message.author.bot:
             return
         if message.guild and message.guild.id != self.bot.guild_id:
             return
