@@ -1,5 +1,6 @@
 import logging
 import random
+from typing import List
 
 import discord
 from discord import app_commands
@@ -8,6 +9,8 @@ from discord.ui import Button
 
 import utility.draw as draw
 from dev.model import BaseView, BotModel, DefaultEmbed, ErrorEmbed
+from utility.paginator import GeneralPaginator
+from utility.utils import divide_chunks
 
 
 class OtherCMDCog(commands.Cog, name="other"):
@@ -159,6 +162,26 @@ class OtherCMDCog(commands.Cog, name="other"):
         view.add_item(Button(label="下載頭像", url=member.display_avatar.url))
         embed.set_image(url=member.avatar)
         await i.response.send_message(embed=embed, view=view)
+    
+    @app_commands.guild_only()
+    @app_commands.command(name="popular-thread", description="查看目前最熱門的討論串")
+    async def popular_thread(self, i: discord.Interaction):
+        assert i.guild
+        assert i.guild.icon
+        
+        threads = i.guild.threads
+        threads = sorted(threads, key=lambda x: x.message_count, reverse=True)
+        
+        embeds: List[discord.Embed] = []
+        div_threads = list(divide_chunks(threads, 10))
+        for div in div_threads:
+            embed = DefaultEmbed("最熱門的討論串")
+            embed.set_author(name=i.guild.name, icon_url=i.guild.icon.url)
+            for thread in div:
+                embed.add_field(name=thread.name, value=f"訊息數量: {thread.message_count}", inline=False)
+            embeds.append(embed)
+        
+        await GeneralPaginator(i, embeds).start()
 
     @app_commands.command(name="cp", description="湊CP, 並查看兩人契合度")
     @app_commands.rename(person_one="攻", person_two="受", random_type="契合度計算方式")
@@ -212,7 +235,7 @@ class OtherCMDCog(commands.Cog, name="other"):
         if msg.attachments:
             embed.set_image(url=msg.attachments[0].url)
 
-        if msg.reference:
+        if msg.reference and msg.reference.message_id:
             ref = await msg.channel.fetch_message(msg.reference.message_id)
             embed.add_field(
                 name="回覆給...", value=f"[{ref.author}]({ref.jump_url})", inline=False
