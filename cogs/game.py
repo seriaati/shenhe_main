@@ -298,7 +298,7 @@ class GameCog(commands.GroupCog, name="game"):
         await i.response.defer()
 
         rows = await i.client.pool.fetch(
-            "SELECT * FROM game_win_lose WHERE game = $1", game.value
+            "SELECT * FROM game_win_lose WHERE game = $1 WHERE win + lose >= 10", game.value
         )
         all_players: typing.List[model.GamePlayer] = [
             model.GamePlayer.from_row(row) for row in rows
@@ -322,9 +322,9 @@ class GameCog(commands.GroupCog, name="game"):
                     player_rank = rank
 
                 embed.description += f"{rank}. <@{player.user_id}> {player.win}勝{player.lose}敗 ({player.win / (player.win + player.lose) * 100:.2f}%)\n"
+            embed.title = f"你的排名：{player_rank}"
+            embed.set_footer(text=f"只有進行十場遊戲以上的玩家才會進入排行榜")
             embeds.append(embed)
-        for embed in embeds:
-            embed.set_footer(text=f"你的排名：{player_rank}")
 
         if not embeds:
             return await i.followup.send(
