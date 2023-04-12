@@ -298,7 +298,8 @@ class GameCog(commands.GroupCog, name="game"):
         await i.response.defer()
 
         rows = await i.client.pool.fetch(
-            "SELECT * FROM game_win_lose WHERE game = $1 WHERE win + lose >= 10", game.value
+            "SELECT * FROM game_win_lose WHERE game = $1 WHERE win + lose >= 10",
+            game.value,
         )
         all_players: typing.List[model.GamePlayer] = [
             model.GamePlayer.from_row(row) for row in rows
