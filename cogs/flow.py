@@ -139,9 +139,15 @@ class FlowCog(commands.Cog, name="flow"):
     @flow_check()
     @app_commands.guild_only()
     @app_commands.command(name="give", description="給予其他使用者暴幣")
-    @app_commands.rename(member="使用者")
-    @app_commands.describe(member="被給予暴幣的使用者")
+    @app_commands.rename(member="使用者", amount="數量")
+    @app_commands.describe(member="被給予暴幣的使用者", amount="給予的暴幣數量")
     async def give(self, i: discord.Interaction, member: discord.Member, amount: int):
+        if amount <= 0:
+            return await i.response.send_message(
+                embed=ErrorEmbed("錯誤", "請輸入大於 0 的數字"),
+                ephemeral=True,
+            )
+
         flow_user = await flow_app.get_balance(i.user.id, self.bot.pool)
         if flow_user < amount:
             return await i.response.send_message(
