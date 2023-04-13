@@ -178,7 +178,10 @@ class OtherCMDCog(commands.Cog, name="other"):
             embed = DefaultEmbed("最熱門的討論串")
             embed.set_author(name=i.guild.name, icon_url=i.guild.icon.url)
             for thread in div:
-                embed.add_field(name=thread.name, value=f"訊息數量: {thread.message_count}", inline=False)
+                value = f"訊息數量: {thread.message_count}"
+                if thread.owner:
+                    value += f"\n創建者: {thread.owner.mention}"
+                embed.add_field(name=thread.name, value=value, inline=False)
             embeds.append(embed)
         
         await GeneralPaginator(i, embeds).start()
