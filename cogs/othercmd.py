@@ -112,7 +112,7 @@ class OtherCMDCog(commands.Cog, name="other"):
             return await send_no_image_found(i)
 
         await self.bot.pool.execute(
-            "INSERT INTO save_image (image_urls) VALUES ($1) WHERE user_id = $2 ON CONFLICT (user_id) DO UPDATE SET image_urls = $1",
+            "INSERT INTO save_image (image_urls, user_id) VALUES ($1, $2) ON CONFLICT (user_id) DO UPDATE SET image_urls = $1",
             db_urls,
             i.user.id,
         )
