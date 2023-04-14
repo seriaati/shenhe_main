@@ -162,7 +162,8 @@ class OtherCMDCog(commands.Cog, name="other"):
 
         async def callback(self, inter: discord.Interaction):
             i: Inter = inter  # type: ignore
-            await i.response.defer(ephemeral=True)
+            embed = DefaultEmbed("下載圖片中", "請稍後...")
+            await i.response.send_message(embed=embed, ephemeral=True)
 
             urls_ = await i.client.pool.fetchval(
                 "SELECT image_urls FROM save_image WHERE user_id = $1", i.user.id
@@ -206,7 +207,7 @@ class OtherCMDCog(commands.Cog, name="other"):
             embed = DefaultEmbed("圖片下載成功")
             embed.description = f"共 {len(fps)} 張圖片"
             file_ = discord.File(zip_file, filename="images.zip")
-            await i.followup.send(file=file_, ephemeral=True)
+            await i.edit_original_response(attachments=[file_])
 
     @app_commands.command(name="image-manager", description="圖片管理器")
     async def image_manager(self, i: discord.Interaction):
