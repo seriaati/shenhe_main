@@ -222,7 +222,7 @@ class OtherCMDCog(commands.Cog, name="other"):
             embed.description = f"共 {len(fps)} 張圖片"
             embed.set_footer(text="資料庫內的圖片皆已刪除")
             file_ = discord.File(zip_file, filename=f"{uuid4()}.zip")
-            await i.edit_original_response(attachments=[file_], embed=None)
+            await i.edit_original_response(attachments=[file_], embed=embed)
 
             await i.client.pool.execute(
                 "DELETE FROM save_image WHERE user_id = $1", i.user.id
