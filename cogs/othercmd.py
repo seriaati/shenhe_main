@@ -200,7 +200,7 @@ class OtherCMDCog(commands.Cog, name="other"):
                     if clean_url is None:
                         continue
 
-                artwork_id = clean_url.split("/")[-1]
+                artwork_id = clean_url.split("/")[-1] + ".jpg"
                 fp = io.BytesIO()
                 logging.info(f"Downloading {clean_url}")
                 async with i.client.session.get(clean_url) as resp:
