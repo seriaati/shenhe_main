@@ -176,7 +176,7 @@ class OtherCMDCog(commands.Cog, name="other"):
 
     class DownloadImage(discord.ui.Button):
         def __init__(self):
-            super().__init__(label="下載圖片", style=discord.ButtonStyle.primary)
+            super().__init__(label="下載所有圖片", style=discord.ButtonStyle.primary)
 
         async def callback(self, inter: discord.Interaction):
             i: Inter = inter  # type: ignore
@@ -220,8 +220,13 @@ class OtherCMDCog(commands.Cog, name="other"):
 
             embed = DefaultEmbed("圖片下載成功")
             embed.description = f"共 {len(fps)} 張圖片"
+            embed.set_footer(text="資料庫內的圖片皆已刪除")
             file_ = discord.File(zip_file, filename=f"{uuid4()}.zip")
             await i.edit_original_response(attachments=[file_], embed=None)
+
+            await i.client.pool.execute(
+                "DELETE FROM save_image WHERE user_id = $1", i.user.id
+            )
 
     @app_commands.command(name="image-manager", description="圖片管理器")
     async def image_manager(self, i: discord.Interaction):
