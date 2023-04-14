@@ -212,7 +212,14 @@ class OtherCMDCog(commands.Cog, name="other"):
         if not images_:
             return await i.edit_original_response(
                 embed=ErrorEmbed(
-                    "你目前沒有儲存任何圖片", "右鍵任何一個含有圖片的訊息，或含有 `twitter`, `pixiv` 的訊息，並選擇 `儲存圖片`"
+                    "你目前沒有儲存任何圖片",
+                    """
+                    以下是可以儲存的圖片來源：
+                    1. 本身帶有圖片附件的訊息
+                    2. 本身帶有圖片網址的訊息
+                    3. Twitter 貼文的訊息
+                    4. Pixiv 繪圖的訊息
+                    """
                 )
             )
         images: List[str] = images_  # type: ignore
