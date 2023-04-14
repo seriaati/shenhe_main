@@ -273,7 +273,7 @@ class OtherCMDCog(commands.Cog, name="other"):
 
             embed = DefaultEmbed(title, image)
             if jump_url:
-                embed.description += f"\n[點我回到訊息]({jump_url})" # type: ignore
+                embed.description += f"\n\n[點我回到訊息]({jump_url})" # type: ignore
             embed.set_author(name=user.display_name, icon_url=user.display_avatar.url)
             embed.set_image(url=image)
             embed.set_footer(text=f"共 {len(images)} 張圖片")
