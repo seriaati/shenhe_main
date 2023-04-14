@@ -104,12 +104,11 @@ class OtherCMDCog(commands.Cog, name="other"):
             if not urls:
                 return await send_no_image_found(i)
             db_urls.extend(urls)
-        elif message.attachments:
+
+        if message.attachments:
             for attachment in message.attachments:
                 if attachment.content_type and "image" in attachment.content_type:
                     db_urls.append(attachment.url)
-        else:
-            return await send_no_image_found(i)
 
         embed = DefaultEmbed("儲存圖片成功")
         embed.set_footer(text=f"共 {len(db_urls)} 張圖片")
