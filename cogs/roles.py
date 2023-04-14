@@ -1,7 +1,7 @@
-from typing import List, Optional, Union
+from typing import Optional, Union
 
 import discord
-from discord import Emoji, ui
+from discord import ui
 from discord.ext import commands
 
 import data.constants as constants
@@ -12,8 +12,8 @@ from utility.utils import default_embed
 class ReactionRole(ui.View):
     def __init__(
         self,
-        roles: List[discord.Role],
-        emojis: Optional[List[Union[discord.Emoji, str]]] = None,
+        roles,
+        emojis = None,
         style: discord.ButtonStyle = discord.ButtonStyle.blurple,
     ):
         super().__init__(timeout=None)
@@ -123,15 +123,23 @@ class ReactionRoles(commands.Cog):
             style=discord.ButtonStyle.gray,
         )
         self.bot.add_view(self.element_view)
-
-        self.team_ids = (1091879436321816636, 1091650330267234306)
-        self.team_emojis = ("🌾", "🎉")
-        self.team_view = ReactionRole(
-            [guild.get_role(id) for id in self.team_ids],
-            self.team_emojis,
+        
+        self.ping_ids = (1091650330267234306, 1096438021856968835, 1096438068338245632)
+        self.ping_emojis = ("🎉", "📜", "📢")
+        self.ping_view = ReactionRole(
+            [guild.get_role(id) for id in self.ping_ids],
+            self.ping_emojis,
             style=discord.ButtonStyle.gray,
         )
-        self.bot.add_view(self.team_view)
+
+        self.other_ids = (1091879436321816636, )
+        self.other_emojis = ("🌾",)
+        self.other_view = ReactionRole(
+            [guild.get_role(id) for id in self.other_ids],
+            self.other_emojis,
+            style=discord.ButtonStyle.gray,
+        )
+        self.bot.add_view(self.other_view)
 
     @commands.command(name="reacton_roles", aliases=["rr"])
     @commands.is_owner()
@@ -150,9 +158,12 @@ class ReactionRoles(commands.Cog):
         elif id_type == "element":
             embed_title = "🪄 元素身份組"
             view = self.element_view
-        elif id_type == "team":
-            embed_title = "🏆 隊伍身份組"
-            view = self.team_view
+        elif id_type == "ping":
+            embed_title = "📢 Ping Ping 身份組"
+            view = self.ping_view
+        elif id_type == "other":
+            embed_title = "🏆 其他身份組"
+            view = self.other_view
 
         embed = default_embed(message=embed_description).set_author(name=embed_title)
         await ctx.send(embed=embed, view=view)
