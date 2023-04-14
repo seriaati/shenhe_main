@@ -210,7 +210,7 @@ class OtherCMDCog(commands.Cog, name="other"):
 
     @app_commands.command(name="image-manager", description="圖片管理器")
     async def image_manager(self, i: discord.Interaction):
-        await i.response.defer()
+        await i.response.defer(ephemeral=True)
         images_ = await self.bot.pool.fetchval(
             "SELECT image_urls FROM save_image WHERE user_id = $1", i.user.id
         )
@@ -239,7 +239,7 @@ class OtherCMDCog(commands.Cog, name="other"):
             embed.set_footer(text=f"共 {len(images)} 張圖片")
             embeds.append(embed)
 
-        await GeneralPaginator(i, embeds, [self.DownloadImage()]).start(followup=True)
+        await GeneralPaginator(i, embeds, [self.DownloadImage()]).start(edit=True)
 
     @app_commands.command(name="bypass", description="繞過 Discord 的圖片禁令限制")
     @app_commands.rename(image="圖片")
