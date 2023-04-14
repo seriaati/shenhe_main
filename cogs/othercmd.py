@@ -267,7 +267,7 @@ class OtherCMDCog(commands.Cog, name="other"):
                 if image is None:
                     continue
 
-            embed = DefaultEmbed(title)
+            embed = DefaultEmbed(title, image)
             embed.set_author(name=user.display_name, icon_url=user.display_avatar.url)
             embed.set_image(url=image)
             embed.set_footer(text=f"共 {len(images)} 張圖片")
