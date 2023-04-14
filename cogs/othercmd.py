@@ -259,6 +259,7 @@ class OtherCMDCog(commands.Cog, name="other"):
     ) -> List[Embed]:
         embeds: List[Embed] = []
         for image in images:
+            image = re.sub(r"\?.*", "", image)
             if "twitter" in image:
                 image = convert_twitter_to_direct_url(image)
             elif "phixiv" in image or "pixiv" in image:
