@@ -137,21 +137,22 @@ class OtherCMDCog(commands.Cog, name="other"):
 
         if not db_urls:
             return await send_no_image_found(i)
-
-        embeds = self.get_image_embeds(i.user, db_urls, "圖片儲存成功")
-        await GeneralPaginator(i, embeds).start(edit=True)
-
+        
+        new_urls = db_urls.copy()
         original = await self.bot.pool.fetchval(
             "SELECT image_urls FROM save_image WHERE user_id = $1", i.user.id
         )
         if original is not None:
-            db_urls.extend(original)
+            new_urls.extend(original)
 
         await self.bot.pool.execute(
             "INSERT INTO save_image (image_urls, user_id) VALUES ($1, $2) ON CONFLICT (user_id) DO UPDATE SET image_urls = $1",
-            db_urls,
+            new_urls,
             i.user.id,
         )
+
+        embeds = self.get_image_embeds(i.user, db_urls, "圖片儲存成功")
+        await GeneralPaginator(i, embeds).start(edit=True)
 
     async def send_quote_embed(self, member: discord.Member, msg: discord.Message):
         embed = DefaultEmbed(
