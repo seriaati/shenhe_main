@@ -3,7 +3,7 @@ import logging
 import random
 import re
 import zipfile
-from typing import Dict, List
+from typing import Dict, List, Optional, Union
 
 import discord
 from discord import Embed, app_commands
@@ -20,6 +20,30 @@ async def send_no_image_found(i: discord.Interaction):
     embed = ErrorEmbed("此訊息內沒有任何圖片", "請確認訊息內是否有圖片或是圖片網址")
     embed.set_footer(text="如果這是誤判，請聯絡小雪")
     await i.edit_original_response(embed=embed)
+
+
+def convert_twitter_to_direct_url(url: str) -> str:
+    if "twitter" in url and "fxtwitter" not in url:
+        url = url.replace("twitter", "fxtwitter")
+
+    image_extensions = ("png", "jpg", "jpeg", "gif", "webp")
+    if any(ext in url for ext in image_extensions):
+        return url
+    return url + ".jpg"
+
+
+def convert_phixiv_to_direct_url(url: str) -> Optional[str]:
+    if "pixiv" in url and "phixiv" not in url:
+        url = url.replace("pixiv", "phixiv")
+
+    id_pattern = re.compile(r"/(\d+)$")
+    match = id_pattern.search(url)
+    if not match:
+        return None
+
+    artwork_id = match.group(1)
+    url = f"https://www.phixiv.net/d/{artwork_id}"
+    return url
 
 
 class OtherCMDCog(commands.Cog, name="other"):
@@ -95,7 +119,7 @@ class OtherCMDCog(commands.Cog, name="other"):
             return await send_no_image_found(i)
 
         db_urls: List[str] = []
-        websites = ("fxtwitter", "phixiv", "pixiv")
+        websites = ("twitter", "fxtwitter", "phixiv", "pixiv")
         image_extensions = ("png", "jpg", "jpeg", "gif", "webp")
         if any(website in message.content for website in websites) or any(
             ext in message.content for ext in image_extensions
@@ -110,12 +134,11 @@ class OtherCMDCog(commands.Cog, name="other"):
                 if attachment.content_type and "image" in attachment.content_type:
                     db_urls.append(attachment.url)
 
-        embed = DefaultEmbed("儲存圖片成功")
-        embed.set_footer(text=f"共 {len(db_urls)} 張圖片")
-        embed.set_author(
-            name="使用 /image-manager 指令管理儲存的圖片", icon_url=i.user.display_avatar.url
-        )
-        await i.edit_original_response(embed=embed)
+        if not db_urls:
+            return await send_no_image_found(i)
+
+        embeds = self.get_image_embeds(i.user, db_urls, "圖片儲存成功")
+        await GeneralPaginator(i, embeds).start(edit=True)
 
         original = await self.bot.pool.fetchval(
             "SELECT image_urls FROM save_image WHERE user_id = $1", i.user.id
@@ -170,20 +193,14 @@ class OtherCMDCog(commands.Cog, name="other"):
             fps: Dict[str, io.BytesIO] = {}
             for url in urls:
                 clean_url = re.sub(r"\?.*", "", url)
-                if "fxtwitter" in clean_url and not clean_url.endswith(".jpg"):
-                    clean_url = f"{clean_url}.jpg"
-                    artwork_id = clean_url.split("/")[-1]
+                if "twitter" in clean_url:
+                    clean_url = convert_twitter_to_direct_url(clean_url)
                 elif "phixiv" in clean_url or "pixiv" in clean_url:
-                    id_pattern = re.compile(r"/(\d+)$")
-                    match = id_pattern.search(clean_url)
-                    if not match:
-                        return await send_no_image_found(i)
+                    clean_url = convert_phixiv_to_direct_url(clean_url)
+                    if clean_url is None:
+                        continue
 
-                    artwork_id = match.group(1)
-                    clean_url = f"https://www.phixiv.net/d/{artwork_id}"
-                else:
-                    artwork_id = clean_url.split("/")[-1]
-
+                artwork_id = clean_url.split("/")[-1]
                 fp = io.BytesIO()
                 async with i.client.session.get(clean_url) as resp:
                     fp.write(await resp.read())
@@ -201,7 +218,7 @@ class OtherCMDCog(commands.Cog, name="other"):
             embed = DefaultEmbed("圖片下載成功")
             embed.description = f"共 {len(fps)} 張圖片"
             file_ = discord.File(zip_file, filename="images.zip")
-            await i.edit_original_response(attachments=[file_])
+            await i.edit_original_response(attachments=[file_], embed=None)
 
     @app_commands.command(name="image-manager", description="圖片管理器")
     async def image_manager(self, i: discord.Interaction):
@@ -224,17 +241,28 @@ class OtherCMDCog(commands.Cog, name="other"):
                 )
             )
         images: List[str] = images_  # type: ignore
+        embeds = self.get_image_embeds(i.user, images, "圖片管理器")
+
+        await GeneralPaginator(i, embeds, [self.DownloadImage()]).start(edit=True)
+
+    def get_image_embeds(
+        self, user: Union[discord.Member, discord.User], images: List[str], title: str
+    ) -> List[Embed]:
         embeds: List[Embed] = []
         for image in images:
-            embed = DefaultEmbed("圖片管理器")
-            embed.set_author(
-                name=i.user.display_name, icon_url=i.user.display_avatar.url
-            )
+            if "twitter" in image:
+                image = convert_twitter_to_direct_url(image)
+            elif "phixiv" in image or "pixiv" in image:
+                image = convert_phixiv_to_direct_url(image)
+                if image is None:
+                    continue
+
+            embed = DefaultEmbed(title)
+            embed.set_author(name=user.display_name, icon_url=user.display_avatar.url)
             embed.set_image(url=image)
             embed.set_footer(text=f"共 {len(images)} 張圖片")
             embeds.append(embed)
-
-        await GeneralPaginator(i, embeds, [self.DownloadImage()]).start(edit=True)
+        return embeds
 
     @app_commands.command(name="bypass", description="繞過 Discord 的圖片禁令限制")
     @app_commands.rename(image="圖片")
