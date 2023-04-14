@@ -152,6 +152,8 @@ class OtherCMDCog(commands.Cog, name="other"):
         )
 
         embeds = self.get_image_embeds(i.user, db_urls, "圖片儲存成功", message.jump_url)
+        for embed in embeds:
+            embed.set_footer(text=f"資料庫內目前共有 {len(new_urls)} 張圖片")
         await GeneralPaginator(i, embeds).start(edit=True)
 
     async def send_quote_embed(self, member: discord.Member, msg: discord.Message):
