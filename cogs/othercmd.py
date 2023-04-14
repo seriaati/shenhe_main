@@ -202,6 +202,7 @@ class OtherCMDCog(commands.Cog, name="other"):
 
                 artwork_id = clean_url.split("/")[-1]
                 fp = io.BytesIO()
+                logging.info(f"Downloading {artwork_id}")
                 async with i.client.session.get(clean_url) as resp:
                     fp.write(await resp.read())
                 fps[artwork_id] = fp
@@ -210,6 +211,7 @@ class OtherCMDCog(commands.Cog, name="other"):
             with zipfile.ZipFile(zip_file, "w") as zip:
                 num = 1
                 for filename, fp in fps.items():
+                    fp.seek(0)
                     zip.writestr(filename, fp.getvalue())
                     num += 1
 
