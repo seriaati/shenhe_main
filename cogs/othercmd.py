@@ -210,7 +210,7 @@ class OtherCMDCog(commands.Cog, name="other"):
         embed.set_author(name=i.user.display_name, icon_url=i.user.display_avatar.url)
         embed.description = ""
         if not images_:
-            await i.edit_original_response(
+            return await i.edit_original_response(
                 embed=ErrorEmbed(
                     "你目前沒有儲存任何圖片", "右鍵任何一個含有圖片的訊息，或含有 `twitter`, `pixiv` 的訊息，並選擇 `儲存圖片`"
                 )
