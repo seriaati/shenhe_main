@@ -137,7 +137,7 @@ class OtherCMDCog(commands.Cog, name="other"):
 
         if not db_urls:
             return await send_no_image_found(i)
-        
+
         new_urls = db_urls.copy()
         original = await self.bot.pool.fetchval(
             "SELECT image_urls FROM save_image WHERE user_id = $1", i.user.id
@@ -151,7 +151,7 @@ class OtherCMDCog(commands.Cog, name="other"):
             i.user.id,
         )
 
-        embeds = self.get_image_embeds(i.user, db_urls, "圖片儲存成功")
+        embeds = self.get_image_embeds(i.user, db_urls, "圖片儲存成功", message.jump_url)
         await GeneralPaginator(i, embeds).start(edit=True)
 
     async def send_quote_embed(self, member: discord.Member, msg: discord.Message):
@@ -255,7 +255,11 @@ class OtherCMDCog(commands.Cog, name="other"):
         await GeneralPaginator(i, embeds, [self.DownloadImage()]).start(edit=True)
 
     def get_image_embeds(
-        self, user: Union[discord.Member, discord.User], images: List[str], title: str
+        self,
+        user: Union[discord.Member, discord.User],
+        images: List[str],
+        title: str,
+        jump_url: Optional[str] = None,
     ) -> List[Embed]:
         embeds: List[Embed] = []
         for image in images:
@@ -268,6 +272,8 @@ class OtherCMDCog(commands.Cog, name="other"):
                     continue
 
             embed = DefaultEmbed(title, image)
+            if jump_url:
+                embed.description += f"[點我回到訊息]({jump_url})" # type: ignore
             embed.set_author(name=user.display_name, icon_url=user.display_avatar.url)
             embed.set_image(url=image)
             embed.set_footer(text=f"共 {len(images)} 張圖片")
