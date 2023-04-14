@@ -137,7 +137,7 @@ class OtherCMDCog(commands.Cog, name="other"):
 
         if not db_urls:
             return await send_no_image_found(i)
-        
+
         new_urls = db_urls.copy()
         original = await self.bot.pool.fetchval(
             "SELECT image_urls FROM save_image WHERE user_id = $1", i.user.id
