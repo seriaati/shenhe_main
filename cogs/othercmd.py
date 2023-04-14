@@ -219,7 +219,7 @@ class OtherCMDCog(commands.Cog, name="other"):
                     2. 本身帶有圖片網址的訊息
                     3. Twitter 貼文的訊息
                     4. Pixiv 繪圖的訊息
-                    """
+                    """,
                 )
             )
         images: List[str] = images_  # type: ignore
