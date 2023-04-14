@@ -111,17 +111,12 @@ class OtherCMDCog(commands.Cog, name="other"):
         else:
             return await send_no_image_found(i)
 
-        embeds: List[Embed] = []
-        for url in db_urls:
-            embed = DefaultEmbed("儲存圖片成功")
-            embed.set_image(url=url)
-            embed.set_footer(text=f"共 {len(db_urls)} 張圖片")
-            embed.set_author(
-                name="使用 /image-manager 指令管理儲存的圖片", icon_url=i.user.display_avatar.url
-            )
-            embeds.append(embed)
-
-        await GeneralPaginator(i, embeds).start(edit=True)
+        embed = DefaultEmbed("儲存圖片成功")
+        embed.set_footer(text=f"共 {len(db_urls)} 張圖片")
+        embed.set_author(
+            name="使用 /image-manager 指令管理儲存的圖片", icon_url=i.user.display_avatar.url
+        )
+        await i.edit_original_response(embed=embed)
 
         original = await self.bot.pool.fetchval(
             "SELECT image_urls FROM save_image WHERE user_id = $1", i.user.id
