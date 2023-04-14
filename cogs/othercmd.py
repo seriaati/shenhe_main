@@ -202,7 +202,7 @@ class OtherCMDCog(commands.Cog, name="other"):
 
                 artwork_id = clean_url.split("/")[-1]
                 fp = io.BytesIO()
-                logging.info(f"Downloading {artwork_id}")
+                logging.info(f"Downloading {clean_url}")
                 async with i.client.session.get(clean_url) as resp:
                     fp.write(await resp.read())
                 fps[artwork_id] = fp
