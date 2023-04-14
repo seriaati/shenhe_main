@@ -4,6 +4,7 @@ import random
 import re
 import zipfile
 from typing import Dict, List, Optional, Union
+from uuid import uuid4
 
 import discord
 from discord import Embed, app_commands
@@ -219,7 +220,7 @@ class OtherCMDCog(commands.Cog, name="other"):
 
             embed = DefaultEmbed("圖片下載成功")
             embed.description = f"共 {len(fps)} 張圖片"
-            file_ = discord.File(zip_file, filename="images.zip")
+            file_ = discord.File(zip_file, filename=f"{uuid4()}.zip")
             await i.edit_original_response(attachments=[file_], embed=None)
 
     @app_commands.command(name="image-manager", description="圖片管理器")
