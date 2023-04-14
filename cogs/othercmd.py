@@ -116,7 +116,7 @@ class OtherCMDCog(commands.Cog, name="other"):
         url_pattern = re.compile(
             r"http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+"
         )
-        if not url_pattern.match(message.content) and not message.attachments:
+        if not url_pattern.search(message.content) and not message.attachments:
             return await send_no_image_found(i)
 
         db_urls: List[str] = []
