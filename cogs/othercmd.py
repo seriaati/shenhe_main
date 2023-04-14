@@ -111,20 +111,28 @@ class OtherCMDCog(commands.Cog, name="other"):
         else:
             return await send_no_image_found(i)
 
+        embeds: List[Embed] = []
+        for url in db_urls:
+            embed = DefaultEmbed("儲存圖片成功")
+            embed.set_image(url=url)
+            embed.set_footer(text=f"共 {len(db_urls)} 張圖片")
+            embed.set_author(
+                name="使用 /image-manager 指令管理儲存的圖片", icon_url=i.user.display_avatar.url
+            )
+            embeds.append(embed)
+
+        await GeneralPaginator(i, embeds).start(edit=True)
+
+        original = await self.bot.pool.fetchval(
+            "SELECT image_urls FROM save_image WHERE user_id = $1", i.user.id
+        )
+        if original is not None:
+            db_urls.extend(original)
+
         await self.bot.pool.execute(
             "INSERT INTO save_image (image_urls, user_id) VALUES ($1, $2) ON CONFLICT (user_id) DO UPDATE SET image_urls = $1",
             db_urls,
             i.user.id,
-        )
-
-        embed = DefaultEmbed("圖片儲存成功")
-        embed.description = ""
-        for url in db_urls:
-            embed.description += f"`{url}`\n"
-        embed.set_footer(text=f"共 {len(db_urls)} 張圖片")
-
-        await i.edit_original_response(
-            content="使用 `/image-manager` 指令管理儲存的圖片", embed=embed
         )
 
     async def send_quote_embed(self, member: discord.Member, msg: discord.Message):
@@ -156,9 +164,10 @@ class OtherCMDCog(commands.Cog, name="other"):
             i: Inter = inter  # type: ignore
             await i.response.defer(ephemeral=True)
 
-            urls = await i.client.pool.fetchval(
+            urls_ = await i.client.pool.fetchval(
                 "SELECT image_urls FROM save_image WHERE user_id = $1", i.user.id
             )
+            urls: List[str] = urls_  # type: ignore
             if not urls:
                 embed = ErrorEmbed("沒有圖片可以下載")
                 return await i.edit_original_response(embed=embed)
@@ -228,6 +237,7 @@ class OtherCMDCog(commands.Cog, name="other"):
             )
             embed.set_image(url=image)
             embed.set_footer(text=f"共 {len(images)} 張圖片")
+            embeds.append(embed)
 
         await GeneralPaginator(i, embeds, [self.DownloadImage()]).start(followup=True)
 
