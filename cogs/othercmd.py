@@ -6,7 +6,7 @@ import zipfile
 from typing import Dict, List
 
 import discord
-from discord import app_commands
+from discord import Embed, app_commands
 from discord.ext import commands
 from discord.ui import Button
 
@@ -148,11 +148,11 @@ class OtherCMDCog(commands.Cog, name="other"):
         assert isinstance(channel, discord.TextChannel)
         await channel.send(embed=embed)
 
-    class ImageManager(BaseView):
-        @discord.ui.button(label="下載圖片", style=discord.ButtonStyle.primary)
-        async def download_images(
-            self, inter: discord.Interaction, _: discord.ui.Button
-        ):
+    class DownloadImage(discord.ui.Button):
+        def __init__(self):
+            super().__init__(label="下載圖片", style=discord.ButtonStyle.primary)
+
+        async def callback(self, inter: discord.Interaction):
             i: Inter = inter  # type: ignore
             await i.response.defer(ephemeral=True)
 
@@ -206,9 +206,6 @@ class OtherCMDCog(commands.Cog, name="other"):
             "SELECT image_urls FROM save_image WHERE user_id = $1", i.user.id
         )
 
-        embed = DefaultEmbed("圖片管理器")
-        embed.set_author(name=i.user.display_name, icon_url=i.user.display_avatar.url)
-        embed.description = ""
         if not images_:
             return await i.edit_original_response(
                 embed=ErrorEmbed(
@@ -219,15 +216,20 @@ class OtherCMDCog(commands.Cog, name="other"):
                     2. 本身帶有圖片網址的訊息
                     3. Twitter 貼文的訊息
                     4. Pixiv 繪圖的訊息
-                    """
+                    """,
                 )
             )
         images: List[str] = images_  # type: ignore
+        embeds: List[Embed] = []
         for image in images:
-            embed.description += f"`{image}`\n"
-        embed.set_footer(text=f"共 {len(images)} 張圖片")
+            embed = DefaultEmbed("圖片管理器")
+            embed.set_author(
+                name=i.user.display_name, icon_url=i.user.display_avatar.url
+            )
+            embed.set_image(url=image)
+            embed.set_footer(text=f"共 {len(images)} 張圖片")
 
-        await i.followup.send(embed=embed)
+        await GeneralPaginator(i, embeds, [self.DownloadImage()]).start(followup=True)
 
     @app_commands.command(name="bypass", description="繞過 Discord 的圖片禁令限制")
     @app_commands.rename(image="圖片")
