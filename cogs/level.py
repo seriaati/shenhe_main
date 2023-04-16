@@ -186,8 +186,8 @@ class LevelCog(commands.Cog):
 
     @app_commands.guild_only()
     @app_commands.command(name="level", description="查看等級")
-    @app_commands.rename(member="用戶")
-    @app_commands.describe(member="要查看等級的用戶")
+    @app_commands.rename(m="用戶")
+    @app_commands.describe(m="要查看等級的用戶")
     async def level(self, i: discord.Interaction, m: Optional[discord.Member] = None):
         await i.response.defer()
         member = m or i.user
