@@ -281,11 +281,12 @@ class LevelCog(commands.GroupCog, name="level"):
         embeds: List[discord.Embed] = []
         div_stats = list(divide_chunks(stats, 10))
         word = "聊天" if order_by_chat else "語音"
+        rank = 1
         for div in div_stats:
             embed = DefaultEmbed(f"{word}等級排行榜")
             assert i.guild.icon
             embed.set_author(name=i.guild.name, icon_url=i.guild.icon.url)
-            for rank, stat in enumerate(div, start=1):
+            for stat in div:
                 member = i.guild.get_member(stat["user_id"])
                 if member is None:
                     member = await i.guild.fetch_member(stat["user_id"])
@@ -294,6 +295,7 @@ class LevelCog(commands.GroupCog, name="level"):
                     value=f"Lv.{round(stat[query]**0.2)} ({round(stat[query], 2)})",
                     inline=False,
                 )
+                rank += 1
             embeds.append(embed)
 
         await GeneralPaginator(i, embeds).start(followup=True)
