@@ -188,9 +188,10 @@ class LevelCog(commands.Cog):
     @app_commands.command(name="level", description="查看等級")
     @app_commands.rename(member="用戶")
     @app_commands.describe(member="要查看等級的用戶")
-    async def level(self, i: discord.Interaction, member: discord.Member):
+    async def level(self, i: discord.Interaction, m: Optional[discord.Member] = None):
         await i.response.defer()
-        member = member or i.user
+        member = m or i.user
+        assert isinstance(member, discord.Member)
 
         assert i.guild is not None
         stats = await self.bot.pool.fetchrow(
