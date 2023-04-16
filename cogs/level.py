@@ -1,3 +1,4 @@
+import asyncio
 import datetime
 from typing import List, Optional, Union
 
@@ -296,6 +297,26 @@ class LevelCog(commands.GroupCog, name="level"):
             embeds.append(embed)
 
         await GeneralPaginator(i, embeds).start(followup=True)
+
+    @commands.is_owner()
+    @commands.command(name="pause_level")
+    async def pause_level(
+        self, ctx: commands.Context, member: discord.Member, minutes: int
+    ):
+        await self.bot.pool.execute(
+            "UPDATE levels SET paused = $1 WHERE user_id = $2 AND guild_id = $3",
+            True,
+            member.id,
+            member.guild.id,
+        )
+        await ctx.send("ok")
+        await asyncio.sleep(minutes * 60)
+        await self.bot.pool.execute(
+            "UPDATE levels SET paused = $1 WHERE user_id = $2 AND guild_id = $3",
+            False,
+            member.id,
+            member.guild.id,
+        )
 
 
 async def setup(bot: commands.Bot):
