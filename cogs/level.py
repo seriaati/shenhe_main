@@ -209,6 +209,8 @@ class LevelCog(commands.Cog):
         start_date: datetime.datetime = stats["start_date"]
 
         days_passed = (get_dt_now() - start_date).days
+        if days_passed == 0:
+            days_passed = 1
         avg_chat_xp = chat_xp / days_passed
         avg_voice_xp = voice_xp / days_passed
 
