@@ -300,11 +300,14 @@ class LevelCog(commands.GroupCog, name="level"):
         div_stats = list(divide_chunks(stats, 10))
         word = "聊天" if order_by_chat else "語音"
         rank = 1
+        self_rank = None
         for div in div_stats:
             embed = DefaultEmbed(f"{word}等級排行榜")
             assert i.guild.icon
             embed.set_author(name=i.guild.name, icon_url=i.guild.icon.url)
             for stat in div:
+                if stat["user_id"] == i.user.id:
+                    self_rank = rank
                 member = i.guild.get_member(stat["user_id"])
                 if member is None:
                     member = await i.guild.fetch_member(stat["user_id"])
@@ -314,6 +317,7 @@ class LevelCog(commands.GroupCog, name="level"):
                     inline=False,
                 )
                 rank += 1
+            embed.set_footer(text=f"你的排名: {self_rank if self_rank else '(未上榜)'}")
             embeds.append(embed)
 
         await GeneralPaginator(i, embeds).start(followup=True)
