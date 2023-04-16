@@ -5,7 +5,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-from dev.model import BotModel, DefaultEmbed
+from dev.model import BotModel, DefaultEmbed, ErrorEmbed
 from utility.utils import get_dt_now
 
 
@@ -198,6 +198,10 @@ class LevelCog(commands.Cog):
             member.id,
             i.guild.id,
         )
+        if stats is None:
+            embed = ErrorEmbed("該用戶目前沒有資料", "不同的伺服器等級是分開計算的")
+            return await i.followup.send(embed=embed)
+
         chat_level: int = stats["chat_level"]
         chat_xp: int = stats["chat_xp"]
         voice_level: int = stats["voice_level"]
