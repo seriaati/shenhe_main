@@ -216,9 +216,9 @@ class LevelCog(commands.GroupCog, name="level"):
             return await i.followup.send(embed=embed)
 
         chat_xp: int = stats["chat_xp"]
-        chat_level = chat_xp**0.5
+        chat_level = round(chat_xp**0.5)
         voice_xp: int = stats["voice_xp"]
-        voice_level = voice_xp**0.5
+        voice_level = round(voice_xp**0.5)
         start_date: datetime.datetime = stats["start_date"]
 
         days_passed = (get_dt_now() - start_date).days
@@ -251,6 +251,8 @@ class LevelCog(commands.GroupCog, name="level"):
         await i.followup.send(embed=embed)
 
     @app_commands.guild_only()
+    @app_commands.rename(order_by_chat="排序方式")
+    @app_commands.describe(order_by_chat="要依據聊天等級還是語音等級排序")
     @app_commands.choices(
         order_by_chat=[
             app_commands.Choice(name="聊天等級", value=1),
@@ -288,7 +290,7 @@ class LevelCog(commands.GroupCog, name="level"):
                     member = await i.guild.fetch_member(stat["user_id"])
                 embed.add_field(
                     name=f"{rank}. {member.display_name}",
-                    value=f"Lv.{stat[query]**0.5} ({stat[query]})",
+                    value=f"Lv.{round(stat[query]**0.5)} ({round(stat[query], 2)})",
                     inline=False,
                 )
             embeds.append(embed)
