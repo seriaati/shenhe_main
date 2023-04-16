@@ -216,9 +216,9 @@ class LevelCog(commands.GroupCog, name="level"):
             return await i.followup.send(embed=embed)
 
         chat_xp: int = stats["chat_xp"]
-        chat_level = round(chat_xp**0.5)
+        chat_level = round(chat_xp**0.2)
         voice_xp: int = stats["voice_xp"]
-        voice_level = round(voice_xp**0.5)
+        voice_level = round(voice_xp**0.2)
         start_date: datetime.datetime = stats["start_date"]
 
         days_passed = (get_dt_now() - start_date).days
@@ -246,7 +246,7 @@ class LevelCog(commands.GroupCog, name="level"):
                 name="加入群組日期",
                 value=discord.utils.format_dt(member.joined_at, style="R"),
             )
-        embed.set_footer(text="一則訊息 1 經驗，一分鐘語音 1 經驗\n等級=經驗^(0.5)")
+        embed.set_footer(text="一則訊息 1 經驗，一分鐘語音 1 經驗\n等級=經驗^(0.2)")
 
         await i.followup.send(embed=embed)
 
@@ -290,7 +290,7 @@ class LevelCog(commands.GroupCog, name="level"):
                     member = await i.guild.fetch_member(stat["user_id"])
                 embed.add_field(
                     name=f"{rank}. {member.display_name}",
-                    value=f"Lv.{round(stat[query]**0.5)} ({round(stat[query], 2)})",
+                    value=f"Lv.{round(stat[query]**0.2)} ({round(stat[query], 2)})",
                     inline=False,
                 )
             embeds.append(embed)
