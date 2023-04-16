@@ -236,14 +236,15 @@ class LevelCog(commands.GroupCog, name="level"):
     @app_commands.guild_only()
     @app_commands.choices(
         order_by_chat=[
-            app_commands.Choice(name="聊天等級", value=True),
-            app_commands.Choice(name="語音等級", value=False),
+            app_commands.Choice(name="聊天等級", value=1),
+            app_commands.Choice(name="語音等級", value=0),
         ]
     )
     @app_commands.command(name="leaderboard", description="查看等級排行榜")
-    async def leaderboard(self, i: discord.Interaction, order_by_chat: bool):
+    async def leaderboard(self, i: discord.Interaction, order_by_chat: int):
         await i.response.defer()
 
+        order_by_chat = bool(order_by_chat)
         assert i.guild is not None
         stats = await self.bot.pool.fetch(
             "SELECT user_id, chat_xp, voice_xp FROM levels WHERE guild_id = $1",
