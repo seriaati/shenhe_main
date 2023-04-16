@@ -1,15 +1,16 @@
 import datetime
-from typing import Optional, Union
+from typing import List, Optional, Union
 
 import discord
 from discord import app_commands
 from discord.ext import commands
 
 from dev.model import BotModel, DefaultEmbed, ErrorEmbed
-from utility.utils import get_dt_now
+from utility.paginator import GeneralPaginator
+from utility.utils import divide_chunks, get_dt_now
 
 
-class LevelCog(commands.Cog):
+class LevelCog(commands.GroupCog, name="level"):
     def __init__(self, bot):
         self.bot: BotModel = bot
 
@@ -97,44 +98,66 @@ class LevelCog(commands.Cog):
         # add xp to user
         await self.update_xp(member, xp, is_voice=True)
 
-        # calculate level
-        level = await self.calculate_level(member, is_voice=True)
-
-        # update level
-        await self.update_level(member, level, is_voice=True)
-
     # text xp level system
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
-        if message.author.bot or not message.guild:
+        if (
+            message.author.bot
+            or not message.guild
+            or not isinstance(message.author, discord.Member)
+        ):
+            return
+        await self.create_level_user(message.author)
+
+        last_get = await self.get_last_get(message.author)
+        if (get_dt_now() - last_get).total_seconds() < 30:
             return
 
-        # add xp to user
-        assert isinstance(message.author, discord.Member)
-        await self.create_level_user(message.author)
-        await self.give_chat_xp(message.author)
+        today_earn = await self.get_today_earn(message.author)
+        if today_earn >= 400:
+            return
+
+        await self.update_xp(message.author, 1)
+
+    async def get_today_earn(self, member: discord.Member) -> int:
+        today_earn = await self.bot.pool.fetchval(
+            """
+            SELECT today_earn
+            FROM levels
+            WHERE user_id = $1
+            AND guild_id = $2
+            """,
+            member.id,
+            member.guild.id,
+        )
+
+        return today_earn
+
+    async def get_last_get(self, member: discord.Member) -> datetime.datetime:
+        last_get = await self.bot.pool.fetchval(
+            """
+            SELECT last_get
+            FROM levels
+            WHERE user_id = $1
+            AND guild_id = $2
+            """,
+            member.id,
+            member.guild.id,
+        )
+
+        return last_get
 
     async def create_level_user(self, member: discord.Member):
         await self.bot.pool.execute(
             """
-            INSERT INTO levels (user_id, guild_id, start_date)
-            VALUES ($1, $2, $3)
+            INSERT INTO levels (user_id, guild_id, start_date, last_get)
+            VALUES ($1, $2, $3, $3)
             ON CONFLICT DO NOTHING
             """,
             member.id,
             member.guild.id,
             get_dt_now(),
         )
-
-    async def give_chat_xp(self, member: discord.Member):
-        # add xp to user
-        await self.update_xp(member, 1)
-
-        # calculate level
-        level = await self.calculate_level(member)
-
-        # update level
-        await self.update_level(member, level)
 
     async def update_xp(
         self,
@@ -147,45 +170,17 @@ class LevelCog(commands.Cog):
         await self.bot.pool.execute(
             f"""
             UPDATE levels
-            SET {query} = {query} + $1
+            SET {query} = {query} + $1, last_get = $4, today_earn = today_earn + $1
             WHERE user_id = $2 AND guild_id = $3
             """,
             xp,
             member.id,
             member.guild.id,
-        )
-
-    async def calculate_level(self, member: discord.Member, *, is_voice: bool = False):
-        query = "voice_xp" if is_voice else "chat_xp"
-        current_xp = await self.bot.pool.fetchval(
-            f"SELECT {query} FROM levels WHERE user_id = $1 AND guild_id = $2",
-            member.id,
-            member.guild.id,
-        )
-        level = int(current_xp**0.25)
-        return level
-
-    async def update_level(
-        self,
-        member: discord.Member,
-        level: int,
-        *,
-        is_voice: bool = False,
-    ):
-        query = "voice_level" if is_voice else "chat_level"
-        await self.bot.pool.execute(
-            f"""
-            UPDATE levels
-            SET {query} = $1
-            WHERE user_id = $2 AND guild_id = $3
-            """,
-            level,
-            member.id,
-            member.guild.id,
+            get_dt_now(),
         )
 
     @app_commands.guild_only()
-    @app_commands.command(name="level", description="查看等級")
+    @app_commands.command(name="check", description="查看等級")
     @app_commands.rename(m="用戶")
     @app_commands.describe(m="要查看等級的用戶")
     async def level(self, i: discord.Interaction, m: Optional[discord.Member] = None):
@@ -203,10 +198,10 @@ class LevelCog(commands.Cog):
             embed = ErrorEmbed("該用戶目前沒有資料", "不同的伺服器等級是分開計算的")
             return await i.followup.send(embed=embed)
 
-        chat_level: int = stats["chat_level"]
         chat_xp: int = stats["chat_xp"]
-        voice_level: int = stats["voice_level"]
+        chat_level = chat_xp**0.5
         voice_xp: int = stats["voice_xp"]
+        voice_level = voice_xp**0.5
         start_date: datetime.datetime = stats["start_date"]
 
         days_passed = (get_dt_now() - start_date).days
@@ -234,9 +229,53 @@ class LevelCog(commands.Cog):
                 name="加入群組日期",
                 value=discord.utils.format_dt(member.joined_at, style="R"),
             )
-        embed.set_footer(text="一則訊息 1 經驗值，一分鐘語音 1 經驗值\n等級=經驗值^(0.25)")
+        embed.set_footer(text="一則訊息 1 經驗，一分鐘語音 1 經驗\n等級=經驗^(0.5)")
 
         await i.followup.send(embed=embed)
+
+    @app_commands.guild_only()
+    @app_commands.choices(
+        order_by_chat=[
+            app_commands.Choice(name="聊天等級", value=True),
+            app_commands.Choice(name="語音等級", value=False),
+        ]
+    )
+    @app_commands.command(name="leaderboard", description="查看等級排行榜")
+    async def leaderboard(self, i: discord.Interaction, order_by_chat: bool):
+        await i.response.defer()
+
+        assert i.guild is not None
+        stats = await self.bot.pool.fetch(
+            "SELECT user_id, chat_xp, voice_xp FROM levels WHERE guild_id = $1",
+            i.guild.id,
+        )
+
+        if not stats:
+            embed = ErrorEmbed("目前排行榜沒有資料")
+            return await i.followup.send(embed=embed)
+
+        query = "chat_xp" if order_by_chat else "voice_xp"
+        stats.sort(key=lambda x: x[query], reverse=True)
+
+        embeds: List[discord.Embed] = []
+        div_stats = list(divide_chunks(stats, 10))
+        word = "聊天" if order_by_chat else "語音"
+        for div in div_stats:
+            embed = DefaultEmbed(f"{word}等級排行榜")
+            assert i.guild.icon
+            embed.set_author(name=i.guild.name, icon_url=i.guild.icon.url)
+            for rank, stat in enumerate(div, start=1):
+                member = i.guild.get_member(stat["user_id"])
+                if member is None:
+                    member = await i.guild.fetch_member(stat["user_id"])
+                embed.add_field(
+                    name=f"{rank}. {member.display_name}",
+                    value=f"Lv.{stat[query]**0.5} ({stat[query]})",
+                    inline=False,
+                )
+            embeds.append(embed)
+
+        await GeneralPaginator(i, embeds).start(followup=True)
 
 
 async def setup(bot: commands.Bot):
