@@ -3,7 +3,7 @@ from typing import List, Optional, Union
 
 import discord
 from discord import app_commands
-from discord.ext import commands
+from discord.ext import commands, tasks
 
 from dev.model import BotModel, DefaultEmbed, ErrorEmbed
 from utility.paginator import GeneralPaginator
@@ -13,6 +13,23 @@ from utility.utils import divide_chunks, get_dt_now
 class LevelCog(commands.GroupCog, name="level"):
     def __init__(self, bot):
         self.bot: BotModel = bot
+
+    async def cog_load(self):
+        self.clear_today_earn.start()
+
+    async def cog_unload(self):
+        self.clear_today_earn.cancel()
+
+    # clear today_earn every day
+    @tasks.loop(hours=1)
+    async def clear_today_earn(self):
+        if get_dt_now().hour == 0:
+            await self.bot.pool.execute(
+                """
+                UPDATE levels
+                SET today_earn = 0
+                """
+            )
 
     # voice xp level system
     @commands.Cog.listener()
