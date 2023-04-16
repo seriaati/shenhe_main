@@ -111,10 +111,14 @@ class LevelCog(commands.GroupCog, name="level"):
     async def give_voice_xp(self, member: discord.Member, joined_at: datetime.datetime):
         # calculate xp
         second = int((get_dt_now() - joined_at).total_seconds())
-        xp = second // 60
+        xp = second // 300
 
         # add xp to user
-        await self.update_xp(member, xp, is_voice=True)
+        current, future = await self.update_xp(member, xp, is_voice=True)
+        if current < future:
+            chat = self.bot.get_channel(1061881312790720602)
+            if isinstance(chat, discord.TextChannel):
+                await chat.send(f"⬆️ 恭喜 {member.mention} 升級到了 {future} 等！")
 
     # text xp level system
     @commands.Cog.listener()
@@ -135,7 +139,11 @@ class LevelCog(commands.GroupCog, name="level"):
         if today_earn >= 400:
             return
 
-        await self.update_xp(message.author, 1)
+        current, future = await self.update_xp(message.author, 1)
+        if current < future:
+            await message.channel.send(
+                f"⬆️ 恭喜 {message.author.mention} 升級到了 {future} 等！"
+            )
 
     async def get_today_earn(self, member: discord.Member) -> int:
         today_earn = await self.bot.pool.fetchval(
@@ -185,6 +193,15 @@ class LevelCog(commands.GroupCog, name="level"):
         is_voice: bool = False,
     ):
         query = "voice_xp" if is_voice else "chat_xp"
+        current_xp = await self.bot.pool.fetchval(
+            f"SELECT {query} FROM levels WHERE user_id = $1 AND guild_id = $2",
+            member.id,
+            member.guild.id,
+        )
+        # check if user level up
+        # level curve is exp^0.2
+        current_level = int(current_xp**0.2)
+        future_level = int((current_xp + xp) ** 0.2)
         await self.bot.pool.execute(
             f"""
             UPDATE levels
@@ -196,6 +213,7 @@ class LevelCog(commands.GroupCog, name="level"):
             member.guild.id,
             get_dt_now(),
         )
+        return current_level, future_level
 
     @app_commands.guild_only()
     @app_commands.command(name="check", description="查看等級")
@@ -247,7 +265,7 @@ class LevelCog(commands.GroupCog, name="level"):
                 name="加入群組日期",
                 value=discord.utils.format_dt(member.joined_at, style="R"),
             )
-        embed.set_footer(text="一則訊息 1 經驗，一分鐘語音 1 經驗\n等級=經驗^(0.2)")
+        embed.set_footer(text="一則訊息 1 經驗，五分鐘語音 1 經驗\n等級=經驗^(0.2)")
 
         await i.followup.send(embed=embed)
 
