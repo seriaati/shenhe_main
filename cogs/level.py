@@ -137,7 +137,7 @@ class LevelCog(commands.GroupCog, name="level"):
         )
         embed.add_field(
             name="粗估數據",
-            value=f"在群組中聊了 {round(chat_xp/2/60, 2)} 小時\n在語音台中聊了 {voice_xp/12} 小時",
+            value=f"在群組中聊了 {round(chat_xp/2/60, 2)} 小時\n在語音台中聊了 {round(voice_xp/12, 2)} 小時",
             inline=False,
         )
         embed.add_field(
