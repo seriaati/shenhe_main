@@ -301,7 +301,7 @@ class LevelCog(commands.GroupCog, name="level"):
     ):
         word = "語音" if is_voice else "聊天"
         embed = DefaultEmbed(
-            f"恭喜 {member.mention} 的{word}等級升級到了 {future} 等",
+            f"恭喜 {member.display_name} 的{word}等級升級到了 {future} 等",
             f"升級到 {future+1} 等需要 {self.get_xp_required(future+1)} 點{word}經驗",
         )
         embed.set_author(name="🎉 升級啦！！", icon_url=member.display_avatar.url)
