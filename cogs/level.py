@@ -239,7 +239,7 @@ class LevelCog(commands.GroupCog, name="level"):
             member.id,
             member.guild.id,
         )
-    
+
     async def create_voice_user(self, member: discord.Member):
         await self.bot.pool.execute(
             """
@@ -395,6 +395,7 @@ class LevelCog(commands.GroupCog, name="level"):
         b = 1.5
         xp_required = a * (b ** (level - 1))
         return round(xp_required)
+
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(LevelCog(bot))
