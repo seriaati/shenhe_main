@@ -122,7 +122,7 @@ class LevelCog(commands.GroupCog, name="level"):
         avg_chat_xp = round(chat_xp / days_passed, 2)
         avg_voice_xp = round(voice_xp / days_passed, 2)
 
-        embed = DefaultEmbed("聊天/語音等級")
+        embed = DefaultEmbed("等級系統")
         embed.set_author(name=member.display_name, icon_url=member.display_avatar.url)
         embed.add_field(
             name="聊天等級",
