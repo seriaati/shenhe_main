@@ -118,7 +118,23 @@ class LevelCog(commands.GroupCog, name="level"):
         if current < future:
             chat = self.bot.get_channel(1061881312790720602)
             if isinstance(chat, discord.TextChannel):
-                await chat.send(f"⬆️ 恭喜 {member.mention} 升級到了 {future} 等！")
+                embed = self.get_level_up_embed(member, future, is_voice=True)
+                await chat.send(content=member.mention, embed=embed)
+
+    def get_level_up_embed(
+        self, member: discord.Member, future: int, *, is_voice=False
+    ):
+        word = "語音" if is_voice else "聊天"
+        embed = DefaultEmbed(
+            f"恭喜 {member.mention} 的{word}等級升級到了 {future} 等",
+            f"升級到 {future+1} 等需要 {self.get_xp_required(future+1)} 點{word}經驗",
+        )
+        embed.set_author(name="🎉 升級啦！！", icon_url=member.display_avatar.url)
+        embed.set_thumbnail(
+            url="https://media.discordapp.net/attachments/684365249960345643/1030361702379827200/fefb3731391c05bc777bf780fac5d85b16fba702_raw.gif?width=300&height=300"
+        )
+
+        return embed
 
     # text xp level system
     @commands.Cog.listener()
@@ -141,9 +157,8 @@ class LevelCog(commands.GroupCog, name="level"):
 
         current, future = await self.update_xp(message.author, 1)
         if current < future:
-            await message.channel.send(
-                f"⬆️ 恭喜 {message.author.mention} 升級到了 {future} 等！"
-            )
+            embed = self.get_level_up_embed(message.author, future)
+            await message.channel.send(content=message.author.mention, embed=embed)
 
     async def get_today_earn(self, member: discord.Member) -> int:
         today_earn = await self.bot.pool.fetchval(
@@ -198,10 +213,9 @@ class LevelCog(commands.GroupCog, name="level"):
             member.id,
             member.guild.id,
         )
-        # check if user level up
-        # level curve is exp^0.2
-        current_level = int(current_xp**0.2)
-        future_level = int((current_xp + xp) ** 0.2)
+
+        current_level = self.get_level(current_xp)
+        future_level = self.get_level(current_xp + xp)
         await self.bot.pool.execute(
             f"""
             UPDATE levels
@@ -214,6 +228,22 @@ class LevelCog(commands.GroupCog, name="level"):
             get_dt_now(),
         )
         return current_level, future_level
+
+    def get_level(self, xp: int) -> int:
+        a = 100
+        b = 1.5
+        level = 1
+        xp_required = a * (b ** (level - 1))
+        while xp >= xp_required:
+            level += 1
+            xp_required = a * (b ** (level - 1))
+        return level - 1
+
+    def get_xp_required(self, level: int) -> int:
+        a = 100
+        b = 1.5
+        xp_required = a * (b ** (level - 1))
+        return round(xp_required)
 
     @app_commands.guild_only()
     @app_commands.command(name="check", description="查看等級")
@@ -235,9 +265,11 @@ class LevelCog(commands.GroupCog, name="level"):
             return await i.followup.send(embed=embed)
 
         chat_xp: int = stats["chat_xp"]
-        chat_level = round(chat_xp**0.2)
+        chat_level = self.get_level(chat_xp)
+        chat_req = self.get_xp_required(chat_level + 1)
         voice_xp: int = stats["voice_xp"]
-        voice_level = round(voice_xp**0.2)
+        voice_level = self.get_level(voice_xp)
+        voice_req = self.get_xp_required(voice_level + 1)
         start_date: datetime.datetime = stats["start_date"]
 
         days_passed = (get_dt_now() - start_date).days
@@ -249,13 +281,20 @@ class LevelCog(commands.GroupCog, name="level"):
         embed = DefaultEmbed("聊天/語音等級")
         embed.set_author(name=member.display_name, icon_url=member.display_avatar.url)
         embed.add_field(
-            name="聊天等級", value=f"Lv.{chat_level} ({chat_xp} 經驗)", inline=False
+            name="聊天等級",
+            value=f"Lv.{chat_level} ({chat_xp}/{chat_req})",
         )
         embed.add_field(
-            name="語音等級", value=f"Lv.{voice_level} ({voice_xp} 經驗)", inline=False
+            name="語音等級",
+            value=f"Lv.{voice_level} ({voice_xp}/{voice_req})",
         )
         embed.add_field(
             name="平均每日經驗", value=f"聊天: {avg_chat_xp} | 語音: {avg_voice_xp}", inline=False
+        )
+        embed.add_field(
+            name="粗估數據",
+            value=f"在群組中聊了 {round(chat_xp/2/60, 2)} 小時\n在語音台中聊了 {voice_xp/12} 小時",
+            inline=False,
         )
         embed.add_field(
             name="等級計算起始日", value=discord.utils.format_dt(start_date, style="R")
@@ -265,7 +304,6 @@ class LevelCog(commands.GroupCog, name="level"):
                 name="加入群組日期",
                 value=discord.utils.format_dt(member.joined_at, style="R"),
             )
-        embed.set_footer(text="一則訊息 1 經驗，五分鐘語音 1 經驗\n等級=經驗^(0.2)")
 
         await i.followup.send(embed=embed)
 
@@ -301,26 +339,42 @@ class LevelCog(commands.GroupCog, name="level"):
         word = "聊天" if order_by_chat else "語音"
         rank = 1
         self_rank = None
+        assert i.guild.icon
+
         for div in div_stats:
             embed = DefaultEmbed(f"{word}等級排行榜")
-            assert i.guild.icon
             embed.set_author(name=i.guild.name, icon_url=i.guild.icon.url)
+            embed.description = ""
             for stat in div:
                 if stat["user_id"] == i.user.id:
                     self_rank = rank
                 member = i.guild.get_member(stat["user_id"])
                 if member is None:
                     member = await i.guild.fetch_member(stat["user_id"])
-                embed.add_field(
-                    name=f"{rank}. {member.display_name}",
-                    value=f"Lv.{round(stat[query]**0.2)} ({round(stat[query], 2)})",
-                    inline=False,
+
+                xp = stat[query]
+                embed.description += (
+                    f"**{rank}. {member.mention}** | {self.get_level(xp)}等 ({xp})\n"
                 )
                 rank += 1
             embed.set_footer(text=f"你的排名: {self_rank if self_rank else '(未上榜)'}")
             embeds.append(embed)
 
         await GeneralPaginator(i, embeds).start(followup=True)
+
+    @app_commands.command(name="rules", description="查看等級系統規則")
+    async def rules(self, i: discord.Interaction):
+        embed = DefaultEmbed()
+        embed.set_author(name="📕 等級系統規則")
+        embed.description = (
+            "1. 聊天經驗獲取方式: 發送訊息\n"
+            "2. 語音經驗獲取方式: 待在語音頻道\n"
+            "3. 聊天經驗獲取量: 每一則訊息 1 經驗\n"
+            "4. 語音經驗獲取量: 每五分鐘 1 經驗\n"
+            "5. 等級計算方式: 累積經驗值\n"
+            "6. 等級公式: `level = log(xp / 100) / log(1.5) + 1`\n"
+        )
+        await i.response.send_message(embed=embed)
 
     @commands.is_owner()
     @commands.command(name="pause_level")
