@@ -65,77 +65,6 @@ class LevelCog(commands.GroupCog, name="level"):
             await self.give_voice_xp(member, joined_at)
             await self.set_joined_at(member, after.channel)
 
-    async def create_voice_user(self, member: discord.Member):
-        await self.bot.pool.execute(
-            """
-            INSERT INTO voice_xp (user_id, guild_id)
-            VALUES ($1, $2)
-            ON CONFLICT DO NOTHING
-            """,
-            member.id,
-            member.guild.id,
-        )
-
-    async def get_joined_at(self, member) -> Optional[datetime.datetime]:
-        joined_at = await self.bot.pool.fetchval(
-            """
-            SELECT joined_at
-            FROM voice_xp
-            WHERE user_id = $1
-            AND guild_id = $2
-            """,
-            member.id,
-            member.guild.id,
-        )
-
-        return joined_at
-
-    async def set_joined_at(
-        self,
-        member: discord.Member,
-        channel: Union[discord.VoiceChannel, discord.StageChannel],
-    ):
-        await self.bot.pool.execute(
-            """
-            UPDATE voice_xp
-            SET joined_at = $1, channel_id = $2
-            WHERE user_id = $3
-            AND guild_id = $4
-            """,
-            get_dt_now(),
-            channel.id,
-            member.id,
-            member.guild.id,
-        )
-
-    async def give_voice_xp(self, member: discord.Member, joined_at: datetime.datetime):
-        # calculate xp
-        second = int((get_dt_now() - joined_at).total_seconds())
-        xp = second // 300
-
-        # add xp to user
-        current, future = await self.update_xp(member, xp, is_voice=True)
-        if current < future:
-            chat = self.bot.get_channel(1061881312790720602)
-            if isinstance(chat, discord.TextChannel):
-                embed = self.get_level_up_embed(member, future, is_voice=True)
-                await chat.send(content=member.mention, embed=embed)
-
-    def get_level_up_embed(
-        self, member: discord.Member, future: int, *, is_voice=False
-    ):
-        word = "語音" if is_voice else "聊天"
-        embed = DefaultEmbed(
-            f"恭喜 {member.mention} 的{word}等級升級到了 {future} 等",
-            f"升級到 {future+1} 等需要 {self.get_xp_required(future+1)} 點{word}經驗",
-        )
-        embed.set_author(name="🎉 升級啦！！", icon_url=member.display_avatar.url)
-        embed.set_thumbnail(
-            url="https://media.discordapp.net/attachments/684365249960345643/1030361702379827200/fefb3731391c05bc777bf780fac5d85b16fba702_raw.gif?width=300&height=300"
-        )
-
-        return embed
-
     # text xp level system
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
@@ -159,91 +88,6 @@ class LevelCog(commands.GroupCog, name="level"):
         if current < future:
             embed = self.get_level_up_embed(message.author, future)
             await message.channel.send(content=message.author.mention, embed=embed)
-
-    async def get_today_earn(self, member: discord.Member) -> int:
-        today_earn = await self.bot.pool.fetchval(
-            """
-            SELECT today_earn
-            FROM levels
-            WHERE user_id = $1
-            AND guild_id = $2
-            """,
-            member.id,
-            member.guild.id,
-        )
-
-        return today_earn
-
-    async def get_last_get(self, member: discord.Member) -> datetime.datetime:
-        last_get = await self.bot.pool.fetchval(
-            """
-            SELECT last_get
-            FROM levels
-            WHERE user_id = $1
-            AND guild_id = $2
-            """,
-            member.id,
-            member.guild.id,
-        )
-
-        return last_get
-
-    async def create_level_user(self, member: discord.Member):
-        await self.bot.pool.execute(
-            """
-            INSERT INTO levels (user_id, guild_id, start_date, last_get)
-            VALUES ($1, $2, $3, $3)
-            ON CONFLICT DO NOTHING
-            """,
-            member.id,
-            member.guild.id,
-            get_dt_now(),
-        )
-
-    async def update_xp(
-        self,
-        member: discord.Member,
-        xp: int,
-        *,
-        is_voice: bool = False,
-    ):
-        query = "voice_xp" if is_voice else "chat_xp"
-        current_xp = await self.bot.pool.fetchval(
-            f"SELECT {query} FROM levels WHERE user_id = $1 AND guild_id = $2",
-            member.id,
-            member.guild.id,
-        )
-
-        current_level = self.get_level(current_xp)
-        future_level = self.get_level(current_xp + xp)
-        await self.bot.pool.execute(
-            f"""
-            UPDATE levels
-            SET {query} = {query} + $1, last_get = $4, today_earn = today_earn + $1
-            WHERE user_id = $2 AND guild_id = $3
-            """,
-            xp,
-            member.id,
-            member.guild.id,
-            get_dt_now(),
-        )
-        return current_level, future_level
-
-    def get_level(self, xp: int) -> int:
-        a = 100
-        b = 1.5
-        level = 1
-        xp_required = a * (b ** (level - 1))
-        while xp >= xp_required:
-            level += 1
-            xp_required = a * (b ** (level - 1))
-        return level - 1
-
-    def get_xp_required(self, level: int) -> int:
-        a = 100
-        b = 1.5
-        xp_required = a * (b ** (level - 1))
-        return round(xp_required)
 
     @app_commands.guild_only()
     @app_commands.command(name="check", description="查看等級")
@@ -395,7 +239,162 @@ class LevelCog(commands.GroupCog, name="level"):
             member.id,
             member.guild.id,
         )
+    
+    async def create_voice_user(self, member: discord.Member):
+        await self.bot.pool.execute(
+            """
+            INSERT INTO voice_xp (user_id, guild_id)
+            VALUES ($1, $2)
+            ON CONFLICT DO NOTHING
+            """,
+            member.id,
+            member.guild.id,
+        )
 
+    async def get_joined_at(self, member) -> Optional[datetime.datetime]:
+        joined_at = await self.bot.pool.fetchval(
+            """
+            SELECT joined_at
+            FROM voice_xp
+            WHERE user_id = $1
+            AND guild_id = $2
+            """,
+            member.id,
+            member.guild.id,
+        )
+
+        return joined_at
+
+    async def set_joined_at(
+        self,
+        member: discord.Member,
+        channel: Union[discord.VoiceChannel, discord.StageChannel],
+    ):
+        await self.bot.pool.execute(
+            """
+            UPDATE voice_xp
+            SET joined_at = $1, channel_id = $2
+            WHERE user_id = $3
+            AND guild_id = $4
+            """,
+            get_dt_now(),
+            channel.id,
+            member.id,
+            member.guild.id,
+        )
+
+    async def give_voice_xp(self, member: discord.Member, joined_at: datetime.datetime):
+        # calculate xp
+        second = int((get_dt_now() - joined_at).total_seconds())
+        xp = second // 300
+
+        # add xp to user
+        current, future = await self.update_xp(member, xp, is_voice=True)
+        if current < future:
+            chat = self.bot.get_channel(1061881312790720602)
+            if isinstance(chat, discord.TextChannel):
+                embed = self.get_level_up_embed(member, future, is_voice=True)
+                await chat.send(content=member.mention, embed=embed)
+
+    def get_level_up_embed(
+        self, member: discord.Member, future: int, *, is_voice=False
+    ):
+        word = "語音" if is_voice else "聊天"
+        embed = DefaultEmbed(
+            f"恭喜 {member.mention} 的{word}等級升級到了 {future} 等",
+            f"升級到 {future+1} 等需要 {self.get_xp_required(future+1)} 點{word}經驗",
+        )
+        embed.set_author(name="🎉 升級啦！！", icon_url=member.display_avatar.url)
+        embed.set_thumbnail(
+            url="https://media.discordapp.net/attachments/684365249960345643/1030361702379827200/fefb3731391c05bc777bf780fac5d85b16fba702_raw.gif?width=300&height=300"
+        )
+
+        return embed
+
+    async def get_today_earn(self, member: discord.Member) -> int:
+        today_earn = await self.bot.pool.fetchval(
+            """
+            SELECT today_earn
+            FROM levels
+            WHERE user_id = $1
+            AND guild_id = $2
+            """,
+            member.id,
+            member.guild.id,
+        )
+
+        return today_earn
+
+    async def get_last_get(self, member: discord.Member) -> datetime.datetime:
+        last_get = await self.bot.pool.fetchval(
+            """
+            SELECT last_get
+            FROM levels
+            WHERE user_id = $1
+            AND guild_id = $2
+            """,
+            member.id,
+            member.guild.id,
+        )
+
+        return last_get
+
+    async def create_level_user(self, member: discord.Member):
+        await self.bot.pool.execute(
+            """
+            INSERT INTO levels (user_id, guild_id, start_date, last_get)
+            VALUES ($1, $2, $3, $3)
+            ON CONFLICT DO NOTHING
+            """,
+            member.id,
+            member.guild.id,
+            get_dt_now(),
+        )
+
+    async def update_xp(
+        self,
+        member: discord.Member,
+        xp: int,
+        *,
+        is_voice: bool = False,
+    ):
+        query = "voice_xp" if is_voice else "chat_xp"
+        current_xp = await self.bot.pool.fetchval(
+            f"SELECT {query} FROM levels WHERE user_id = $1 AND guild_id = $2",
+            member.id,
+            member.guild.id,
+        )
+
+        current_level = self.get_level(current_xp)
+        future_level = self.get_level(current_xp + xp)
+        await self.bot.pool.execute(
+            f"""
+            UPDATE levels
+            SET {query} = {query} + $1, last_get = $4, today_earn = today_earn + $1
+            WHERE user_id = $2 AND guild_id = $3
+            """,
+            xp,
+            member.id,
+            member.guild.id,
+            get_dt_now(),
+        )
+        return current_level, future_level
+
+    def get_level(self, xp: int) -> int:
+        a = 100
+        b = 1.5
+        level = 1
+        xp_required = a * (b ** (level - 1))
+        while xp >= xp_required:
+            level += 1
+            xp_required = a * (b ** (level - 1))
+        return level - 1
+
+    def get_xp_required(self, level: int) -> int:
+        a = 100
+        b = 1.5
+        xp_required = a * (b ** (level - 1))
+        return round(xp_required)
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(LevelCog(bot))
