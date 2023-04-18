@@ -49,7 +49,7 @@ class WebhookCog(commands.Cog):
 
                     if direct_url:
                         file_ = await self.download_image(
-                            direct_url, direct_url.split("/")[-1]
+                            direct_url, "auto_spoiler.jpg"
                         )
                         files.append(file_)
                         message.content = message.content.replace(url, "")
