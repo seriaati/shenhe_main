@@ -52,7 +52,7 @@ class WebhookCog(commands.Cog):
                             direct_url, "auto_spoiler.jpg"
                         )
                         files.append(file_)
-                        message.content = message.content.replace(url, "")
+                        message.content = message.content.replace(url, f"<{url}>")
                     
 
         if any(not a.is_spoiler() for a in message.attachments):
