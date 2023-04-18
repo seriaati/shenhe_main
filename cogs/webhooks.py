@@ -106,9 +106,6 @@ class WebhookCog(commands.Cog):
 
         for website, fix in fix_embeds.items():
             if website in message.content and fix not in message.content:
-                if website == "pixiv.net":
-                    return
-
                 webhooks = await message.channel.webhooks()
                 if not webhooks:
                     webhook = await message.channel.create_webhook(name="Fix Embed")
