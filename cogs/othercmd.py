@@ -23,6 +23,7 @@ async def send_no_image_found(i: discord.Interaction):
 
 
 def convert_twitter_to_direct_url(url: str) -> str:
+    url = re.sub(r"\?.*", "", url)
     if "twitter" in url and "fxtwitter" not in url:
         url = url.replace("twitter", "fxtwitter")
 
@@ -33,6 +34,7 @@ def convert_twitter_to_direct_url(url: str) -> str:
 
 
 def convert_phixiv_to_direct_url(url: str) -> Optional[str]:
+    url = re.sub(r"\?.*", "", url)
     if "pixiv" in url and "phixiv" not in url:
         url = url.replace("pixiv", "phixiv")
 
@@ -195,18 +197,17 @@ class OtherCMDCog(commands.Cog, name="other"):
 
             fps: Dict[str, io.BytesIO] = {}
             for url in urls:
-                clean_url = re.sub(r"\?.*", "", url)
-                if "twitter" in clean_url:
-                    clean_url = convert_twitter_to_direct_url(clean_url)
-                elif "phixiv" in clean_url or "pixiv" in clean_url:
-                    clean_url = convert_phixiv_to_direct_url(clean_url)
-                    if clean_url is None:
+                if "twitter" in url:
+                    url = convert_twitter_to_direct_url(url)
+                elif "phixiv" in url or "pixiv" in url:
+                    url = convert_phixiv_to_direct_url(url)
+                    if url is None:
                         continue
 
-                artwork_id = clean_url.split("/")[-1] + ".jpg"
+                artwork_id = url.split("/")[-1] + ".jpg"
                 fp = io.BytesIO()
-                logging.info(f"Downloading {clean_url}")
-                async with i.client.session.get(clean_url) as resp:
+                logging.info(f"Downloading {url}")
+                async with i.client.session.get(url) as resp:
                     fp.write(await resp.read())
                 fps[artwork_id] = fp
 
