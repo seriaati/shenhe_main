@@ -37,6 +37,7 @@ class WebhookCog(commands.Cog):
             if any(website in message.content for website in websites) or any(
                 ext in message.content for ext in image_extensions
             ):
+                await message.delete()
                 urls: List[str] = url_pattern.findall(message.content)
                 for url in urls:
                     if "twitter" in url:
@@ -51,6 +52,8 @@ class WebhookCog(commands.Cog):
                             direct_url, direct_url.split("/")[-1]
                         )
                         files.append(file_)
+                        message.content = message.content.replace(url, "")
+                    
 
         if any(not a.is_spoiler() for a in message.attachments):
             await message.delete()
