@@ -5,8 +5,7 @@ from typing import List
 import discord
 from discord.ext import commands
 
-from cogs.othercmd import (convert_phixiv_to_direct_url,
-                           convert_twitter_to_direct_url)
+from cogs.othercmd import convert_phixiv_to_direct_url, convert_twitter_to_direct_url
 from data.constants import fix_embeds
 from dev.model import BotModel
 
@@ -63,7 +62,7 @@ class WebhookCog(commands.Cog):
                     files.append(file_)
                 else:
                     files.append(await attachment.to_file())
-        
+
         if files:
             webhooks = await message.channel.webhooks()
             if not webhooks:
