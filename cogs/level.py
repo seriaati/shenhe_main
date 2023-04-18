@@ -116,11 +116,9 @@ class LevelCog(commands.GroupCog, name="level"):
         voice_req = self.get_xp_required(voice_level + 1)
         start_date: datetime.datetime = stats["start_date"]
 
-        days_passed = (get_dt_now() - start_date).days
-        if days_passed == 0:
-            days_passed = 1
-        avg_chat_xp = round(chat_xp / days_passed, 2)
-        avg_voice_xp = round(voice_xp / days_passed, 2)
+        time_passed = (get_dt_now() - start_date).total_seconds()
+        avg_chat_xp_per_day = chat_xp / time_passed * 86400
+        avg_voice_xp_per_day = voice_xp / time_passed * 86400
 
         embed = DefaultEmbed("等級系統")
         embed.set_author(name=member.display_name, icon_url=member.display_avatar.url)
@@ -133,7 +131,9 @@ class LevelCog(commands.GroupCog, name="level"):
             value=f"Lv.{voice_level} ({voice_xp}/{voice_req})",
         )
         embed.add_field(
-            name="平均每日經驗", value=f"聊天: {avg_chat_xp} | 語音: {avg_voice_xp}", inline=False
+            name="平均每日經驗",
+            value=f"聊天: {round(avg_chat_xp_per_day, 2)} | 語音: {round(avg_voice_xp_per_day, 2)}",
+            inline=False,
         )
         embed.add_field(
             name="粗估數據",
@@ -239,7 +239,7 @@ class LevelCog(commands.GroupCog, name="level"):
             member.id,
             member.guild.id,
         )
-    
+
     async def create_voice_user(self, member: discord.Member):
         await self.bot.pool.execute(
             """
@@ -395,6 +395,7 @@ class LevelCog(commands.GroupCog, name="level"):
         b = 1.5
         xp_required = a * (b ** (level - 1))
         return round(xp_required)
+
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(LevelCog(bot))
