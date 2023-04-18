@@ -369,10 +369,10 @@ class OtherCMDCog(commands.Cog, name="other"):
     @app_commands.command(name="avatar", description="查看一個用戶的頭像(並且偷偷下載)")
     @app_commands.rename(member="使用者")
     async def avatar(self, i: discord.Interaction, member: discord.Member):
-        embed = DefaultEmbed(str(member))
+        embed = DefaultEmbed(member.display_name)
         view = BaseView()
         view.add_item(Button(label="下載頭像", url=member.display_avatar.url))
-        embed.set_image(url=member.avatar)
+        embed.set_image(url=member.display_avatar.url)
         await i.response.send_message(embed=embed, view=view)
 
     @app_commands.command(name="cp", description="湊CP, 並查看兩人契合度")
