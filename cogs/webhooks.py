@@ -5,6 +5,8 @@ from typing import List
 import discord
 from discord.ext import commands
 
+from cogs.othercmd import (convert_phixiv_to_direct_url,
+                           convert_twitter_to_direct_url)
 from data.constants import fix_embeds
 from dev.model import BotModel
 
@@ -16,30 +18,53 @@ class WebhookCog(commands.Cog):
     # auto spoiler
     @commands.Cog.listener("on_message")
     async def auto_spoiler(self, message: discord.Message):
-        if message.author.bot:
-            return
-        if message.guild and message.guild.id != self.bot.guild_id:
-            return
-
-        if message.channel.id == 1061898394446069852 and any(
-            not a.is_spoiler() for a in message.attachments
+        if (
+            message.author.bot
+            or not isinstance(message.channel, discord.TextChannel)
+            or (message.guild and message.guild.id != self.bot.guild_id)
+            or message.channel.id != 1061898394446069852
         ):
-            assert isinstance(message.channel, discord.TextChannel)
+            return
 
-            files: List[discord.File] = []
+        files: List[discord.File] = []
+
+        url_pattern = re.compile(
+            r"http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+"
+        )
+        if url_pattern.search(message.content):
+            websites = ("twitter", "fxtwitter", "phixiv", "pixiv")
+            image_extensions = ("png", "jpg", "jpeg", "gif", "webp")
+            if any(website in message.content for website in websites) or any(
+                ext in message.content for ext in image_extensions
+            ):
+                urls: List[str] = url_pattern.findall(message.content)
+                for url in urls:
+                    if "twitter" in url:
+                        direct_url = convert_twitter_to_direct_url(url)
+                    elif "pixiv" in url or "phixiv" in url:
+                        direct_url = convert_phixiv_to_direct_url(url)
+                    else:
+                        direct_url = url
+
+                    if direct_url:
+                        file_ = await self.download_image(
+                            direct_url, direct_url.split("/")[-1]
+                        )
+                        files.append(file_)
+
+        if any(not a.is_spoiler() for a in message.attachments):
             await message.delete()
 
             for attachment in message.attachments:
                 if not attachment.is_spoiler():
-                    async with self.bot.session.get(attachment.proxy_url) as resp:
-                        bytes_obj = io.BytesIO(await resp.read())
-                        file_ = discord.File(
-                            bytes_obj, filename=attachment.filename, spoiler=True
-                        )
-                        files.append(file_)
+                    url = attachment.proxy_url
+                    file_name = attachment.filename
+                    file_ = await self.download_image(url, file_name)
+                    files.append(file_)
                 else:
                     files.append(await attachment.to_file())
-
+        
+        if files:
             webhooks = await message.channel.webhooks()
             if not webhooks:
                 webhook = await message.channel.create_webhook(name="Auto-Spoiler")
@@ -53,6 +78,13 @@ class WebhookCog(commands.Cog):
                 avatar_url=message.author.display_avatar.url,
             )
 
+    async def download_image(self, url, file_name):
+        async with self.bot.session.get(url) as resp:
+            bytes_obj = io.BytesIO(await resp.read())
+            file_ = discord.File(bytes_obj, filename=file_name, spoiler=True)
+
+        return file_
+
     # use fxtwitter and phixiv to send tweet
     @commands.Cog.listener("on_message")
     async def use_fxtwitter(self, message: discord.Message):
@@ -62,6 +94,8 @@ class WebhookCog(commands.Cog):
             return
         if not isinstance(message.channel, discord.TextChannel):
             return
+        if message.channel.id == 1061898394446069852:
+            return
 
         # check if message.content contains a URL using regex
         if not re.search(r"(https?://[^\s]+)", message.content):
@@ -69,7 +103,7 @@ class WebhookCog(commands.Cog):
 
         for website, fix in fix_embeds.items():
             if website in message.content and fix not in message.content:
-                if website == "pixiv.net" and message.channel.id == 1061898394446069852:
+                if website == "pixiv.net":
                     return
 
                 webhooks = await message.channel.webhooks()
