@@ -14,7 +14,6 @@ from discord.ui import Button
 import utility.draw as draw
 from dev.model import BaseView, BotModel, DefaultEmbed, ErrorEmbed, Inter
 from utility.paginator import GeneralPaginator
-from utility.utils import divide_chunks
 
 
 async def send_no_image_found(i: discord.Interaction):
