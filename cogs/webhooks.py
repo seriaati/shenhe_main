@@ -15,7 +15,7 @@ class DeleteMessage(BaseView):
     def __init__(self):
         super().__init__(timeout=600.0)
     
-    @discord.ui.button(emoji="🗑️", style=discord.ButtonStyle.red)
+    @discord.ui.button(emoji="刪除", style=discord.ButtonStyle.red)
     async def delete_message(self, i: discord.Interaction, _: discord.ui.Button):
         await i.response.defer()
         if i.message:
