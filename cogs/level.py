@@ -18,7 +18,7 @@ class LevelSetting(BaseView):
     async def start(self, i: Inter) -> Any:
         assert i.guild is not None
         await i.response.defer()
-        
+
         notif: bool = await i.client.pool.fetchval(
             "SELECT notif FROM levels WHERE user_id = $1 AND guild_id = $2",
             i.user.id,
@@ -27,11 +27,10 @@ class LevelSetting(BaseView):
         self.clear_items()
         self.add_item(EnableNotif(notif))
         self.add_item(DisableNotif(notif))
-        
+
         embed = DefaultEmbed("升級通知設定", "請選擇要開啟或關閉升級通知")
         self.author = i.user
         self.message = await i.edit_original_response(embed=embed, view=self)
-        
 
 
 class EnableNotif(discord.ui.Button):
@@ -40,12 +39,12 @@ class EnableNotif(discord.ui.Button):
             label="開啟",
             style=discord.ButtonStyle.blurple if notif else discord.ButtonStyle.gray,
         )
-        
+
         self.view: LevelSetting
-    
+
     async def callback(self, i: Inter):
         assert i.guild is not None
-        
+
         await i.client.pool.execute(
             "UPDATE levels SET notif = $1 WHERE user_id = $2 AND guild_id = $3",
             True,
@@ -64,10 +63,10 @@ class DisableNotif(discord.ui.Button):
             else discord.ButtonStyle.gray,
         )
         self.view: LevelSetting
-    
+
     async def callback(self, i: Inter):
         assert i.guild is not None
-        
+
         await i.client.pool.execute(
             "UPDATE levels SET notif = $1 WHERE user_id = $2 AND guild_id = $3",
             False,
@@ -290,7 +289,7 @@ class LevelCog(commands.GroupCog, name="level"):
     @app_commands.guild_only()
     @app_commands.command(name="settings", description="查看等級系統設定")
     async def settings(self, inter: discord.Interaction):
-        i: Inter = inter # type: ignore
+        i: Inter = inter  # type: ignore
         view = LevelSetting()
         await view.start(i)
 
