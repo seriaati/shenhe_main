@@ -24,6 +24,7 @@ class LevelSetting(BaseView):
             i.user.id,
             i.guild.id,
         )
+        self.clear_items()
         self.add_item(EnableNotif(notif))
         self.add_item(DisableNotif(notif))
         
