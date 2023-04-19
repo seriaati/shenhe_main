@@ -1,14 +1,79 @@
 import asyncio
 import datetime
-from typing import List, Optional, Union
+from typing import Any, List, Optional, Union
 
 import discord
 from discord import app_commands
 from discord.ext import commands, tasks
 
-from dev.model import BotModel, DefaultEmbed, ErrorEmbed
+from dev.model import BaseView, BotModel, DefaultEmbed, ErrorEmbed, Inter
 from utility.paginator import GeneralPaginator
 from utility.utils import divide_chunks, get_dt_now
+
+
+class LevelSetting(BaseView):
+    def __init__(self):
+        super().__init__(timeout=600.0)
+
+    async def start(self, i: Inter) -> Any:
+        assert i.guild is not None
+        await i.response.defer()
+        
+        notif: bool = await i.client.pool.fetchval(
+            "SELECT notif FROM levels WHERE user_id = $1 AND guild_id = $2",
+            i.user.id,
+            i.guild.id,
+        )
+        self.add_item(EnableNotif(notif))
+        self.add_item(DisableNotif(notif))
+        
+        embed = DefaultEmbed("升級通知設定", "請選擇要開啟或關閉升級通知")
+        self.author = i.user
+        self.message = await i.edit_original_response(embed=embed, view=self)
+        
+
+
+class EnableNotif(discord.ui.Button):
+    def __init__(self, notif: bool):
+        super().__init__(
+            label="開啟",
+            style=discord.ButtonStyle.blurple if notif else discord.ButtonStyle.gray,
+        )
+        
+        self.view: LevelSetting
+    
+    async def callback(self, i: Inter):
+        assert i.guild is not None
+        
+        await i.client.pool.execute(
+            "UPDATE levels SET notif = $1 WHERE user_id = $2 AND guild_id = $3",
+            True,
+            i.user.id,
+            i.guild.id,
+        )
+        await self.view.start(i)
+
+
+class DisableNotif(discord.ui.Button):
+    def __init__(self, notif: bool):
+        super().__init__(
+            label="關閉",
+            style=discord.ButtonStyle.blurple
+            if not notif
+            else discord.ButtonStyle.gray,
+        )
+        self.view: LevelSetting
+    
+    async def callback(self, i: Inter):
+        assert i.guild is not None
+        
+        await i.client.pool.execute(
+            "UPDATE levels SET notif = $1 WHERE user_id = $2 AND guild_id = $3",
+            False,
+            i.user.id,
+            i.guild.id,
+        )
+        await self.view.start(i)
 
 
 class LevelCog(commands.GroupCog, name="level"):
@@ -85,7 +150,8 @@ class LevelCog(commands.GroupCog, name="level"):
             return
 
         current, future = await self.update_xp(message.author, 1)
-        if current < future:
+        notif = await self.get_notif(message.author)
+        if notif and current < future:
             embed = self.get_level_up_embed(message.author, future)
             await message.channel.send(content=message.author.mention, embed=embed)
 
@@ -220,6 +286,13 @@ class LevelCog(commands.GroupCog, name="level"):
         )
         await i.response.send_message(embed=embed)
 
+    @app_commands.guild_only()
+    @app_commands.command(name="settings", description="查看等級系統設定")
+    async def settings(self, inter: discord.Interaction):
+        i: Inter = inter # type: ignore
+        view = LevelSetting()
+        await view.start(i)
+
     @commands.is_owner()
     @commands.command(name="pause_level")
     async def pause_level(
@@ -290,7 +363,8 @@ class LevelCog(commands.GroupCog, name="level"):
 
         # add xp to user
         current, future = await self.update_xp(member, xp, is_voice=True)
-        if current < future:
+        notif = await self.get_notif(member)
+        if notif and current < future:
             chat = self.bot.get_channel(1061881312790720602)
             if isinstance(chat, discord.TextChannel):
                 embed = self.get_level_up_embed(member, future, is_voice=True)
@@ -395,6 +469,13 @@ class LevelCog(commands.GroupCog, name="level"):
         b = 1.5
         xp_required = a * (b ** (level - 1))
         return round(xp_required)
+
+    async def get_notif(self, member: discord.Member):
+        return await self.bot.pool.fetchval(
+            "SELECT notif FROM levels WHERE user_id = $1 AND guild_id = $2",
+            member.id,
+            member.guild.id,
+        )
 
 
 async def setup(bot: commands.Bot):
