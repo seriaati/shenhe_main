@@ -68,7 +68,7 @@ class BaseView(discord.ui.View):
         elif interaction.user.id == self.author.id:
             return True
         else:
-            embed = ErrorEmbed("錯誤", "你不是指令發送者")
+            embed = ErrorEmbed("權限不足", f"只有 {self.author.mention} 才能跟此訊息互動")
             try:
                 await interaction.response.send_message(embed=embed, ephemeral=True)
             except discord.InteractionResponded:

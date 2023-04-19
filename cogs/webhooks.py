@@ -1,6 +1,6 @@
 import io
 import re
-from typing import List
+from typing import List, Optional
 
 import discord
 from discord.ext import commands
@@ -8,8 +8,18 @@ from discord.ext import commands
 from cogs.othercmd import (convert_phixiv_to_direct_url,
                            convert_twitter_to_direct_url)
 from data.constants import fix_embeds
-from dev.model import BotModel
+from dev.model import BaseView, BotModel
 
+
+class DeleteMessage(BaseView):
+    def __init__(self):
+        super().__init__(timeout=600.0)
+    
+    @discord.ui.button(emoji="🗑️", style=discord.ButtonStyle.red)
+    async def delete_message(self, i: discord.Interaction, _: discord.ui.Button):
+        await i.response.defer()
+        if i.message:
+            await i.message.delete()
 
 class WebhookCog(commands.Cog):
     def __init__(self, bot):
@@ -73,12 +83,16 @@ class WebhookCog(commands.Cog):
                 webhook = await message.channel.create_webhook(name="Auto-Spoiler")
             else:
                 webhook = webhooks[0]
+            
+            view = DeleteMessage()
+            view.author = message.author
 
-            await webhook.send(
+            view.message = await webhook.send(
                 content=message.content,
                 files=files,
                 username=message.author.display_name,
                 avatar_url=message.author.display_avatar.url,
+                view=view
             )
 
     async def download_image(self, url, file_name):
@@ -113,10 +127,15 @@ class WebhookCog(commands.Cog):
                     webhook = webhooks[0]
 
                 await message.delete()
-                await webhook.send(
+                
+                view = DeleteMessage()
+                view.author = message.author
+                
+                view.message = await webhook.send(
                     content=message.content.replace(website, fix),
                     username=message.author.display_name,
                     avatar_url=message.author.display_avatar.url,
+                    view=view,
                 )
 
 
