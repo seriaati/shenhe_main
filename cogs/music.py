@@ -29,7 +29,7 @@ def music_deco(func):
 
 class MusicView(BaseView):
     def __init__(self, player: wavelink.Player) -> None:
-        super().__init__(timeout=120.0)
+        super().__init__()
 
         self.player = player
         self.add_item(Previous(not player.queue.history))
@@ -40,10 +40,11 @@ class MusicView(BaseView):
         self.add_item(Next(not player.queue))
         self.add_item(Stop(not player.is_playing()))
         self.add_item(ClearQueue(not player.queue))
-        self.add_item(Loop(not player.is_playing()))
+        self.add_item(Loop(not player.is_playing(), player.queue.loop))
         self.add_item(Shuffle(not player.queue))
         self.add_item(Disconnect())
         self.add_item(AddSong())
+        self.add_item(AutoPlay())
 
 
 class Resume(ui.Button):
@@ -129,18 +130,18 @@ class Previous(ui.Button):
 
 
 class Loop(ui.Button):
-    def __init__(self, disabled: bool):
+    def __init__(self, disabled: bool, current: bool):
         super().__init__(
-            style=discord.ButtonStyle.green,
+            style=discord.ButtonStyle.green if current else discord.ButtonStyle.gray,
             row=2,
             disabled=disabled,
             emoji="<:repeat_song:1021592454618689627>",
         )
         self.view: MusicView
 
+    @music_deco
     async def callback(self, i: discord.Interaction) -> typing.Any:
         self.view.player.queue.loop = not self.view.player.queue.loop
-        await return_music_embed(i, self.view.player)
 
 
 class Shuffle(ui.Button):
@@ -355,7 +356,9 @@ class ChooseSongSelect(ui.Select):
 class AutoPlay(ui.Button):
     def __init__(self):
         super().__init__(
-            style=discord.ButtonStyle.primary, emoji="<:autoplay:1100366675481731112>"
+            style=discord.ButtonStyle.primary,
+            emoji="<:autoplay:1100366675481731112>",
+            row=3,
         )
         self.view: MusicView
 
