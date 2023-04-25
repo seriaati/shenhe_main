@@ -400,7 +400,7 @@ def get_player_status_embed(player: wavelink.Player) -> discord.Embed:
 
 async def return_music_embed(i: discord.Interaction, player: wavelink.Player) -> None:
     player_embed = await get_player_embed(player)
-    queue_embed = get_queue_embed(player.queue+player.auto_queue)
+    queue_embed = get_queue_embed(player.queue + player.auto_queue)
     status_embed = get_player_status_embed(player)
     view = MusicView(player)
     embeds = (player_embed, queue_embed, status_embed)
@@ -441,7 +441,7 @@ class MusicCog(commands.Cog, name="music"):
 
         if not player.queue.is_empty:
             await player.play(player.queue.get())
-        
+
         await asyncio.sleep(300)
         if not player.is_playing():
             await player.disconnect()
