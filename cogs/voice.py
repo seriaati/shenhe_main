@@ -56,6 +56,9 @@ class VoiceCog(commands.GroupCog, name="vc"):
         before: discord.VoiceState,
         after: discord.VoiceState,
     ):
+        if member.guild.id != self.bot.guild_id:
+            return
+        
         guild = member.guild
         make_vc = guild.get_channel(1061881611450322954)
         assert make_vc
