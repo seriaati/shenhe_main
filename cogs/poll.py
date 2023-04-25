@@ -5,10 +5,16 @@ from discord import app_commands, ui
 from discord.ext import commands
 
 from dev.model import BaseModal, BaseView, DefaultEmbed
+from utility.utils import get_dt_now
 
 
 class PollView(BaseView):
-    def __init__(self, question: str, options: List[str]):
+    def __init__(
+        self,
+        question: str,
+        options: List[str],
+        poll_starter: Union[discord.Member, discord.User],
+    ):
         super().__init__(timeout=None)
 
         self.question = question
@@ -16,20 +22,29 @@ class PollView(BaseView):
         self.result: Dict[str, List[Union[discord.Member, discord.User]]] = {
             option: [] for option in options
         }
+        self.poll_starter = poll_starter
 
         for option in options:
             self.add_item(OptionButton(option))
 
     async def start(self, i: discord.Interaction):
-        self.author = i.user
-
         embed = DefaultEmbed(self.question)
-        embed.description = ""
+        embed.set_author(name="📢 投票時間")
+        embed.set_footer(text=f"開始於: {get_dt_now().strftime('%Y-%m-%d %H:%M:%S')}")
+        value = ""
         for option, voters in self.result.items():
-            embed.description += f"{option}: {len(voters)}\n"
+            value += f"{option}: {len(voters)}\n"
+        embed.add_field(name="當前結果", value=value, inline=False)
 
         await i.response.edit_message(embed=embed, view=self)
         self.message = await i.original_response()
+
+    @ui.button(label="結束投票", style=discord.ButtonStyle.red, custom_id="end_poll")
+    async def end_poll(self, i: discord.Interaction, _: ui.Button):
+        if i.user.id != self.poll_starter.id:
+            return await i.response.send_message("你不是投票發起人", ephemeral=True)
+        self.disable_items()
+        await i.response.edit_message(view=self)
 
 
 class OptionButton(ui.Button):
@@ -100,7 +115,7 @@ class OptionEditView(BaseView):
         disabled=True,
     )
     async def start_poll(self, i: discord.Interaction, _: ui.Button):
-        view = PollView(self.question, self.options)
+        view = PollView(self.question, self.options, i.user)
         await view.start(i)
 
     @ui.select(
