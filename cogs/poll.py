@@ -1,4 +1,4 @@
-from typing import Dict, List
+from typing import Dict, List, Union
 
 import discord
 from discord import app_commands, ui
@@ -9,39 +9,52 @@ from dev.model import BaseModal, BaseView, DefaultEmbed
 
 class PollView(BaseView):
     def __init__(self, question: str, options: List[str]):
-        super().__init__()
+        super().__init__(timeout=None)
 
         self.question = question
         self.options = options
-        self.result: Dict[str, int] = {option: 0 for option in options}
+        self.result: Dict[str, List[Union[discord.Member, discord.User]]] = {
+            option: [] for option in options
+        }
 
         for option in options:
             self.add_item(OptionButton(option))
 
-    async def start(self, i: discord.Interaction):
+    async def start(self, i: discord.Interaction, *, edit: bool = False):
         self.author = i.user
 
         embed = DefaultEmbed(self.question)
         embed.description = ""
         for option, count in self.result.items():
             embed.description += f"{option}: {count}\n"
-        try:
-            await i.response.send_message(embed=embed, view=self)
-        except discord.InteractionResponded:
-            self.message = await i.edit_original_response(embed=embed, view=self)
+
+        if edit:
+            await i.response.edit_message(embed=embed, view=self)
         else:
-            self.message = await i.original_response()
+            await i.response.send_message(embed=embed, view=self)
+        self.message = await i.original_response()
 
 
 class OptionButton(ui.Button):
     def __init__(self, label: str):
-        super().__init__(label=label)
+        super().__init__(
+            label=label, style=discord.ButtonStyle.blurple, custom_id=f"vote_{label}"
+        )
         self.view: PollView
 
     async def callback(self, i: discord.Interaction):
         assert self.label
-        self.view.result[self.label] += 1
-        await self.view.start(i)
+        voted = self.view.result[self.label]
+        others_voted = []
+        for voters in self.view.result.values():
+            others_voted.extend(voters)
+        if i.user in voted:
+            voted.remove(i.user)
+        elif i.user in others_voted:
+            return await i.response.send_message("你已經投過票了", ephemeral=True)
+        else:
+            voted.append(i.user)
+        await self.view.start(i, edit=True)
 
 
 class OptionEditView(BaseView):
