@@ -4,7 +4,7 @@ import discord
 from discord import app_commands, ui
 from discord.ext import commands
 
-from dev.model import BaseModal, BaseView, DefaultEmbed
+from dev.model import BaseModal, BaseView, DefaultEmbed, ErrorEmbed
 from utility.utils import get_dt_now
 
 
@@ -42,7 +42,8 @@ class PollView(BaseView):
     @ui.button(label="結束投票", style=discord.ButtonStyle.red, custom_id="end_poll")
     async def end_poll(self, i: discord.Interaction, _: ui.Button):
         if i.user.id != self.poll_starter.id:
-            return await i.response.send_message("你不是投票發起人", ephemeral=True)
+            embed = ErrorEmbed("你不是投票發起人", f"投票發起人: {self.poll_starter.mention}")
+            return await i.response.send_message(embed=embed, ephemeral=True)
         self.disable_items()
         await i.response.edit_message(view=self)
 
