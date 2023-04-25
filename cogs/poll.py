@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 import discord
 from discord import app_commands, ui
@@ -14,10 +14,10 @@ class PollView(BaseView):
         self.question = question
         self.options = options
         self.result: Dict[str, int] = {option: 0 for option in options}
-        
+
         for option in options:
             self.add_item(OptionButton(option))
-    
+
     async def start(self, i: discord.Interaction):
         self.author = i.user
 
@@ -32,15 +32,17 @@ class PollView(BaseView):
         else:
             self.message = await i.original_response()
 
+
 class OptionButton(ui.Button):
     def __init__(self, label: str):
         super().__init__(label=label)
         self.view: PollView
-    
+
     async def callback(self, i: discord.Interaction):
         assert self.label
         self.view.result[self.label] += 1
         await self.view.start(i)
+
 
 class OptionEditView(BaseView):
     def __init__(self, question: str):
@@ -53,11 +55,16 @@ class OptionEditView(BaseView):
         self.author = i.user
 
         embed = DefaultEmbed("投票設定")
-        embed.add_field(name="問題", value=self.question)
+        embed.add_field(name="問題", value=self.question, inline=False)
         if self.options:
-            embed.add_field(name="選項", value="\n".join(self.options))
-            self.add_item(OptionSelect(self.options))
-            self.start_poll.disabled = False
+            embed.add_field(name="選項", value="\n".join(self.options), inline=False)
+            self.option_select.options = [
+                discord.SelectOption(label=option, value=option)
+                for option in self.options
+            ]
+        self.option_select.disabled = not self.options
+        self.start_poll.disabled = not self.options
+
         try:
             await i.response.send_message(embed=embed, view=self)
         except discord.InteractionResponded:
@@ -86,6 +93,18 @@ class OptionEditView(BaseView):
         view = PollView(self.question, self.options)
         await view.start(i)
 
+    @ui.select(
+        placeholder="選擇要刪除的選項...",
+        max_values=1,
+        row=1,
+        custom_id="option_select",
+        disabled=True,
+        options=[discord.SelectOption(label="空", value="空")],
+    )
+    async def option_select(self, i: discord.Interaction, select: ui.Select):
+        self.options.remove(select.values[0])
+        await self.start(i)
+
 
 class NewOptionModal(BaseModal):
     option = ui.TextInput(label="選項名稱", placeholder="輸入選項名稱")
@@ -93,18 +112,9 @@ class NewOptionModal(BaseModal):
     def __init__(self):
         super().__init__(title="新增選項")
 
-
-class OptionSelect(ui.Select):
-    def __init__(self, options: List[str]):
-        super().__init__(placeholder="選擇要刪除的選項...", max_values=len(options), row=1)
-        for option in options:
-            self.add_option(label=option, value=option)
-
-        self.view: OptionEditView
-
-    async def callback(self, i: discord.Interaction):
-        self.view.options.remove(self.values[0])
-        await self.view.start(i)
+    async def on_submit(self, i: discord.Interaction):
+        await i.response.defer()
+        self.stop()
 
 
 class PollCog(commands.Cog):
@@ -112,6 +122,8 @@ class PollCog(commands.Cog):
         self.bot = bot
 
     @app_commands.guild_only()
+    @app_commands.rename(question="問題")
+    @app_commands.describe(question="投票的問題")
     @app_commands.checks.has_permissions(manage_guild=True)
     @app_commands.command(name="poll", description="開始一個投票")
     async def poll(self, i: discord.Interaction, question: str):
