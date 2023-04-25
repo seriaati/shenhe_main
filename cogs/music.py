@@ -351,6 +351,7 @@ class AutoPlay(ui.Button):
 
     @music_deco
     async def calllback(self, i: discord.Interaction) -> typing.Any:
+        logging.info(f"AutoPlay button pressed by {i.user}")
         self.view.player.autoplay = not self.view.player.autoplay
 
 
@@ -371,13 +372,11 @@ async def get_player_embed(player: wavelink.Player) -> discord.Embed:
     return embed
 
 
-def get_queue_embed(queue: wavelink.Queue, loop: bool) -> discord.Embed:
+def get_queue_embed(queue: wavelink.BaseQueue) -> discord.Embed:
     embed = DefaultEmbed()
     if queue.is_empty:
         embed.title = "空的待播放清單"
         embed.description = "點按下方的按鈕來新增歌曲"
-    elif loop:
-        embed.title = "循環模式開啟中"
     else:
         desc = ""
         for index, song in enumerate(list(queue)[:10]):
@@ -390,7 +389,7 @@ def get_queue_embed(queue: wavelink.Queue, loop: bool) -> discord.Embed:
 def get_player_status_embed(player: wavelink.Player) -> discord.Embed:
     embed = DefaultEmbed()
     embed.add_field(
-        name="播放狀態", value="正在播放" if player.is_playing() else "暫停中", inline=False
+        name="播放狀態", value="暫停中" if player.is_paused() else "正在播放", inline=False
     )
     embed.add_field(
         name="循環模式", value="開啟" if player.queue.loop else "關閉", inline=False
@@ -401,7 +400,7 @@ def get_player_status_embed(player: wavelink.Player) -> discord.Embed:
 
 async def return_music_embed(i: discord.Interaction, player: wavelink.Player) -> None:
     player_embed = await get_player_embed(player)
-    queue_embed = get_queue_embed(player.queue, player.queue.loop)
+    queue_embed = get_queue_embed(player.queue+player.auto_queue)
     status_embed = get_player_status_embed(player)
     view = MusicView(player)
     embeds = (player_embed, queue_embed, status_embed)
@@ -442,9 +441,9 @@ class MusicCog(commands.Cog, name="music"):
 
         if not player.queue.is_empty:
             await player.play(player.queue.get())
-        try:
-            await self.bot.wait_for("wavelink_track_start", timeout=300)
-        except asyncio.TimeoutError:
+        
+        await asyncio.sleep(300)
+        if not player.is_playing():
             await player.disconnect()
 
     @commands.Cog.listener()
