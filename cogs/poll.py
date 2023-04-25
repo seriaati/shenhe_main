@@ -20,18 +20,15 @@ class PollView(BaseView):
         for option in options:
             self.add_item(OptionButton(option))
 
-    async def start(self, i: discord.Interaction, *, edit: bool = False):
+    async def start(self, i: discord.Interaction):
         self.author = i.user
 
         embed = DefaultEmbed(self.question)
         embed.description = ""
-        for option, count in self.result.items():
-            embed.description += f"{option}: {count}\n"
+        for option, voters in self.result.items():
+            embed.description += f"{option}: {len(voters)}\n"
 
-        if edit:
-            await i.response.edit_message(embed=embed, view=self)
-        else:
-            await i.response.send_message(embed=embed, view=self)
+        await i.response.edit_message(embed=embed, view=self)
         self.message = await i.original_response()
 
 
@@ -54,7 +51,7 @@ class OptionButton(ui.Button):
             return await i.response.send_message("你已經投過票了", ephemeral=True)
         else:
             voted.append(i.user)
-        await self.view.start(i, edit=True)
+        await self.view.start(i)
 
 
 class OptionEditView(BaseView):
