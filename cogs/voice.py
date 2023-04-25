@@ -58,7 +58,7 @@ class VoiceCog(commands.GroupCog, name="vc"):
     ):
         if member.guild.id != self.bot.guild_id:
             return
-        
+
         guild = member.guild
         make_vc = guild.get_channel(1061881611450322954)
         assert make_vc
