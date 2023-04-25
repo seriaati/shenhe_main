@@ -150,7 +150,6 @@ class PollCog(commands.Cog):
     @app_commands.guild_only()
     @app_commands.rename(question="問題")
     @app_commands.describe(question="投票的問題")
-    @app_commands.checks.has_permissions(manage_guild=True)
     @app_commands.command(name="poll", description="開始一個投票")
     async def poll(self, i: discord.Interaction, question: str):
         view = OptionEditView(question)
