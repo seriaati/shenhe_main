@@ -14,10 +14,10 @@ class PollView(BaseView):
         self.question = question
         self.options = options
         self.result: Dict[str, int] = {option: 0 for option in options}
-        
+
         for option in options:
             self.add_item(OptionButton(option))
-    
+
     async def start(self, i: discord.Interaction):
         self.author = i.user
 
@@ -32,15 +32,17 @@ class PollView(BaseView):
         else:
             self.message = await i.original_response()
 
+
 class OptionButton(ui.Button):
     def __init__(self, label: str):
         super().__init__(label=label)
         self.view: PollView
-    
+
     async def callback(self, i: discord.Interaction):
         assert self.label
         self.view.result[self.label] += 1
         await self.view.start(i)
+
 
 class OptionEditView(BaseView):
     def __init__(self, question: str):
