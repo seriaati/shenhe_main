@@ -1,4 +1,4 @@
-from typing import Optional, Union
+from typing import List, Optional, Sequence, Union
 
 import discord
 from discord import ui
@@ -12,13 +12,15 @@ from utility.utils import default_embed
 class ReactionRole(ui.View):
     def __init__(
         self,
-        roles,
-        emojis = None,
+        roles: List[Optional[discord.Role]],
+        emojis: Optional[Sequence[Union[str, Optional[discord.Emoji]]]] = None,
         style: discord.ButtonStyle = discord.ButtonStyle.blurple,
     ):
         super().__init__(timeout=None)
 
         for index, role in enumerate(roles):
+            if role is None:
+                continue
             self.add_item(
                 RoleButton(role, index // 3, style, emojis[index] if emojis else None)
             )
@@ -123,7 +125,7 @@ class ReactionRoles(commands.Cog):
             style=discord.ButtonStyle.gray,
         )
         self.bot.add_view(self.element_view)
-        
+
         self.ping_ids = (1091650330267234306, 1096438021856968835, 1096438068338245632)
         self.ping_emojis = ("🎉", "📜", "📢")
         self.ping_view = ReactionRole(
@@ -132,7 +134,7 @@ class ReactionRoles(commands.Cog):
             style=discord.ButtonStyle.gray,
         )
 
-        self.other_ids = (1091879436321816636, )
+        self.other_ids = (1091879436321816636,)
         self.other_emojis = ("🌾",)
         self.other_view = ReactionRole(
             [guild.get_role(id) for id in self.other_ids],
