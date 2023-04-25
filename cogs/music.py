@@ -49,6 +49,7 @@ class Resume(ui.Button):
 
     async def callback(self, i: discord.Interaction) -> typing.Any:
         await self.view.player.resume()
+        await return_music_embed(i, self.view.player)
 
 
 class Pause(ui.Button):
@@ -90,6 +91,7 @@ class Next(ui.Button):
     async def callback(self, i: discord.Interaction) -> typing.Any:
         await self.view.player.resume()
         await self.view.player.stop()
+        await return_music_embed(i, self.view.player)
 
 
 class Previous(ui.Button):
@@ -99,11 +101,11 @@ class Previous(ui.Button):
 
     async def callback(self, i: discord.Interaction) -> typing.Any:
         current = self.view.player.current
-        assert current is not None
-
-        self.view.player.queue.put_at_front(current)
+        if current:
+            self.view.player.queue.put_at_front(current)
         self.view.player.queue.put_at_front(self.view.player.queue.history[-1])
         await self.view.player.stop()
+        await return_music_embed(i, self.view.player)
 
 
 class Loop(ui.Button):
