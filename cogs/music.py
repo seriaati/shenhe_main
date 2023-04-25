@@ -40,7 +40,7 @@ class MusicView(BaseView):
         self.add_item(Next(not player.queue))
         self.add_item(Stop(not player.is_playing()))
         self.add_item(ClearQueue(not player.queue))
-        self.add_item(Loop(not player.is_playing(), player.queue.loop))
+        self.add_item(Loop(not player.is_playing()))
         self.add_item(Shuffle(not player.queue))
         self.add_item(Disconnect())
         self.add_item(AddSong())
@@ -59,7 +59,6 @@ class Resume(ui.Button):
 
     @music_deco
     async def callback(self, i: discord.Interaction) -> typing.Any:
-        await i.response.defer()
         await self.view.player.resume()
 
 
@@ -75,7 +74,6 @@ class Pause(ui.Button):
 
     @music_deco
     async def callback(self, i: discord.Interaction) -> typing.Any:
-        await i.response.defer()
         await self.view.player.pause()
 
 
@@ -91,7 +89,6 @@ class Stop(ui.Button):
 
     @music_deco
     async def callback(self, i: discord.Interaction) -> typing.Any:
-        await i.response.defer()
         self.view.player.queue.clear()
         await self.view.player.stop()
 
@@ -103,11 +100,6 @@ class Next(ui.Button):
 
     async def callback(self, i: discord.Interaction) -> typing.Any:
         await self.view.player.stop()
-        self.view.disable_items()
-        await i.response.edit_message(view=self.view)
-
-        await asyncio.sleep(2)
-        await return_music_embed(i, self.view.player)
 
 
 class Previous(ui.Button):
@@ -116,23 +108,18 @@ class Previous(ui.Button):
         self.view: MusicView
 
     async def callback(self, i: discord.Interaction) -> typing.Any:
-        self.view.disable_items()
-        await i.response.edit_message(view=self.view)
-
         current = self.view.player.current
         assert current is not None
 
         self.view.player.queue.put_at_front(current)
         self.view.player.queue.put_at_front(self.view.player.queue.history[-1])
         await self.view.player.stop()
-        await asyncio.sleep(2)
-        await return_music_embed(i, self.view.player)
 
 
 class Loop(ui.Button):
-    def __init__(self, disabled: bool, current: bool):
+    def __init__(self, disabled: bool):
         super().__init__(
-            style=discord.ButtonStyle.green if current else discord.ButtonStyle.gray,
+            style=discord.ButtonStyle.green,
             row=2,
             disabled=disabled,
             emoji="<:repeat_song:1021592454618689627>",
@@ -357,7 +344,7 @@ class AutoPlay(ui.Button):
     def __init__(self):
         super().__init__(
             style=discord.ButtonStyle.primary,
-            emoji="<:autoplay:1100366675481731112>",
+            emoji="<:auto_play_off:1100374478283866153>",
             row=3,
         )
         self.view: MusicView
@@ -384,7 +371,7 @@ async def get_player_embed(player: wavelink.Player) -> discord.Embed:
     return embed
 
 
-async def get_queue_embed(queue: wavelink.Queue, loop: bool) -> discord.Embed:
+def get_queue_embed(queue: wavelink.Queue, loop: bool) -> discord.Embed:
     embed = DefaultEmbed()
     if queue.is_empty:
         embed.title = "空的待播放清單"
@@ -400,15 +387,29 @@ async def get_queue_embed(queue: wavelink.Queue, loop: bool) -> discord.Embed:
     return embed
 
 
+def get_player_status_embed(player: wavelink.Player) -> discord.Embed:
+    embed = DefaultEmbed()
+    embed.add_field(
+        name="播放狀態", value="正在播放" if player.is_playing() else "暫停中", inline=False
+    )
+    embed.add_field(
+        name="循環模式", value="開啟" if player.queue.loop else "關閉", inline=False
+    )
+    embed.add_field(name="自動播放", value="開啟" if player.autoplay else "關閉", inline=False)
+    return embed
+
+
 async def return_music_embed(i: discord.Interaction, player: wavelink.Player) -> None:
     player_embed = await get_player_embed(player)
-    queue_embed = await get_queue_embed(player.queue, player.queue.loop)
+    queue_embed = get_queue_embed(player.queue, player.queue.loop)
+    status_embed = get_player_status_embed(player)
     view = MusicView(player)
+    embeds = (player_embed, queue_embed, status_embed)
 
     try:
-        await i.response.edit_message(embeds=[player_embed, queue_embed], view=view)
+        await i.response.edit_message(embeds=embeds, view=view)
     except discord.InteractionResponded:
-        await i.edit_original_response(embeds=[player_embed, queue_embed], view=view)
+        await i.edit_original_response(embeds=embeds, view=view)
     view.message = await i.original_response()
 
 
