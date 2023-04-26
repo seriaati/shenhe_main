@@ -32,7 +32,6 @@ class MusicView(BaseView):
         self.add_item(ClearQueue(not player.queue))
         self.add_item(Loop(not player.is_playing()))
         self.add_item(Shuffle(not player.queue))
-        self.add_item(Disconnect())
         self.add_item(AddSong())
         self.add_item(AutoPlay())
 
@@ -49,7 +48,7 @@ class Resume(ui.Button):
 
     async def callback(self, i: discord.Interaction) -> typing.Any:
         await self.view.player.resume()
-        await return_music_embed(i, self.view.player)
+        await return_music_inter(i, self.view.player)
 
 
 class Pause(ui.Button):
@@ -64,7 +63,7 @@ class Pause(ui.Button):
 
     async def callback(self, i: discord.Interaction) -> typing.Any:
         await self.view.player.pause()
-        await return_music_embed(i, self.view.player)
+        await return_music_inter(i, self.view.player)
 
 
 class Stop(ui.Button):
@@ -78,9 +77,10 @@ class Stop(ui.Button):
         self.view: MusicView
 
     async def callback(self, i: discord.Interaction) -> typing.Any:
+        self.view.player.cleanup()
         self.view.player.queue.clear()
         await self.view.player.stop()
-        await return_music_embed(i, self.view.player)
+        await return_music_inter(i, self.view.player)
 
 
 class Next(ui.Button):
@@ -91,7 +91,7 @@ class Next(ui.Button):
     async def callback(self, i: discord.Interaction) -> typing.Any:
         await self.view.player.resume()
         await self.view.player.stop()
-        await return_music_embed(i, self.view.player)
+        await return_music_inter(i, self.view.player)
 
 
 class Previous(ui.Button):
@@ -105,7 +105,7 @@ class Previous(ui.Button):
             self.view.player.queue.put_at_front(current)
         self.view.player.queue.put_at_front(self.view.player.queue.history[-1])
         await self.view.player.stop()
-        await return_music_embed(i, self.view.player)
+        await return_music_inter(i, self.view.player)
 
 
 class Loop(ui.Button):
@@ -120,7 +120,7 @@ class Loop(ui.Button):
 
     async def callback(self, i: discord.Interaction) -> typing.Any:
         self.view.player.queue.loop = not self.view.player.queue.loop
-        await return_music_embed(i, self.view.player)
+        await return_music_inter(i, self.view.player)
 
 
 class Shuffle(ui.Button):
@@ -138,7 +138,7 @@ class Shuffle(ui.Button):
         random.shuffle(queue)
         self.view.player.queue.clear()
         self.view.player.queue.extend(queue)
-        await return_music_embed(i, self.view.player)
+        await return_music_inter(i, self.view.player)
 
 
 class ClearQueue(ui.Button):
@@ -148,22 +148,7 @@ class ClearQueue(ui.Button):
 
     async def callback(self, i: discord.Interaction) -> typing.Any:
         self.view.player.queue.clear()
-        await return_music_embed(i, self.view.player)
-
-
-class Disconnect(ui.Button):
-    def __init__(self):
-        super().__init__(
-            style=discord.ButtonStyle.red,
-            row=3,
-            emoji="<:disconnect:1021592448541130762>",
-        )
-        self.view: MusicView
-
-    async def callback(self, i: discord.Interaction) -> typing.Any:
-        await i.response.defer()
-        await self.view.player.disconnect()
-        await i.delete_original_response()
+        await return_music_inter(i, self.view.player)
 
 
 class AddSong(ui.Button):
@@ -295,7 +280,7 @@ class AddSongModal(BaseModal):
             return await i.edit_original_response(embed=embed, view=view)
 
         await asyncio.sleep(1.5)
-        await return_music_embed(i, player)
+        await return_music_inter(i, player)
 
     async def on_error(self, i: discord.Interaction, error: Exception) -> None:
         return await super().on_error(i, error)
@@ -324,7 +309,7 @@ class ChooseSongSelect(ui.Select):
         embed.set_image(url=track.thumb)
         await i.response.edit_message(embed=embed, view=self.view)
         await asyncio.sleep(1.5)
-        await return_music_embed(i, player)
+        await return_music_inter(i, player)
 
 
 class AutoPlay(ui.Button):
@@ -338,7 +323,7 @@ class AutoPlay(ui.Button):
 
     async def calllback(self, i: discord.Interaction) -> typing.Any:
         self.view.player.autoplay = not self.view.player.autoplay
-        await return_music_embed(i, self.view.player)
+        await return_music_inter(i, self.view.player)
 
 
 async def get_player_embed(player: wavelink.Player) -> discord.Embed:
@@ -375,16 +360,13 @@ def get_queue_embed(queue: wavelink.BaseQueue) -> discord.Embed:
 def get_player_status_embed(player: wavelink.Player) -> discord.Embed:
     embed = DefaultEmbed()
     embed.add_field(
-        name="播放狀態", value="暫停中" if player.is_paused() else "正在播放", inline=False
-    )
-    embed.add_field(
         name="循環模式", value="開啟" if player.queue.loop else "關閉", inline=False
     )
     embed.add_field(name="自動播放", value="開啟" if player.autoplay else "關閉", inline=False)
     return embed
 
 
-async def return_music_embed(i: discord.Interaction, player: wavelink.Player) -> None:
+async def return_music_inter(i: discord.Interaction, player: wavelink.Player) -> None:
     player_embed = await get_player_embed(player)
     queue_embed = get_queue_embed(player.queue + player.auto_queue)
     status_embed = get_player_status_embed(player)
@@ -474,7 +456,7 @@ class MusicCog(commands.Cog, name="music"):
                 player: wavelink.Player = await i.user.voice.channel.connect(
                     cls=wavelink.Player  # type: ignore
                 )
-        await return_music_embed(i, player)
+        await return_music_inter(i, player)
 
 
 async def setup(bot: commands.Bot) -> None:
