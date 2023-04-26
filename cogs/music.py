@@ -273,12 +273,9 @@ class AddSongModal(BaseModal):
                         await player.play(youtube_track)
                     else:
                         player.queue.put(youtube_track)
-                    embed = DefaultEmbed("已新增 Youtube 歌曲").set_image(
-                        url=youtube_track.thumb
-                    )
-                    await i.edit_original_response(
-                        embed=embed,
-                    )
+                    embed = DefaultEmbed("已新增 Youtube 歌曲")
+                    embed.set_image(url=youtube_track.thumb)
+                    await i.edit_original_response(embed=embed)
         else:  # query is not an url
             tracks = await wavelink.YouTubeTrack.search(query)
             options = []
@@ -393,11 +390,15 @@ async def return_music_embed(i: discord.Interaction, player: wavelink.Player) ->
     status_embed = get_player_status_embed(player)
     view = MusicView(player)
     embeds = (player_embed, queue_embed, status_embed)
-
+    view.disable_items()
     try:
-        await i.response.edit_message(embeds=embeds, view=view)
+        await i.response.edit_message(view=view)
     except discord.InteractionResponded:
-        await i.edit_original_response(embeds=embeds, view=view)
+        await i.edit_original_response(view=view)
+
+    await asyncio.sleep(1.5)
+    view.enable_items()
+    await i.edit_original_response(embeds=embeds, view=view)
     view.message = await i.original_response()
 
 

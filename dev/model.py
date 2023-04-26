@@ -61,6 +61,12 @@ class BaseView(discord.ui.View):
         for child in self.children:
             if isinstance(child, (discord.ui.Button, discord.ui.Select)):
                 child.disabled = True
+    
+    def enable_items(self):
+        """Enable all buttons and selects in the view."""
+        for child in self.children:
+            if isinstance(child, (discord.ui.Button, discord.ui.Select)):
+                child.disabled = False
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         if self.author is None:
