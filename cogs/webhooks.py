@@ -5,8 +5,7 @@ from typing import List
 import discord
 from discord.ext import commands
 
-from cogs.othercmd import (convert_phixiv_to_direct_url,
-                           convert_twitter_to_direct_url)
+from cogs.othercmd import convert_phixiv_to_direct_url, convert_twitter_to_direct_url
 from data.constants import fix_embeds
 from dev.model import BaseView, BotModel
 
@@ -14,12 +13,13 @@ from dev.model import BaseView, BotModel
 class DeleteMessage(BaseView):
     def __init__(self):
         super().__init__(timeout=600.0)
-    
+
     @discord.ui.button(label="刪除", style=discord.ButtonStyle.red)
     async def delete_message(self, i: discord.Interaction, _: discord.ui.Button):
         await i.response.defer()
         if i.message:
             await i.message.delete()
+
 
 class WebhookCog(commands.Cog):
     def __init__(self, bot):
@@ -63,7 +63,6 @@ class WebhookCog(commands.Cog):
                         )
                         files.append(file_)
                         message.content = message.content.replace(url, f"<{url}>")
-                    
 
         if any(not a.is_spoiler() for a in message.attachments):
             await message.delete()
@@ -76,14 +75,14 @@ class WebhookCog(commands.Cog):
                     files.append(file_)
                 else:
                     files.append(await attachment.to_file())
-        
+
         if files:
             webhooks = await message.channel.webhooks()
             if not webhooks:
                 webhook = await message.channel.create_webhook(name="Auto-Spoiler")
             else:
                 webhook = webhooks[0]
-            
+
             view = DeleteMessage()
             view.author = message.author
 
@@ -92,7 +91,7 @@ class WebhookCog(commands.Cog):
                 files=files,
                 username=message.author.display_name,
                 avatar_url=message.author.display_avatar.url,
-                view=view
+                view=view,
             )
 
     async def download_image(self, url, file_name):
@@ -127,10 +126,10 @@ class WebhookCog(commands.Cog):
                     webhook = webhooks[0]
 
                 await message.delete()
-                
+
                 view = DeleteMessage()
                 view.author = message.author
-                
+
                 view.message = await webhook.send(
                     content=message.content.replace(website, fix),
                     username=message.author.display_name,
