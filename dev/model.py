@@ -5,6 +5,7 @@ import typing
 import aiohttp
 import asyncpg
 import discord
+from attr import define, field
 from discord.ext import commands
 from pydantic import BaseModel, validator
 
@@ -61,7 +62,7 @@ class BaseView(discord.ui.View):
         for child in self.children:
             if isinstance(child, (discord.ui.Button, discord.ui.Select)):
                 child.disabled = True
-    
+
     def enable_items(self):
         """Enable all buttons and selects in the view."""
         for child in self.children:
@@ -220,3 +221,47 @@ class ConnectFourMatch(BaseModel):
             board_link=row["board_link"],
             sticky_id=row["sticky_id"],
         )
+
+
+@define
+class Giveaway:
+    prize: str
+    author: int
+    prize_num: int
+    message_id: typing.Optional[int] = field(default=None)
+    participants: typing.List[int] = field(default=list)
+    extra_info: typing.Optional[str] = field(default=None)
+
+    async def insert_to_db(self, pool: asyncpg.Pool) -> None:
+        await pool.execute(
+            """
+            INSERT INTO giveaway (message_id, prize, author, prize_num, participants, extra_info)
+            VALUES ($1, $2, $3, $4, $5, $6)
+            """,
+            self.message_id,
+            self.prize,
+            self.author,
+            self.prize_num,
+            self.participants,
+            self.extra_info,
+        )
+    
+    async def update_db(self, pool: asyncpg.Pool) -> None:
+        await pool.execute(
+            """
+            UPDATE giveaway
+            SET participants = $1
+            WHERE message_id = $2
+            """,
+            self.participants,
+            self.message_id
+        )
+
+    def create_embed(self) -> DefaultEmbed:
+        embed = DefaultEmbed(self.prize, "點按 🎉 按鈕來參加抽獎！")
+        embed.add_field(name="主辦人", value=f"<@{self.author}>", inline=False)
+        embed.add_field(name="獎品數量", value=str(self.prize_num), inline=False)
+        if self.extra_info:
+            embed.add_field(name="其他資訊", value=self.extra_info, inline=False)
+
+        return embed

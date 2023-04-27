@@ -1,68 +1,46 @@
 import random
-import traceback
 import typing
 
 import discord
 from discord import app_commands, ui
 from discord.ext import commands
 
+from dev.model import BotModel, DefaultEmbed, ErrorEmbed, Giveaway, Inter
 from utility.paginator import GeneralPaginator
-from utility.utils import default_embed
-
-
-def create_gv_embed(
-    prize: str,
-    author: discord.Member,
-    prize_num: int,
-    extra_info: typing.Optional[str] = None,
-) -> discord.Embed:
-    embed = default_embed(prize, "點按 🎉 按鈕來參加抽獎！")
-    embed.add_field(name="主辦人", value=author.mention, inline=False)
-    embed.add_field(name="獎品數量", value=str(prize_num), inline=False)
-    if extra_info:
-        embed.add_field(name="其他資訊", value=extra_info, inline=False)
-
-    return embed
 
 
 class GiveAwayView(ui.View):
     def __init__(
         self,
-        prize: str,
-        author: discord.Member,
-        prize_num: int,
-        extra_info: typing.Optional[str] = None,
+        gv: Giveaway,
     ) -> None:
         super().__init__(timeout=None)
-
-        self.participants: typing.List[discord.Member] = []
-        self.prize = prize
-        self.author = author
-        self.prize_num = prize_num
-        self.extra_info = extra_info
+        self.gv = gv
 
     async def update_embed_and_view(self, i: discord.Interaction):
-        embed = create_gv_embed(
-            self.prize, self.author, self.prize_num, self.extra_info
-        )
+        embed = self.gv.create_embed()
         await i.response.edit_message(embed=embed, view=self)
 
     async def announce_winners(self, i: discord.Interaction):
-        winners = random.sample(self.participants, self.prize_num)
+        winners = random.sample(self.gv.participants, self.gv.prize_num)
 
+        assert i.message, "Interaction message is None"
         embed = i.message.embeds[0]
         embed.color = discord.Color.red()
         embed.clear_fields()
-        embed.add_field(name="主辦人", value=self.author.mention, inline=False)
-        embed.add_field(name="得獎者", value="\n".join(w.mention for w in winners))
+        embed.add_field(name="主辦人", value=f"<@{self.gv.author}>", inline=False)
+        embed.add_field(name="得獎者", value="\n".join(f"<@{w}>" for w in winners))
 
         self.join_gv.disabled = True
         await i.response.edit_message(embed=embed, view=self, content="**🎊 抽獎結束！ 🎊**")
 
-        winner_mentions = ", ".join(w.mention for w in winners)
-        winner_embed = default_embed(
-            message=f"恭喜 {winner_mentions} 贏得了 [{self.prize}]({i.message.jump_url})！"
+        winner_mentions = ", ".join(f"<@{w}>" for w in winners)
+        winner_embed = DefaultEmbed(
+            description=f"恭喜 {winner_mentions} 贏得了 [{self.gv.prize}]({i.message.jump_url})！"
         )
+        assert isinstance(
+            i.channel, discord.TextChannel
+        ), "Interaction channel is not a TextChannel"
         await i.channel.send(
             embed=winner_embed,
             content=f"恭喜 {winner_mentions} 🎉",
@@ -71,12 +49,14 @@ class GiveAwayView(ui.View):
     @ui.button(
         style=discord.ButtonStyle.blurple, custom_id="join_gv", emoji="🎉", label="0"
     )
-    async def join_gv(self, i: discord.Interaction, button: ui.Button):
-        if i.user in self.participants:
-            self.participants.remove(i.user)
+    async def join_gv(self, inter: discord.Interaction, button: ui.Button):
+        i: Inter = inter  # type: ignore
+        if i.user in self.gv.participants:
+            self.gv.participants.remove(i.user)
         else:
-            self.participants.append(i.user)
-        button.label = str(len(self.participants))
+            self.gv.participants.append(i.user.id)
+        button.label = str(len(self.gv.participants))
+        await self.gv.update_db(i.client.pool)
         await self.update_embed_and_view(i)
 
     @ui.button(
@@ -86,18 +66,19 @@ class GiveAwayView(ui.View):
         emoji="👥",
     )
     async def participants_gv(self, i: discord.Interaction, _: ui.Button):
-        if not self.participants:
-            await i.response.send_message("當前沒有任何人參加抽獎", ephemeral=True)
+        if not self.gv.participants:
+            embed = ErrorEmbed("沒有參加者", "當前沒有任何人參加抽獎")
+            await i.response.send_message(embed=embed, ephemeral=True)
         else:
-            # 5 participants per embed
+            # 10 participants per embed
             embeds: typing.List[discord.Embed] = []
-            for index in range(0, len(self.participants), 5):
+            for index in range(0, len(self.gv.participants), 10):
                 description = "\n".join(
-                    p.mention for p in self.participants[index : index + 5]
+                    f"<@{p}>" for p in self.gv.participants[index : index + 5]
                 )
-                embed = default_embed(
+                embed = DefaultEmbed(
                     "參加者",
-                    f"{description}\n\n共 **{len(self.participants)}** 位參加者",
+                    f"{description}\n\n共 **{len(self.gv.participants)}** 位參加者",
                 )
                 embeds.append(embed)
 
@@ -105,11 +86,13 @@ class GiveAwayView(ui.View):
 
     @ui.button(label="結束抽獎", style=discord.ButtonStyle.red, custom_id="end_gv")
     async def end_gv(self, i: discord.Interaction, button: ui.Button):
-        if i.user.id != self.author.id:
-            await i.response.send_message("你不是主辦人，無法結束抽獎", ephemeral=True)
+        if i.user.id != self.gv.author:
+            embed = ErrorEmbed("你不是主辦人，無法結束抽獎", f"主辦人: <@{self.gv.author}>")
+            await i.response.send_message(embed=embed, ephemeral=True)
         else:
-            if not self.participants:
-                await i.response.send_message("沒有人參加抽獎，無法結束", ephemeral=True)
+            if not self.gv.participants:
+                embed = ErrorEmbed("沒有參加者", "當前沒有任何人參加抽獎，無法結束抽獎")
+                await i.response.send_message(embed=embed, ephemeral=True)
             else:
                 self.remove_item(button)
                 await self.announce_winners(i)
@@ -117,7 +100,7 @@ class GiveAwayView(ui.View):
                 await i.edit_original_response(view=self)
 
 
-class RerollWinners(ui.Button[GiveAwayView]):
+class RerollWinners(ui.Button):
     def __init__(self) -> None:
         super().__init__(
             label="重新抽獎",
@@ -125,17 +108,26 @@ class RerollWinners(ui.Button[GiveAwayView]):
             custom_id="reroll_winners",
             emoji="🎲",
         )
+        self.view: GiveAwayView
 
     async def callback(self, i: discord.Interaction) -> typing.Any:
-        if i.user.id != self.view.author.id:
-            await i.response.send_message("你不是主辦人，無法結束抽獎", ephemeral=True)
+        if i.user.id != self.view.gv.author:
+            embed = ErrorEmbed("你不是主辦人，無法重新抽獎", f"主辦人: <@{self.view.gv.author}>")
+            await i.response.send_message(embed=embed, ephemeral=True)
         else:
             await self.view.announce_winners(i)
 
 
 class GiveAwayCog(commands.Cog):
     def __init__(self, bot) -> None:
-        self.bot = bot
+        self.bot: BotModel = bot
+
+    async def cog_load(self):
+        await self.bot.wait_until_ready()
+        rows = await self.bot.pool.fetch("SELECT * FROM gv")
+        for row in rows:
+            gv = Giveaway(**row)
+            self.bot.add_view(GiveAwayView(gv), message_id=gv.message_id)
 
     @app_commands.rename(prize="獎品名稱", prize_num="獎品數量", extra_info="其他資訊")
     @app_commands.describe(
@@ -155,9 +147,11 @@ class GiveAwayCog(commands.Cog):
             )
             return
 
-        embed = create_gv_embed(prize, i.user, prize_num, extra_info)
-        view = GiveAwayView(prize, i.user, prize_num, extra_info)
-        await i.response.send_message(embed=embed, view=view)
+        gv = Giveaway(prize, i.user.id, prize_num, extra_info=extra_info)
+        view = GiveAwayView(gv)
+        await i.response.send_message(embed=gv.create_embed(), view=view)
+        gv.message_id = (await i.original_response()).id
+        await gv.insert_to_db(self.bot.pool)
 
 
 async def setup(bot: commands.Bot) -> None:
