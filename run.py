@@ -72,6 +72,7 @@ class ShenheBot(BotModel):
             intents=intents,
             application_id=application_id,
             tree_cls=ShenheCommandTree,
+            chunk_guilds_at_startup=False,
         )
 
     async def setup_hook(self) -> None:
@@ -116,5 +117,19 @@ class ShenheBot(BotModel):
 
 
 bot = ShenheBot()
+
+
+@bot.listen("on_interaction")
+async def on_interaction(i: discord.Interaction):
+    if i.guild and not i.guild.chunked:
+        await i.guild.chunk()
+
+
+@bot.before_invoke
+async def before_invoke(ctx):
+    if ctx.guild and not ctx.guild.chunked:
+        await ctx.guild.chunk()
+
+
 assert token
 bot.run(token)
