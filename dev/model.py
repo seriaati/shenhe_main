@@ -256,6 +256,15 @@ class Giveaway:
             self.participants,
             self.message_id
         )
+    
+    async def delete_from_db(self, pool: asyncpg.Pool) -> None:
+        await pool.execute(
+            """
+            DELETE FROM gv
+            WHERE message_id = $1
+            """,
+            self.message_id
+        )
 
     def create_embed(self) -> DefaultEmbed:
         embed = DefaultEmbed(self.prize, "點按 🎉 按鈕來參加抽獎！")
