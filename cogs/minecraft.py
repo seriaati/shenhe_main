@@ -56,9 +56,10 @@ class ServerStatus(BaseView):
         embed.add_field(
             name="人數", value=f"{response.players.now}/{response.players.max}"
         )
-        embed.add_field(
-            name="玩家", value=", ".join([p.name for p in response.players.sample])
-        )
+        if response.players.sample:
+            embed.add_field(
+                name="玩家", value=", ".join([p.name for p in response.players.sample])
+            )
         return embed
 
     @ui.button(label="重整", style=discord.ButtonStyle.blurple)
