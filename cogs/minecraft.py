@@ -2,46 +2,36 @@ from typing import Dict, List, Optional
 
 import aiohttp
 import discord
-from attr import define
 from discord import app_commands, ui
 from discord.ext import commands
+from pydantic import BaseModel, validator
 
 from dev.model import BaseView, BotModel, DefaultEmbed, Inter
 
 
-@define
-class Player:
+class Player(BaseModel):
     name: str
     id: str
 
-    def __init__(self, data_dict: Dict):
-        self.name = data_dict["name"]
-        self.id = data_dict["id"]
 
-
-@define
-class Players:
+class Players(BaseModel):
     max: int
     now: int
     sample: List[Player]
 
-    def __init__(self, data_dict: Dict):
-        self.max = data_dict["max"]
-        self.now = data_dict["now"]
+    @validator("sample", pre=True)
+    def form_sample(cls, v):
+        if isinstance(v, list):
+            return [Player(**p) for p in v]
+        return v
 
 
-@define
-class Server:
+class Server(BaseModel):
     name: str
     protocol: int
 
-    def __init__(self, data_dict: Dict):
-        self.name = data_dict["name"]
-        self.protocol = data_dict["protocol"]
 
-
-@define
-class APIResponse:
+class APIResponse(BaseModel):
     status: str
     online: bool
     motd: str
@@ -52,6 +42,18 @@ class APIResponse:
     server: Server
     last_updated: str
     duration: str
+
+    @validator("players", pre=True)
+    def form_players(cls, v):
+        if isinstance(v, dict):
+            return Players(**v)
+        return v
+
+    @validator("server", pre=True)
+    def form_server(cls, v):
+        if isinstance(v, dict):
+            return Server(**v)
+        return v
 
 
 class ServerStatus(BaseView):
