@@ -51,8 +51,8 @@ class GiveAwayView(ui.View):
     )
     async def join_gv(self, inter: discord.Interaction, button: ui.Button):
         i: Inter = inter  # type: ignore
-        if i.user in self.gv.participants:
-            self.gv.participants.remove(i.user)
+        if i.user.id in self.gv.participants:
+            self.gv.participants.remove(i.user.id)
         else:
             self.gv.participants.append(i.user.id)
         button.label = str(len(self.gv.participants))
