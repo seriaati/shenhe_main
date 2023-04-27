@@ -245,7 +245,7 @@ class Giveaway:
             self.participants,
             self.extra_info,
         )
-    
+
     async def update_db(self, pool: asyncpg.Pool) -> None:
         await pool.execute(
             """
@@ -254,16 +254,16 @@ class Giveaway:
             WHERE message_id = $2
             """,
             self.participants,
-            self.message_id
+            self.message_id,
         )
-    
+
     async def delete_from_db(self, pool: asyncpg.Pool) -> None:
         await pool.execute(
             """
             DELETE FROM gv
             WHERE message_id = $1
             """,
-            self.message_id
+            self.message_id,
         )
 
     def create_embed(self) -> DefaultEmbed:
