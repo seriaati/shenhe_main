@@ -134,6 +134,7 @@ class ReactionRoles(commands.Cog):
             self.ping_emojis,
             style=discord.ButtonStyle.gray,
         )
+        self.bot.add_view(self.ping_view)
 
         self.other_ids = (1091879436321816636,)
         self.other_emojis = ("🌾",)
