@@ -229,7 +229,7 @@ class Giveaway:
     author: int
     prize_num: int
     message_id: typing.Optional[int] = field(default=None)
-    participants: typing.List[int] = field(default=list)
+    participants: typing.List[int] = field(default=[])
     extra_info: typing.Optional[str] = field(default=None)
 
     async def insert_to_db(self, pool: asyncpg.Pool) -> None:
