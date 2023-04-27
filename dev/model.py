@@ -235,7 +235,7 @@ class Giveaway:
     async def insert_to_db(self, pool: asyncpg.Pool) -> None:
         await pool.execute(
             """
-            INSERT INTO giveaway (message_id, prize, author, prize_num, participants, extra_info)
+            INSERT INTO gv (message_id, prize, author, prize_num, participants, extra_info)
             VALUES ($1, $2, $3, $4, $5, $6)
             """,
             self.message_id,
@@ -249,7 +249,7 @@ class Giveaway:
     async def update_db(self, pool: asyncpg.Pool) -> None:
         await pool.execute(
             """
-            UPDATE giveaway
+            UPDATE gv
             SET participants = $1
             WHERE message_id = $2
             """,
