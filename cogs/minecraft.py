@@ -30,10 +30,16 @@ class Server:
 
 @define
 class APIResponse:
+    status: str
     online: bool
     motd: str
+    motd_json: Dict[str, str]
+    favicon: Optional[str]
+    error: Optional[str]
     players: Players
     server: Server
+    last_updated: str
+    duration: str
 
 
 class ServerStatus(BaseView):
