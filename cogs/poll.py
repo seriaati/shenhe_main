@@ -72,7 +72,7 @@ class OptionButton(ui.Button):
 
 class OptionEditView(BaseView):
     def __init__(self, question: str):
-        super().__init__()
+        super().__init__(timeout=None)
 
         self.question = question
         self.options: List[str] = []
