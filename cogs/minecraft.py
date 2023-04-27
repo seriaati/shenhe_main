@@ -10,36 +10,40 @@ from dev.model import BaseView, BotModel, DefaultEmbed, Inter
 
 
 @define
-class MOTD:
-    raw: str
-    clean: str
-    html: str
+class Player:
+    name: str
+    id: str
 
 
 @define
 class Players:
-    online: int
     max: int
-    list: List[str]
-    uuid: Dict[str, str]
+    now: int
+    sample: List[Player]
+
+
+@define
+class Server:
+    name: str
+    protocol: int
 
 
 @define
 class APIResponse:
-    ip: str
-    motd: MOTD
-    players: Players
-    version: str
     online: bool
+    motd: str
+    players: Players
+    server: Server
 
 
 class ServerStatus(BaseView):
     def __init__(self):
         super().__init__(timeout=None)
 
+        self.server_ip = "65.109.114.175"
+
     async def _fetch_data(self, session: aiohttp.ClientSession) -> APIResponse:
-        server_ip = "65.109.114.175"
-        url = f"https://api.mcsrvstat.us/2/{server_ip}"
+        url = f"https://mcapi.us/server/status?ip={self.server_ip}"
         async with session.get(url) as resp:
             return APIResponse(**await resp.json())
 
@@ -47,12 +51,14 @@ class ServerStatus(BaseView):
         embed = DefaultEmbed(
             "Minecraft 伺服器狀態", f"{'🟢 線上' if response.online else '🔴 離線'}"
         )
-        embed.add_field(name="IP", value=response.ip)
-        embed.add_field(name="版本", value=response.version)
+        embed.add_field(name="IP", value=self.server_ip)
+        embed.add_field(name="版本", value=response.server.name)
         embed.add_field(
-            name="人數", value=f"{response.players.online}/{response.players.max}"
+            name="人數", value=f"{response.players.now}/{response.players.max}"
         )
-        embed.add_field(name="玩家", value=", ".join(response.players.list))
+        embed.add_field(
+            name="玩家", value=", ".join([p.name for p in response.players.sample])
+        )
         return embed
 
     @ui.button(label="重整", style=discord.ButtonStyle.blurple)
