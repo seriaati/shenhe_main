@@ -123,7 +123,6 @@ class GiveAwayCog(commands.Cog):
         self.bot: BotModel = bot
 
     async def cog_load(self):
-        await self.bot.wait_until_ready()
         rows = await self.bot.pool.fetch("SELECT * FROM gv")
         for row in rows:
             gv = Giveaway(**row)
