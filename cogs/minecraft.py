@@ -14,6 +14,10 @@ class Player:
     name: str
     id: str
 
+    def __init__(self, data_dict: Dict):
+        self.name = data_dict["name"]
+        self.id = data_dict["id"]
+
 
 @define
 class Players:
@@ -21,11 +25,19 @@ class Players:
     now: int
     sample: List[Player]
 
+    def __init__(self, data_dict: Dict):
+        self.max = data_dict["max"]
+        self.now = data_dict["now"]
+
 
 @define
 class Server:
     name: str
     protocol: int
+
+    def __init__(self, data_dict: Dict):
+        self.name = data_dict["name"]
+        self.protocol = data_dict["protocol"]
 
 
 @define
