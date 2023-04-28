@@ -19,7 +19,7 @@ class Players(BaseModel):
     now: int
     sample: List[Player]
 
-    @validator("sample", pre=True)
+    @validator("sample", pre=True, allow_reuse=True)
     def form_sample(cls, v):
         if isinstance(v, list):
             return [Player(**p) for p in v]
@@ -43,13 +43,13 @@ class APIResponse(BaseModel):
     last_updated: str
     duration: str
 
-    @validator("players", pre=True)
+    @validator("players", pre=True, allow_reuse=True)
     def form_players(cls, v):
         if isinstance(v, dict):
             return Players(**v)
         return v
 
-    @validator("server", pre=True)
+    @validator("server", pre=True, allow_reuse=True)
     def form_server(cls, v):
         if isinstance(v, dict):
             return Server(**v)
