@@ -175,8 +175,8 @@ class CoordsSystem(BaseView):
             embed = DefaultEmbed("座標系統")
             for coord in div:
                 embed.add_field(
-                    name=f"`{coord.id}` {coord.name}",
-                    value=f"{coord.x} {coord.y} {coord.z}",
+                    name=coord.name,
+                    value=f"座標: {coord.x} {coord.y} {coord.z}\nID: {coord.id}",
                 )
             embeds.append(embed)
         return embeds
@@ -184,7 +184,7 @@ class CoordsSystem(BaseView):
     async def _update_interaction(self, i: discord.Interaction) -> None:
         embeds = await self._make_coords_embeds()
         paginator = GeneralPaginator(i, embeds, self.children)  # type: ignore
-        await paginator.start(followup=True)
+        await paginator.start(edit=True)
 
     @ui.button(label="新增座標", style=discord.ButtonStyle.green, custom_id="add_coord_btn")
     async def add_coord(self, i: discord.Interaction, _):
