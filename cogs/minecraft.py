@@ -1,12 +1,16 @@
 from typing import Dict, List, Optional
 
 import aiohttp
+import asyncpg
 import discord
+from attr import define
 from discord import app_commands, ui
 from discord.ext import commands
 from pydantic import BaseModel, validator
 
-from dev.model import BaseView, BotModel, DefaultEmbed, Inter
+from dev.model import BaseModal, BaseView, BotModel, DefaultEmbed, Inter
+from utility.paginator import GeneralPaginator
+from utility.utils import divide_chunks
 
 
 class Player(BaseModel):
@@ -91,6 +95,110 @@ class ServerStatus(BaseView):
         await i.edit_original_response(embed=embed)
 
 
+@define
+class Coord:
+    id: int
+    name: str
+    x: int
+    y: int
+    z: int
+
+
+class AddCoord(BaseModal):
+    name = ui.TextInput(label="座標名稱", placeholder="輸入座標名稱", min_length=1, max_length=50)
+    x = ui.TextInput(label="X", placeholder="輸入X座標", min_length=1, max_length=50)
+    y = ui.TextInput(label="Y", placeholder="輸入Y座標", min_length=1, max_length=50)
+    z = ui.TextInput(label="Z", placeholder="輸入Z座標", min_length=1, max_length=50)
+
+    async def on_submit(self, inter: discord.Interaction):
+        i: Inter = inter  # type: ignore
+        await i.response.defer()
+        await i.client.pool.execute(
+            """
+            INSERT INTO coords(name, x, y, z) VALUES($1, $2, $3, $4)
+            """,
+            self.name,
+            self.x,
+            self.y,
+            self.z,
+        )
+        self.stop()
+
+
+class RemoveCord(BaseModal):
+    coord_id = ui.TextInput(
+        label="座標ID", placeholder="輸入座標ID", min_length=1, max_length=50
+    )
+
+    async def on_submit(self, inter: discord.Interaction):
+        i: Inter = inter  # type: ignore
+        await i.response.defer()
+        await i.client.pool.execute(
+            """
+            DELETE FROM coords WHERE id = $1
+            """,
+            self.coord_id,
+        )
+        self.stop()
+
+
+class CoordsSystem(BaseView):
+    def __init__(self, pool: asyncpg.Pool):
+        super().__init__()
+        self.pool = pool
+
+    async def create_table_in_db(self) -> None:
+        await self.pool.execute(
+            """CREATE TABLE IF NOT EXISTS coords(
+            id SERIAL PRIMARY KEY,
+            name VARCHAR(50) NOT NULL,
+            x INTEGER NOT NULL,
+            y INTEGER NOT NULL,
+            z INTEGER NOT NULL
+            )"""
+        )
+
+    async def _remove_coord(self, id: int) -> None:
+        await self.pool.execute("""DELETE FROM coords WHERE id = $1""", id)
+
+    async def _make_coords_embeds(self) -> List[DefaultEmbed]:
+        coords = await self.pool.fetch("""SELECT * FROM coords""")
+        coords = [Coord(**coord) for coord in coords]
+        if not coords:
+            return [DefaultEmbed("座標系統", "目前沒有座標")]
+
+        div_coords = list(divide_chunks(coords, 8))
+        embeds: List[DefaultEmbed] = []
+        for div in div_coords:
+            embed = DefaultEmbed("座標系統")
+            for coord in div:
+                embed.add_field(
+                    name=f"`{coord.id}` {coord.name}",
+                    value=f"{coord.x} {coord.y} {coord.z}",
+                )
+            embeds.append(embed)
+        return embeds
+
+    async def _update_interaction(self, i: discord.Interaction) -> None:
+        embeds = await self._make_coords_embeds()
+        paginator = GeneralPaginator(i, embeds)  # type: ignore
+        await paginator.start(followup=True)
+
+    @ui.button(label="新增座標", style=discord.ButtonStyle.green)
+    async def add_coord(self, i: discord.Interaction, _):
+        modal = AddCoord()
+        await i.response.send_modal(modal)
+        await modal.wait()
+        await self._update_interaction(i)
+
+    @ui.button(label="刪除座標", style=discord.ButtonStyle.red)
+    async def remove_coord(self, i: discord.Interaction, _):
+        modal = RemoveCord()
+        await i.response.send_modal(modal)
+        await modal.wait()
+        await self._update_interaction(i)
+
+
 class Minecraft(commands.Cog):
     def __init__(self, bot):
         self.bot: BotModel = bot
@@ -111,6 +219,13 @@ class Minecraft(commands.Cog):
         await i.response.send_message(
             embed=view.create_embed(await view._fetch_data(self.bot.session))
         )
+    
+    @app_commands.command(name="coords", description="座標系統")
+    async def coords_slash(self, i: discord.Interaction):
+        await i.response.defer()
+        view = CoordsSystem(self.bot.pool)
+        await view.create_table_in_db()
+        await view._update_interaction(i)
 
 
 async def setup(bot: commands.Bot):
