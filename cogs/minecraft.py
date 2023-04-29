@@ -121,9 +121,9 @@ class AddCoord(BaseModal):
             INSERT INTO coords(name, x, y, z) VALUES($1, $2, $3, $4)
             """,
             self.name.value,
-            self.x.value,
-            self.y.value,
-            self.z.value,
+            int(self.x.value),
+            int(self.y.value),
+            int(self.z.value),
         )
         self.stop()
 
@@ -142,7 +142,7 @@ class RemoveCord(BaseModal):
             """
             DELETE FROM coords WHERE id = $1
             """,
-            self.coord_id.value,
+            int(self.coord_id.value),
         )
         self.stop()
 
