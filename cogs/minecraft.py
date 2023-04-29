@@ -109,6 +109,9 @@ class AddCoord(BaseModal):
     x = ui.TextInput(label="X", placeholder="輸入X座標", min_length=1, max_length=50)
     y = ui.TextInput(label="Y", placeholder="輸入Y座標", min_length=1, max_length=50)
     z = ui.TextInput(label="Z", placeholder="輸入Z座標", min_length=1, max_length=50)
+    
+    def __init__(self):
+        super().__init__(title="新增座標", custom_id="add_coord")
 
     async def on_submit(self, inter: discord.Interaction):
         i: Inter = inter  # type: ignore
@@ -129,6 +132,8 @@ class RemoveCord(BaseModal):
     coord_id = ui.TextInput(
         label="座標ID", placeholder="輸入座標ID", min_length=1, max_length=50
     )
+    def __init__(self):
+        super().__init__(title="移除座標", custom_id="remove_coord")
 
     async def on_submit(self, inter: discord.Interaction):
         i: Inter = inter  # type: ignore
@@ -158,9 +163,6 @@ class CoordsSystem(BaseView):
             )"""
         )
 
-    async def _remove_coord(self, id: int) -> None:
-        await self.pool.execute("""DELETE FROM coords WHERE id = $1""", id)
-
     async def _make_coords_embeds(self) -> List[DefaultEmbed]:
         coords = await self.pool.fetch("""SELECT * FROM coords""")
         coords = [Coord(**coord) for coord in coords]
@@ -184,14 +186,14 @@ class CoordsSystem(BaseView):
         paginator = GeneralPaginator(i, embeds, self.children)  # type: ignore
         await paginator.start(followup=True)
 
-    @ui.button(label="新增座標", style=discord.ButtonStyle.green)
+    @ui.button(label="新增座標", style=discord.ButtonStyle.green, custom_id="add_coord_btn")
     async def add_coord(self, i: discord.Interaction, _):
         modal = AddCoord()
         await i.response.send_modal(modal)
         await modal.wait()
         await self._update_interaction(i)
 
-    @ui.button(label="刪除座標", style=discord.ButtonStyle.red)
+    @ui.button(label="刪除座標", style=discord.ButtonStyle.red, custom_id="remove_coord_btn")
     async def remove_coord(self, i: discord.Interaction, _):
         modal = RemoveCord()
         await i.response.send_modal(modal)
