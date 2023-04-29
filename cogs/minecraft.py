@@ -181,7 +181,7 @@ class CoordsSystem(BaseView):
 
     async def _update_interaction(self, i: discord.Interaction) -> None:
         embeds = await self._make_coords_embeds()
-        paginator = GeneralPaginator(i, embeds)  # type: ignore
+        paginator = GeneralPaginator(i, embeds, self.children)  # type: ignore
         await paginator.start(followup=True)
 
     @ui.button(label="新增座標", style=discord.ButtonStyle.green)
