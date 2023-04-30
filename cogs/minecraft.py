@@ -169,7 +169,7 @@ class CoordsSystem(BaseView):
         if not coords:
             return [DefaultEmbed("座標系統", "目前沒有座標")]
 
-        div_coords = list(divide_chunks(coords, 8))
+        div_coords = list(divide_chunks(coords, 9))
         embeds: List[DefaultEmbed] = []
         for div in div_coords:
             embed = DefaultEmbed("座標系統")
