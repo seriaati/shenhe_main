@@ -82,7 +82,7 @@ class ServerStatus(BaseView):
         )
         if response.players.sample:
             embed.add_field(
-                name="玩家", value="\n".join([p.name for p in response.players.sample])
+                name="玩家", value="\n".join([f"`{p.name}`" for p in response.players.sample])
             )
         return embed
 
