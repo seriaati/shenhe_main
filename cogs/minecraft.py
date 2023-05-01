@@ -31,7 +31,7 @@ class Players(BaseModel):
 
 
 class Server(BaseModel):
-    name: str
+    name: Optional[str]
     protocol: int
 
 
@@ -39,7 +39,7 @@ class APIResponse(BaseModel):
     status: str
     online: bool
     motd: str
-    motd_json: Dict[str, str]
+    motd_json: Optional[Dict[str, str]]
     favicon: Optional[str]
     error: Optional[str]
     players: Players
@@ -76,7 +76,7 @@ class ServerStatus(BaseView):
             "Minecraft 伺服器狀態", f"{'🟢 線上' if response.online else '🔴 離線'}"
         )
         embed.add_field(name="IP", value=self.server_ip)
-        embed.add_field(name="版本", value=response.server.name)
+        embed.add_field(name="版本", value=response.server.name or "未知")
         embed.add_field(
             name="人數", value=f"{response.players.now}/{response.players.max}"
         )
