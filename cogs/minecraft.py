@@ -64,7 +64,7 @@ class ServerStatus(BaseView):
     def __init__(self):
         super().__init__(timeout=None)
 
-        self.server_ip = "65.109.114.175"
+        self.server_ip = "34.81.237.15"
 
     async def _fetch_data(self, session: aiohttp.ClientSession) -> APIResponse:
         url = f"https://mcapi.us/server/status?ip={self.server_ip}"
