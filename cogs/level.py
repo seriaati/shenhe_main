@@ -270,8 +270,10 @@ class LevelCog(commands.GroupCog, name="level"):
                     f"**{rank}. {member.display_name}** | {self.get_level(xp)}等 ({xp})\n"
                 )
                 rank += 1
-            embed.set_footer(text=f"你的排名: {self_rank if self_rank else '(未上榜)'}")
             embeds.append(embed)
+        
+        for embed in embeds:
+            embed.set_footer(text=f"你的排名: {self_rank if self_rank else '(未上榜)'}")
 
         await GeneralPaginator(i, embeds).start(followup=True)
 
