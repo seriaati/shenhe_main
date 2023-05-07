@@ -231,12 +231,13 @@ class Giveaway:
     message_id: typing.Optional[int] = field(default=None)
     participants: typing.List[int] = field(default=[])
     extra_info: typing.Optional[str] = field(default=None)
+    bao: int = field(default=0)
 
-    async def insert_to_db(self, pool: asyncpg.Pool) -> None:
+    async def create(self, pool: asyncpg.Pool) -> None:
         await pool.execute(
             """
-            INSERT INTO gv (message_id, prize, author, prize_num, participants, extra_info)
-            VALUES ($1, $2, $3, $4, $5, $6)
+            INSERT INTO gv (message_id, prize, author, prize_num, participants, extra_info, bao)
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
             """,
             self.message_id,
             self.prize,
@@ -244,9 +245,10 @@ class Giveaway:
             self.prize_num,
             self.participants,
             self.extra_info,
+            self.bao,
         )
-    
-    async def update_db(self, pool: asyncpg.Pool) -> None:
+
+    async def update_participants(self, pool: asyncpg.Pool) -> None:
         await pool.execute(
             """
             UPDATE gv
@@ -254,16 +256,16 @@ class Giveaway:
             WHERE message_id = $2
             """,
             self.participants,
-            self.message_id
+            self.message_id,
         )
-    
-    async def delete_from_db(self, pool: asyncpg.Pool) -> None:
+
+    async def delete(self, pool: asyncpg.Pool) -> None:
         await pool.execute(
             """
             DELETE FROM gv
             WHERE message_id = $1
             """,
-            self.message_id
+            self.message_id,
         )
 
     def create_embed(self) -> DefaultEmbed:
@@ -272,5 +274,8 @@ class Giveaway:
         embed.add_field(name="獎品數量", value=str(self.prize_num), inline=False)
         if self.extra_info:
             embed.add_field(name="其他資訊", value=self.extra_info, inline=False)
+        if self.bao > 0:
+            embed.add_field(name="暴幣", value=f"參加此抽獎需支付 **{self.bao}** 暴幣", inline=False)
+            embed.add_field(name="總暴幣數", value=f"**{self.bao * len(self.participants)}** 暴幣", inline=False)
 
         return embed

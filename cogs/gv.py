@@ -5,8 +5,10 @@ import discord
 from discord import app_commands, ui
 from discord.ext import commands
 
+from apps.flow import flow_transaction, get_balance
 from dev.model import BotModel, DefaultEmbed, ErrorEmbed, Giveaway, Inter
 from utility.paginator import GeneralPaginator
+from utility.utils import divide_chunks
 
 
 class GiveAwayView(ui.View):
@@ -51,12 +53,24 @@ class GiveAwayView(ui.View):
     )
     async def join_gv(self, inter: discord.Interaction, button: ui.Button):
         i: Inter = inter  # type: ignore
+
+        if self.gv.bao > 0 and i.user.id not in self.gv.participants:
+            bao = await get_balance(i.user.id, i.client.pool)
+            if bao < self.gv.bao:
+                embed = ErrorEmbed(
+                    "暴幣不足", f"你的暴幣不足以參加此抽獎\n需要 **{self.gv.bao}** 暴幣，你現在有 **{bao}** 暴幣"
+                )
+                return await i.response.send_message(embed=embed, ephemeral=True)
+
         if i.user.id in self.gv.participants:
             self.gv.participants.remove(i.user.id)
+            await flow_transaction(i.user.id, self.gv.bao, i.client.pool)
         else:
             self.gv.participants.append(i.user.id)
+            await flow_transaction(i.user.id, -self.gv.bao, i.client.pool)
+
         button.label = str(len(self.gv.participants))
-        await self.gv.update_db(i.client.pool)
+        await self.gv.update_participants(i.client.pool)
         await self.update_embed_and_view(i)
 
     @ui.button(
@@ -72,14 +86,15 @@ class GiveAwayView(ui.View):
         else:
             # 10 participants per embed
             embeds: typing.List[discord.Embed] = []
-            for index in range(0, len(self.gv.participants), 10):
-                description = "\n".join(
-                    f"<@{p}>" for p in self.gv.participants[index : index + 5]
-                )
-                embed = DefaultEmbed(
-                    "參加者",
-                    f"{description}\n\n共 **{len(self.gv.participants)}** 位參加者",
-                )
+            participants = list(divide_chunks(self.gv.participants.copy(), 10))
+            index = 1
+            for div in participants:
+                embed = DefaultEmbed("參加者")
+                embed.description = ""
+                for p in div:
+                    embed.description += f"{index}. <@{p}>\n"
+                    index += 1
+                embed.description += f"\n共 **{len(self.gv.participants)}** 位參加者"
                 embeds.append(embed)
 
             await GeneralPaginator(i, embeds).start(ephemeral=True)
@@ -128,9 +143,12 @@ class GiveAwayCog(commands.Cog):
             gv = Giveaway(**row)
             self.bot.add_view(GiveAwayView(gv), message_id=gv.message_id)
 
-    @app_commands.rename(prize="獎品名稱", prize_num="獎品數量", extra_info="其他資訊")
+    @app_commands.rename(prize="獎品名稱", prize_num="獎品數量", extra_info="其他資訊", bao="暴幣")
     @app_commands.describe(
-        prize="要抽獎的獎品名稱", prize_num="要抽獎的獎品數量", extra_info="其他資訊 (選填)"
+        prize="要抽獎的獎品名稱",
+        prize_num="要抽獎的獎品數量",
+        extra_info="其他資訊 (選填)",
+        bao="參加此抽獎需要支付的暴幣數量 (選填)",
     )
     @app_commands.command(name="gv", description="開始一個抽獎")
     async def gv(
@@ -139,6 +157,7 @@ class GiveAwayCog(commands.Cog):
         prize: str,
         prize_num: int,
         extra_info: typing.Optional[str] = None,
+        bao: typing.Optional[app_commands.Range[int, 0]] = 0,
     ):
         if i.channel and i.channel.id != 1084301366031302656:
             await i.response.send_message(
@@ -146,11 +165,11 @@ class GiveAwayCog(commands.Cog):
             )
             return
 
-        gv = Giveaway(prize, i.user.id, prize_num, extra_info=extra_info)
+        gv = Giveaway(prize, i.user.id, prize_num, extra_info=extra_info, bao=bao or 0)
         view = GiveAwayView(gv)
         await i.response.send_message(embed=gv.create_embed(), view=view)
         gv.message_id = (await i.original_response()).id
-        await gv.insert_to_db(self.bot.pool)
+        await gv.create(self.bot.pool)
 
 
 async def setup(bot: commands.Bot) -> None:
