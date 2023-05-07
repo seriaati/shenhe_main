@@ -1,14 +1,80 @@
 import random
 import typing
 
+import asyncpg
 import discord
+from attrs import define, field
 from discord import app_commands, ui
 from discord.ext import commands
 
 from apps.flow import flow_transaction, get_balance
-from dev.model import BotModel, DefaultEmbed, ErrorEmbed, Giveaway, Inter
+from dev.model import BotModel, DefaultEmbed, ErrorEmbed, Inter
 from utility.paginator import GeneralPaginator
 from utility.utils import divide_chunks
+
+
+@define
+class Giveaway:
+    prize: str
+    author: int
+    prize_num: int
+    message_id: typing.Optional[int] = field(default=None)
+    participants: typing.List[int] = field(default=[])
+    extra_info: typing.Optional[str] = field(default=None)
+    bao: int = field(default=0)
+
+    async def create(self, pool: asyncpg.Pool) -> None:
+        await pool.execute(
+            """
+            INSERT INTO gv (message_id, prize, author, prize_num, participants, extra_info, bao)
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
+            """,
+            self.message_id,
+            self.prize,
+            self.author,
+            self.prize_num,
+            self.participants,
+            self.extra_info,
+            self.bao,
+        )
+
+    async def update_participants(self, pool: asyncpg.Pool) -> None:
+        await pool.execute(
+            """
+            UPDATE gv
+            SET participants = $1
+            WHERE message_id = $2
+            """,
+            self.participants,
+            self.message_id,
+        )
+
+    async def delete(self, pool: asyncpg.Pool) -> None:
+        await pool.execute(
+            """
+            DELETE FROM gv
+            WHERE message_id = $1
+            """,
+            self.message_id,
+        )
+
+    def create_embed(self) -> DefaultEmbed:
+        embed = DefaultEmbed(self.prize, "點按 🎉 按鈕來參加抽獎！")
+        embed.add_field(name="主辦人", value=f"<@{self.author}>", inline=False)
+        embed.add_field(name="獎品數量", value=str(self.prize_num), inline=False)
+        if self.extra_info:
+            embed.add_field(name="其他資訊", value=self.extra_info, inline=False)
+        if self.bao > 0:
+            embed.add_field(
+                name="暴幣", value=f"參加此抽獎需支付 **{self.bao}** 暴幣", inline=False
+            )
+            embed.add_field(
+                name="募得的總暴幣數",
+                value=f"**{self.bao * len(self.participants)}** 暴幣",
+                inline=False,
+            )
+
+        return embed
 
 
 class GiveAwayView(ui.View):
@@ -155,7 +221,7 @@ class GiveAwayCog(commands.Cog):
         self,
         i: discord.Interaction,
         prize: str,
-        prize_num: int,
+        prize_num: app_commands.Range[int, 0],
         extra_info: typing.Optional[str] = None,
         bao: typing.Optional[app_commands.Range[int, 0]] = 0,
     ):
