@@ -4,7 +4,6 @@ import discord
 from discord import ui
 from discord.ext import commands
 
-import data.constants as constants
 from dev.model import BotModel
 from utility.utils import default_embed
 
@@ -85,7 +84,16 @@ class ReactionRoles(commands.Cog):
         )
         self.bot.add_view(self.notif_view)
 
-        self.game_role_ids = constants.game_role_ids
+        self.game_role_ids = (
+            1085192975241465956,
+            1085193097698361435,
+            1085146432622821408,
+            1083175433052372992,
+            1083175539369582663,
+            1093481291162329219,
+            1100967660113625128,
+            1106224249703780476,
+        )
         self.game_role_emojis = (
             1085188783198187681,
             1085188641803997245,
@@ -94,6 +102,7 @@ class ReactionRoles(commands.Cog):
             1085188654537920633,
             1093481186761912320,
             1100967593097056407,
+            1105806784117088336,
         )
         self.game_view = ReactionRole(
             [guild.get_role(id) for id in self.game_role_ids],
