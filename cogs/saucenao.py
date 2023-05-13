@@ -34,9 +34,12 @@ class SauceNao(commands.Cog):
         embeds: List[discord.Embed] = []
 
         for result in resp.results:
-            embed = DefaultEmbed(result.title, f"[點我前往]({result.urls[0]})")
+            urls = [f"• {url}" for url in result.urls]
+            embed = DefaultEmbed(result.title, "\n".join(urls))
+            if result.author:
+                embed.set_author(name=result.author)
             embed.set_image(url=result.thumbnail)
-            embed.set_footer(text=f"相似度: {result.similarity}%")
+            embed.set_footer(text=f"相似度: {result.similarity:.2f}%")
             embeds.append(embed)
 
         return embeds
