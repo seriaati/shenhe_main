@@ -64,8 +64,7 @@ class SauceNao(commands.Cog):
     async def search_sauce_ctx(self, i: discord.Interaction, message: discord.Message):
         await self._make_search_response(i, True)
         urls: List[str] = url_pattern.findall(message.content)
-        if not urls:
-            urls = [a.url for a in message.attachments]
+        urls.extend([a.url for a in message.attachments])
 
         # filter out non-image urls
         urls = [
