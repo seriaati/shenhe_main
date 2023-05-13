@@ -62,7 +62,7 @@ class SauceNao(commands.Cog):
         await paginator.start(edit=True)
 
     async def search_sauce_ctx(self, i: discord.Interaction, message: discord.Message):
-        await self._make_search_response(i, True)
+        await self._make_search_response(i, False)
         urls: List[str] = url_pattern.findall(message.content)
         urls.extend([a.url for a in message.attachments])
 
