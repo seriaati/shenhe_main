@@ -75,14 +75,14 @@ class SauceNao(commands.Cog):
     @app_commands.describe(url="圖片連結", ephemeral="是否隱藏訊息（預設為否）")
     @app_commands.choices(
         ephemeral=[
-            app_commands.Choice(name="是", value=True),
-            app_commands.Choice(name="否", value=False),
+            app_commands.Choice(name="是", value=1),
+            app_commands.Choice(name="否", value=0),
         ]
     )
     async def slash_search_sauce_url(
-        self, i: discord.Interaction, url: str, ephemeral: bool = False
+        self, i: discord.Interaction, url: str, ephemeral: int = 0
     ):
-        await self._make_search_response(i, ephemeral)
+        await self._make_search_response(i, bool(ephemeral))
         resp = await self._search(url)
         embeds = self._make_embeds(resp)
         await self._return_results(i, embeds)
@@ -92,14 +92,14 @@ class SauceNao(commands.Cog):
     @app_commands.describe(image="圖片", ephemeral="是否隱藏訊息（預設為否）")
     @app_commands.choices(
         ephemeral=[
-            app_commands.Choice(name="是", value=True),
-            app_commands.Choice(name="否", value=False),
+            app_commands.Choice(name="是", value=1),
+            app_commands.Choice(name="否", value=0),
         ]
     )
     async def slash_search_sauce_image(
-        self, i: discord.Interaction, image: discord.Attachment, ephemeral: bool = False
+        self, i: discord.Interaction, image: discord.Attachment, ephemeral: int = 0
     ):
-        await self._make_search_response(i, ephemeral)
+        await self._make_search_response(i, bool(ephemeral))
         resp = await self._search(image.url)
         embeds = self._make_embeds(resp)
         await self._return_results(i, embeds)
