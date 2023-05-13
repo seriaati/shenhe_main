@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 from saucenao_api import AIOSauceNao
 from saucenao_api.saucenao_api import SauceResponse
 
-from dev.model import DefaultEmbed
+from dev.model import DefaultEmbed, ErrorEmbed
 from utility.paginator import GeneralPaginator
 
 from .image_manager import url_pattern
@@ -64,8 +64,26 @@ class SauceNao(commands.Cog):
     async def search_sauce_ctx(self, i: discord.Interaction, message: discord.Message):
         await self._make_search_response(i, True)
         urls: List[str] = url_pattern.findall(message.content)
-        resp = await self._search(urls[0])
-        embeds = self._make_embeds(resp)
+        if not urls:
+            urls = [a.url for a in message.attachments]
+
+        # filter out non-image urls
+        urls = [
+            url
+            for url in urls
+            if url.endswith((".jpg", ".png", ".gif", ".webp", ".jpeg"))
+        ]
+        if not urls:
+            embed = ErrorEmbed("找不到圖片連結", "請確認訊息內是否有圖片連結")
+            return await i.followup.send(embed=embed)
+
+        embeds: List[discord.Embed] = []
+        for url in urls:
+            resp = await self._search(url)
+            results = self._make_embeds(resp)
+            if not results:
+                continue
+            embeds.append(results[0])
         await self._return_results(i, embeds)
 
     sauce = app_commands.Group(name="sauce", description="查找圖片來源")
@@ -85,6 +103,10 @@ class SauceNao(commands.Cog):
         await self._make_search_response(i, bool(ephemeral))
         resp = await self._search(url)
         embeds = self._make_embeds(resp)
+
+        if not embeds:
+            embed = ErrorEmbed("找不到圖片來源", "請確認連結是否正確")
+            return await i.followup.send(embed=embed)
         await self._return_results(i, embeds)
 
     @sauce.command(name="image", description="透過圖片查找圖片來源")
@@ -102,6 +124,10 @@ class SauceNao(commands.Cog):
         await self._make_search_response(i, bool(ephemeral))
         resp = await self._search(image.url)
         embeds = self._make_embeds(resp)
+        if not embeds:
+            embed = ErrorEmbed("找不到圖片來源", "請確認連結是否正確")
+            return await i.followup.send(embed=embed)
+
         await self._return_results(i, embeds)
 
 
