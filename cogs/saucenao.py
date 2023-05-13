@@ -70,6 +70,12 @@ class SauceNao(commands.Cog):
     @sauce.command(name="url", description="透過圖片連結查找圖片來源")
     @app_commands.rename(url="連結", ephemeral="隱藏訊息")
     @app_commands.describe(url="圖片連結", ephemeral="是否隱藏訊息（預設為否）")
+    @app_commands.choices(
+        ephemeral=[
+            app_commands.Choice(name="是", value=True),
+            app_commands.Choice(name="否", value=False),
+        ]
+    )
     async def slash_search_sauce_url(
         self, i: discord.Interaction, url: str, ephemeral: bool = False
     ):
@@ -81,6 +87,12 @@ class SauceNao(commands.Cog):
     @sauce.command(name="image", description="透過圖片查找圖片來源")
     @app_commands.rename(image="圖片", ephemeral="隱藏訊息")
     @app_commands.describe(image="圖片", ephemeral="是否隱藏訊息（預設為否）")
+    @app_commands.choices(
+        ephemeral=[
+            app_commands.Choice(name="是", value=True),
+            app_commands.Choice(name="否", value=False),
+        ]
+    )
     async def slash_search_sauce_image(
         self, i: discord.Interaction, image: discord.Attachment, ephemeral: bool = False
     ):
