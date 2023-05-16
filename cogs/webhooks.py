@@ -1,6 +1,6 @@
 import io
 import re
-from typing import List
+from typing import Dict, List
 
 import discord
 from discord.ext import commands
@@ -64,17 +64,14 @@ class WebhookCog(commands.Cog):
                         files.append(file_)
                         message.content = message.content.replace(url, f"<{url}>")
 
-        if any(not a.is_spoiler() for a in message.attachments):
-            await message.delete()
-
-            for attachment in message.attachments:
-                if not attachment.is_spoiler():
-                    url = attachment.proxy_url
-                    file_name = attachment.filename
-                    file_ = await self.download_image(url, file_name)
-                    files.append(file_)
-                else:
-                    files.append(await attachment.to_file())
+        url_dict: Dict[str, str] = {}
+        for a in message.attachments:
+            if a.is_spoiler():
+                url_dict[a.filename] = a.url
+            else:
+                files.append(await a.to_file())
+        await message.delete()
+        files.extend([await self.download_image(url, filename) for filename, url in url_dict.items()])
 
         if files:
             webhooks = await message.channel.webhooks()
