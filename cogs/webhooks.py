@@ -50,6 +50,7 @@ class WebhookCog(commands.Cog):
                 await message.delete()
                 urls: List[str] = url_pattern.findall(message.content)
                 for url in urls:
+                    filename = url.split("/")[-1].split("?")[0]
                     if "twitter" in url:
                         direct_url = twitter_to_direct(url)
                     elif "pixiv" in url or "phixiv" in url:
@@ -58,9 +59,7 @@ class WebhookCog(commands.Cog):
                         direct_url = url
 
                     if direct_url:
-                        file_ = await self.download_image(
-                            direct_url, "auto_spoiler.jpg"
-                        )
+                        file_ = await self.download_image(direct_url, filename)
                         files.append(file_)
                         message.content = message.content.replace(url, f"<{url}>")
 
@@ -72,7 +71,12 @@ class WebhookCog(commands.Cog):
                 else:
                     files.append(await a.to_file())
             await message.delete()
-            files.extend([await self.download_image(url, filename) for filename, url in url_dict.items()])
+            files.extend(
+                [
+                    await self.download_image(url, filename)
+                    for filename, url in url_dict.items()
+                ]
+            )
 
         if files:
             webhooks = await message.channel.webhooks()
