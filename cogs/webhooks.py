@@ -64,14 +64,15 @@ class WebhookCog(commands.Cog):
                         files.append(file_)
                         message.content = message.content.replace(url, f"<{url}>")
 
-        url_dict: Dict[str, str] = {}
-        for a in message.attachments:
-            if a.is_spoiler():
-                url_dict[a.filename] = a.url
-            else:
-                files.append(await a.to_file())
-        await message.delete()
-        files.extend([await self.download_image(url, filename) for filename, url in url_dict.items()])
+        if any(not a.is_spoiler() for a in message.attachments):
+            url_dict: Dict[str, str] = {}
+            for a in message.attachments:
+                if a.is_spoiler():
+                    url_dict[a.filename] = a.url
+                else:
+                    files.append(await a.to_file())
+            await message.delete()
+            files.extend([await self.download_image(url, filename) for filename, url in url_dict.items()])
 
         if files:
             webhooks = await message.channel.webhooks()
