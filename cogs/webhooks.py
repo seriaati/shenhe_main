@@ -53,8 +53,10 @@ class WebhookCog(commands.Cog):
                     filename = url.split("/")[-1].split("?")[0]
                     if "twitter" in url:
                         direct_url = twitter_to_direct(url)
+                        filename += ".jpg"
                     elif "pixiv" in url or "phixiv" in url:
                         direct_url = pixiv_to_direct(url)
+                        filename += ".png"
                     else:
                         direct_url = url
 
@@ -70,6 +72,7 @@ class WebhookCog(commands.Cog):
                     url_dict[a.filename] = a.url
                 else:
                     files.append(await a.to_file())
+
             await message.delete()
             files.extend(
                 [
