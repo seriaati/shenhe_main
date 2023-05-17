@@ -66,7 +66,7 @@ class WebhookCog(commands.Cog):
         if any(not a.is_spoiler() for a in message.attachments):
             url_dict: Dict[str, str] = {}
             for a in message.attachments:
-                if a.is_spoiler():
+                if not a.is_spoiler():
                     url_dict[a.filename] = a.url
                 else:
                     files.append(await a.to_file())
