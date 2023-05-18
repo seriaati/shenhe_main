@@ -55,6 +55,20 @@ class AdminCog(commands.Cog):
         await ctx.send("Syncing...")
         await self.bot.tree.sync()
         await ctx.send("Synced")
+    
+    @commands.is_owner()
+    @commands.command(name="verify")
+    async def verify(self, ctx: commands.Context, member: discord.Member):
+        role = ctx.guild.get_role(1108765559849500813)
+        await member.add_roles(role)
+        await ctx.send(f"{member.mention} is now a {role.mention}")
+    
+    @commands.is_owner()
+    @commands.command(name="unverify")
+    async def unverify(self, ctx: commands.Context, member: discord.Member):
+        role = ctx.guild.get_role(1108765559849500813)
+        await member.remove_roles(role)
+        await ctx.send(f"{member.mention} is no longer a {role.mention}")
 
 
 async def setup(bot: commands.Bot) -> None:
