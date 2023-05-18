@@ -58,17 +58,26 @@ class AdminCog(commands.Cog):
     
     @commands.is_owner()
     @commands.command(name="verify")
-    async def verify(self, ctx: commands.Context, member: discord.Member):
-        role = ctx.guild.get_role(1108765559849500813)
+    async def verify(self, ctx: commands.Context, member: discord.Member, name: str):
+        assert ctx.guild is not None
+        role = discord.utils.get(ctx.guild.roles, name=f"verified {name}")
+        if role is None:
+            role = await ctx.guild.create_role(name=f"verified {name}")
         await member.add_roles(role)
         await ctx.send(f"{member.mention} is now a {role.mention}")
     
     @commands.is_owner()
     @commands.command(name="unverify")
-    async def unverify(self, ctx: commands.Context, member: discord.Member):
-        role = ctx.guild.get_role(1108765559849500813)
+    async def unverify(self, ctx: commands.Context, member: discord.Member, name: str):
+        assert ctx.guild is not None
+        role = discord.utils.get(ctx.guild.roles, name=f"verified {name}")
+        if role is None:
+            role = await ctx.guild.create_role(name=f"verified {name}")
         await member.remove_roles(role)
         await ctx.send(f"{member.mention} is no longer a {role.mention}")
+        
+        if len(role.members) == 0:
+            await role.delete()
 
 
 async def setup(bot: commands.Bot) -> None:
