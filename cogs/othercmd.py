@@ -87,7 +87,7 @@ class OtherCMDCog(commands.Cog, name="other"):
         assert isinstance(channel, discord.TextChannel)
         await channel.send(embed=embed)
 
-    @app_commands.command(name="bypass", description="繞過 Discord 的圖片禁令限制")
+    @app_commands.command(name="bypass", description="繞過 Discord 的圖片禁令限制", nsfw=True)
     @app_commands.rename(image="圖片")
     @app_commands.describe(image="要上傳的圖片")
     async def bypass(self, i: discord.Interaction, image: discord.Attachment):
