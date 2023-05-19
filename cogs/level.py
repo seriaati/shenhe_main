@@ -267,7 +267,7 @@ class LevelCog(commands.GroupCog, name="level"):
 
                 xp = stat[query]
                 embed.description += (
-                    f"**{rank}. {member.display_name}** | {self.get_level(xp)}等 ({xp})\n"
+                    f"{rank}. {member.display_name} | {self.get_level(xp)}等 ({xp})\n"
                 )
                 rank += 1
             embeds.append(embed)
