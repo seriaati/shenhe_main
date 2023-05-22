@@ -209,6 +209,8 @@ class OtherCMDCog(commands.Cog, name="other"):
         if random_type == "seed":
             random.seed(str(person_one.id) + str(person_two.id))
         num = random.randint(0, 100)
+        if person_one.id == 509258675983220754 and person_two.id == 410036441129943050:
+            num = 101
 
         fp = await draw.draw_ship_image(
             person_one.display_avatar.url,
