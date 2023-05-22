@@ -1,8 +1,4 @@
-import json
-import logging
-from collections import defaultdict
 from datetime import timedelta
-from typing import DefaultDict
 
 import discord
 from discord.ext import commands
@@ -11,9 +7,7 @@ from discord.ext import commands
 class NoSpam(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot: commands.Bot = bot
-        self.user_messages: DefaultDict[int, DefaultDict[str, list[int]]] = defaultdict(
-            lambda: defaultdict(list)
-        )
+        self.user_messages = {}
 
         self.guild_id = 1061877505067327528
         self.owner_id = 410036441129943050
@@ -95,7 +89,11 @@ class NoSpam(commands.Cog):
 
         user_id = message.author.id
         channel_id = message.channel.id
+        if user_id not in self.user_messages:
+            self.user_messages[user_id] = {}
         messages = self.user_messages[user_id]
+        if message.content not in messages:
+            messages[message.content] = []
         channels = messages[message.content]
         channels.append(channel_id)
 
@@ -108,11 +106,6 @@ class NoSpam(commands.Cog):
     @commands.command(name="cs")
     async def cs(self, ctx: commands.Context):
         await ctx.send(str(self.user_messages))
-    
-    @commands.command(name="hp")
-    async def hp(self, ctx: commands.Context):
-        await ctx.send(str(self.user_messages[ctx.author.id]))
-        await ctx.send(str(type(self.user_messages[ctx.author.id])))
 
 async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(NoSpam(bot))
