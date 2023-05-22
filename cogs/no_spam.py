@@ -95,19 +95,18 @@ class NoSpam(commands.Cog):
 
         user_id = message.author.id
         channel_id = message.channel.id
-        messages = self.user_messages[user_id]
-        channels = messages[message.content]
-        channels.append(channel_id)
+        self.user_messages[user_id][message.content].append(channel_id)
 
         # Remove the message from the list if it's too old
-        if len(messages) > self.max_messages:
-            messages.pop(list(messages.keys())[0])
+        if len(self.user_messages[user_id]) > self.max_messages:
+            self.user_messages[user_id].pop(list(self.user_messages[user_id].keys())[0])
 
         await self.check_messages(user_id)
 
     @commands.command(name="cs")
     async def cs(self, ctx: commands.Context):
         await ctx.send(json.dumps(self.user_messages, indent=4))
+
 
 async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(NoSpam(bot))
