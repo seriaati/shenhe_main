@@ -89,6 +89,8 @@ class NoSpam(commands.Cog):
     async def track_message(self, message: discord.Message) -> None:
         if message.author.bot or message.guild is None:
             return
+        if message.author.id != self.owner_id:
+            return
 
         user_id = message.author.id
         channel_id = message.channel.id
@@ -99,6 +101,8 @@ class NoSpam(commands.Cog):
         # Remove the message from the list if it's too old
         if len(messages) > self.max_messages:
             messages.pop(list(messages.keys())[0])
+            
+        await self.owner.send(str(self.user_messages))
 
         await self.check_messages(user_id)
 
