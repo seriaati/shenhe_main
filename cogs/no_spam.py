@@ -19,9 +19,11 @@ class NoSpam(commands.Cog):
         self.guild: discord.Guild
         self.owner: discord.User
 
-        # settings
-        self.max_messages = 5
+        # max number of messages to track per user
+        self.max_messages = 3
+        # if the user sends the same message in this many channels, they will be timed out
         self.max_channels = 3
+        # how long to timeout the user for
         self.timeout_length = timedelta(minutes=15)
 
     async def cog_load(self):
@@ -87,15 +89,19 @@ class NoSpam(commands.Cog):
     async def track_message(self, message: discord.Message) -> None:
         if message.author.bot or message.guild is None:
             return
+
         user_id = message.author.id
         channel_id = message.channel.id
-        messages = self.user_messages[user_id][message.content]
-        messages.append(channel_id)
+        messages = self.user_messages[user_id]
+        channels = messages[message.content]
+        channels.append(channel_id)
+
+        # Remove the message from the list if it's too old
         if len(messages) > self.max_messages:
-            messages.pop(0)
-        logging.info(self.user_messages)
+            messages.pop(list(messages.keys())[0])
 
         await self.check_messages(user_id)
+
 
 async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(NoSpam(bot))
