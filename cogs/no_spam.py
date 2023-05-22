@@ -94,3 +94,6 @@ class NoSpam(commands.Cog):
             messages.pop(0)
 
         await self.check_messages(user_id)
+
+async def setup(bot: commands.Bot) -> None:
+    await bot.add_cog(NoSpam(bot))
