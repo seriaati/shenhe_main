@@ -1,5 +1,3 @@
-import json
-import logging
 from collections import defaultdict
 from datetime import timedelta
 from typing import DefaultDict
@@ -72,10 +70,12 @@ class NoSpam(commands.Cog):
                     )
 
                 # Send a message to the owner with details about the spam
+                urls = "\n".join(channel_urls)
                 embed = discord.Embed(title="Spam detected")
                 embed.description = f"""
                 Message: {content}
-                Channels: {channel_urls}
+                Channels:
+                {urls}
                 """
                 embed.set_author(
                     name=member.display_name, icon_url=member.display_avatar.url
@@ -100,14 +100,6 @@ class NoSpam(commands.Cog):
 
         await self.check_messages(user_id)
 
-    @commands.command(name="cs")
-    async def cs(self, ctx: commands.Context):
-        await ctx.send(str(self.user_messages))
-    
-    @commands.command(name="hp")
-    async def hp(self, ctx: commands.Context):
-        await ctx.send(str(self.user_messages[ctx.author.id]))
-        
 
 async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(NoSpam(bot))
