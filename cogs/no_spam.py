@@ -1,3 +1,4 @@
+import logging
 from collections import defaultdict
 from datetime import timedelta
 from typing import DefaultDict
@@ -92,6 +93,7 @@ class NoSpam(commands.Cog):
         messages.append(channel_id)
         if len(messages) > self.max_messages:
             messages.pop(0)
+        logging.info(self.user_messages)
 
         await self.check_messages(user_id)
 
