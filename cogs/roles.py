@@ -52,7 +52,7 @@ class RoleButton(ui.Button[ReactionRole]):
             and "神之眼" in self.label
             and any("神之眼" in role.name for role in member.roles)
         ):
-            await i.response.send_message("你已經擁有神之眼了", ephemeral=True)
+            return await i.response.send_message("你已經擁有神之眼了", ephemeral=True)
         else:
             await member.add_roles(self.role)
 
