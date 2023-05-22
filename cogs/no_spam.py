@@ -87,8 +87,6 @@ class NoSpam(commands.Cog):
     async def track_message(self, message: discord.Message) -> None:
         if message.author.bot or message.guild is None:
             return
-        if message.author.id != self.owner_id:
-            return
 
         user_id = message.author.id
         channel_id = message.channel.id
