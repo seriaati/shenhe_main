@@ -1,3 +1,4 @@
+import json
 import logging
 from collections import defaultdict
 from datetime import timedelta
@@ -101,11 +102,12 @@ class NoSpam(commands.Cog):
         # Remove the message from the list if it's too old
         if len(messages) > self.max_messages:
             messages.pop(list(messages.keys())[0])
-            
-        await self.owner.send(str(self.user_messages))
 
         await self.check_messages(user_id)
 
+    @commands.command(name="cs")
+    async def cs(self, ctx: commands.Context):
+        await ctx.send(json.dumps(self.user_messages, indent=4))
 
 async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(NoSpam(bot))
