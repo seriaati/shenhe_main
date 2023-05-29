@@ -93,6 +93,7 @@ class ReactionRoles(commands.Cog):
             1093481291162329219,
             1100967660113625128,
             1106224249703780476,
+            1112764670743412787,
         )
         self.game_role_emojis = (
             1085188783198187681,
@@ -103,6 +104,7 @@ class ReactionRoles(commands.Cog):
             1093481186761912320,
             1100967593097056407,
             1105806784117088336,
+            1112765155055517737,
         )
         self.game_view = ReactionRole(
             [guild.get_role(id) for id in self.game_role_ids],
