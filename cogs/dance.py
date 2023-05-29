@@ -24,7 +24,7 @@ def dance_owner_check():
         i: Inter = inter  # type: ignore
         assert isinstance(i.channel, discord.TextChannel)
         owner_id: int = await i.client.pool.fetchval(
-            "SELECT owner_id FROM dance WHERE channel_id = $1", i.channel.id
+            "SELECT owner FROM dance WHERE channel_id = $1", i.channel.id
         )
         if i.user.id != owner_id:
             embed = ErrorEmbed("你不是此練舞頻道的擁有者", f"擁有者: <@{owner_id}>")
@@ -118,7 +118,7 @@ class DanceCog(commands.GroupCog, name="dance"):
         assert isinstance(i.channel, discord.TextChannel)
         channel = i.channel
         await self.bot.pool.execute(
-            "UPDATE dance SET owner_id = $1 WHERE channel_id = $2",
+            "UPDATE dance SET owner = $1 WHERE channel_id = $2",
             member.id,
             channel.id,
         )
