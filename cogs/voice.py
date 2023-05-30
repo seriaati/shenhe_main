@@ -74,7 +74,7 @@ class VoiceCog(commands.GroupCog, name="vc"):
         old = before.channel
         new = after.channel
 
-        if new:
+        if new: # joining a voice channel
             await member.add_roles(vc_role)
             if new.id == make_vc.id:
                 member_vc = await member.guild.create_voice_channel(
@@ -86,9 +86,10 @@ class VoiceCog(commands.GroupCog, name="vc"):
                     member.id,
                     member_vc.id,
                 )
-        else:
+        else: # disconnecting from a voice channel
             await member.remove_roles(vc_role)
-
+            
+        # changing a voice channel or disconnecting from a voice channel
         if old is not None:
             owner_exist = await self.bot.pool.fetchval(
                 "SELECT EXISTS(SELECT 1 FROM voice WHERE owner_id = $1)", member.id
@@ -99,7 +100,8 @@ class VoiceCog(commands.GroupCog, name="vc"):
                     random.choice(old.members).id,
                     old.id,
                 )
-            if old.id != make_vc and len(old.members) -1 == 0:
+            
+            if old.id != make_vc.id and len(old.members) == 0:
                 try:
                     await old.delete()
                 except discord.NotFound:
