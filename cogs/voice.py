@@ -99,7 +99,7 @@ class VoiceCog(commands.GroupCog, name="vc"):
                     random.choice(old.members).id,
                     old.id,
                 )
-            if old.id != make_vc and len(old.members) == 0:
+            if old.id != make_vc and len(old.members) -1 == 0:
                 try:
                     await old.delete()
                 except discord.NotFound:
