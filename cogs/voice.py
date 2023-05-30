@@ -95,7 +95,7 @@ class VoiceCog(commands.GroupCog, name="vc"):
             owner_exist = await self.bot.pool.fetchval(
                 "SELECT EXISTS(SELECT 1 FROM voice WHERE owner_id = $1)", member.id
             )
-            if owner_exist:
+            if owner_exist and old.members:
                 await self.bot.pool.execute(
                     "UPDATE voice SET owner_id = $1 WHERE channel_id = $2",
                     random.choice(old.members).id,
