@@ -1,7 +1,6 @@
 import random
 
 import discord
-import wavelink
 from discord import app_commands
 from discord.ext import commands
 
@@ -48,7 +47,18 @@ class VoiceCog(commands.GroupCog, name="vc"):
     def __init__(self, bot):
         self.bot: BotModel = bot
         super().__init__()
-
+        self.bot.loop.create_task(self.get_variables())
+        
+        self.vc_role: discord.Role
+        self.make_vc: discord.VoiceChannel
+    
+    async def get_variables(self):
+        await self.bot.wait_until_ready()
+        guild = self.bot.get_guild(self.bot.guild_id)
+        self.vc_role = guild.get_role(1061955528349188147) # type: ignore
+        self.make_vc = guild.get_channel(1061881611450322954) # type: ignore
+        
+    
     @commands.Cog.listener()
     async def on_voice_state_update(
         self,
@@ -58,64 +68,46 @@ class VoiceCog(commands.GroupCog, name="vc"):
     ):
         if member.guild.id != self.bot.guild_id:
             return
-        
-        guild = member.guild
-        make_vc = guild.get_channel(1061881611450322954)
-        assert make_vc
-        vc_role = guild.get_role(1061955528349188147)
-        assert vc_role
 
+        vc_role = self.vc_role
+        make_vc = self.make_vc
         old = before.channel
         new = after.channel
 
-        if (
-            new is None
-            and old is not None
-            and len(old.members) == 1
-            and old.members[0].id == self.bot.user.id
-            and member.guild.voice_client
-        ):
-            player: wavelink.Player = member.guild.voice_client  # type: ignore
-            player.queue.clear()
-            await player.stop()
-            await player.disconnect()
-
-        if new is not None:
+        if new:
             await member.add_roles(vc_role)
-
-        if new == make_vc:
-            member_vc = await member.guild.create_voice_channel(
-                name=f"{member.display_name}的語音台", category=make_vc.category
-            )
-            await member.move_to(member_vc)
-            await member.add_roles(vc_role)
-            await self.bot.pool.execute(
-                "INSERT INTO voice (owner_id, channel_id) VALUES ($1, $2)",
-                member.id,
-                member_vc.id,
-            )
-
-        if new is None:
+            if new.id == make_vc.id:
+                member_vc = await member.guild.create_voice_channel(
+                    name=f"{member.display_name}的語音台", category=make_vc.category
+                )
+                await member.move_to(member_vc)
+                await self.bot.pool.execute(
+                    "INSERT INTO voice (owner_id, channel_id) VALUES ($1, $2)",
+                    member.id,
+                    member_vc.id,
+                )
+        else:
             await member.remove_roles(vc_role)
-            owner = await self.bot.pool.fetchrow(
-                "SELECT 1 FROM voice WHERE owner_id = $1", member.id
+
+        if old is not None:
+            owner_exist = await self.bot.pool.fetchval(
+                "SELECT EXISTS(SELECT 1 FROM voice WHERE owner_id = $1)", member.id
             )
-            if owner is not None and old is not None and len(old.members) != 0:
+            if owner_exist:
                 await self.bot.pool.execute(
                     "UPDATE voice SET owner_id = $1 WHERE channel_id = $2",
                     random.choice(old.members).id,
                     old.id,
                 )
-        if old is not None and old != make_vc and len(old.members) == 0:
-            if old.type is discord.ChannelType.stage_voice:
-                return
-            try:
-                await old.delete()
-            except discord.NotFound:
-                pass
-            await self.bot.pool.execute(
-                "DELETE FROM voice WHERE channel_id = $1", old.id
-            )
+            if old.id != make_vc and len(old.members) == 0:
+                try:
+                    await old.delete()
+                except discord.NotFound:
+                    pass
+                
+                await self.bot.pool.execute(
+                    "DELETE FROM voice WHERE channel_id = $1", old.id
+                )
 
     @check_in_vc()
     @check_owner()
@@ -146,6 +138,7 @@ class VoiceCog(commands.GroupCog, name="vc"):
         traveler = i.guild.get_role(1061880147952812052)
         assert traveler
         await current_vc.set_permissions(traveler, connect=False, view_channel=True)
+        await current_vc.edit(name=f"🔒{current_vc.name}")
         await i.response.send_message(
             embed=DefaultEmbed("成功", "此語音台已被牢牢鎖上 (誰都別想進來！)"), ephemeral=True
         )
