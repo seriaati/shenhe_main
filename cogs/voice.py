@@ -154,6 +154,7 @@ class VoiceCog(commands.GroupCog, name="vc"):
         traveler = i.guild.get_role(1061880147952812052)
         assert traveler
         await current_vc.set_permissions(traveler, connect=True, view_channel=True)
+        await current_vc.edit(name=current_vc.name.replace("🔒", ""))
         await i.response.send_message(
             embed=DefaultEmbed("成功", "此語音台的封印已被解除"), ephemeral=True
         )
