@@ -107,6 +107,20 @@ class FlowCog(commands.Cog, name="flow"):
     @app_commands.rename(member="使用者")
     @app_commands.describe(member="被戳的使用者")
     async def poke(self, i: discord.Interaction, member: discord.Member):
+        flow_member = await flow_app.get_balance(member.id, self.bot.pool)
+        if flow_member < 0:
+            await i.response.send_message(
+                embed=ErrorEmbed(
+                    "錯誤",
+                    f"""
+                    使用者 {member.mention} 的當前暴幣數量不足
+                    {member.mention} 的暴幣: {flow_member}
+                    """,
+                ),
+                ephemeral=True,
+            )
+            return
+        
         success = True if randint(1, 2) == 1 else False
         flow_num = randint(1, 3)
 
