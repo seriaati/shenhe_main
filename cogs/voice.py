@@ -1,3 +1,4 @@
+import logging
 import random
 
 import discord
@@ -101,6 +102,7 @@ class VoiceCog(commands.GroupCog, name="vc"):
                     old.id,
                 )
             
+            logging.info(len(old.members))
             if old.id != make_vc.id and len(old.members) -1 == 0:
                 try:
                     await old.delete()
