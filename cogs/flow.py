@@ -54,7 +54,7 @@ def flow_check():
     return app_commands.check(predicate)
 
 
-class FlowCog(commands.Cog, name="flow"):
+class BaoCog(commands.Cog, name="bao"):
     def __init__(self, bot) -> None:
         self.bot: BotModel = bot
         self.debug = self.bot.debug
@@ -296,4 +296,4 @@ class FlowCog(commands.Cog, name="flow"):
 
 
 async def setup(bot: commands.Bot) -> None:
-    await bot.add_cog(FlowCog(bot))
+    await bot.add_cog(BaoCog(bot))

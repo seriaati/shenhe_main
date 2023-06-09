@@ -9,7 +9,7 @@ from utility.utils import default_embed
 class Dropdown(Select):
     def __init__(self, bot: commands.Bot):
         options = [
-            SelectOption(label="暴幣系統", emoji="🪙", value="flow"),
+            SelectOption(label="暴幣系統", emoji="🪙", value="bao"),
             SelectOption(label="小遊戲系統", emoji="��🏓", value="game"),
             SelectOption(label="語音台系統", emoji="🎙️", value="vc"),
             SelectOption(label="音樂系統", emoji="🎵", value="music"),
