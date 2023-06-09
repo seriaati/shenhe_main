@@ -13,7 +13,7 @@ from utility.paginator import GeneralPaginator
 from utility.utils import divide_chunks
 
 
-def flow_check():
+def bao_check():
     async def predicate(inter: discord.Interaction) -> bool:
         i: Inter = inter  # type: ignore
         member = i.namespace.member
@@ -54,7 +54,7 @@ def flow_check():
     return app_commands.check(predicate)
 
 
-class BaoCog(commands.Cog, name="bao"):
+class BaoCog(commands.GroupCog, name="bao"):
     def __init__(self, bot) -> None:
         self.bot: BotModel = bot
         self.debug = self.bot.debug
@@ -100,7 +100,7 @@ class BaoCog(commands.Cog, name="bao"):
             if gave:
                 await message.add_reaction("<:night:982608497290125366>")
 
-    @flow_check()
+    @bao_check()
     @app_commands.guild_only()
     @app_commands.checks.cooldown(1, 900, key=lambda i: (i.guild_id, i.user.id))
     @app_commands.command(name="poke", description="戳戳")
@@ -136,7 +136,7 @@ class BaoCog(commands.Cog, name="bao"):
         embed = DefaultEmbed(f"{i.user.display_name} 👉 {member.display_name}", message)
         await i.response.send_message(embed=embed)
 
-    @flow_check()
+    @bao_check()
     @app_commands.guild_only()
     @app_commands.command(name="give", description="給予其他使用者暴幣")
     @app_commands.rename(member="使用者", amount="數量")
@@ -268,7 +268,7 @@ class BaoCog(commands.Cog, name="bao"):
         await i.response.send_message(embed=embed)
 
     @app_commands.guild_only()
-    @app_commands.command(name="flow-leaderboard", description="查看暴幣排行榜")
+    @app_commands.command(name="leaderboard", description="查看暴幣排行榜")
     async def flow_leaderboard(self, inter: discord.Interaction):
         i: Inter = inter  # type: ignore
         assert i.guild is not None
