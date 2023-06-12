@@ -5,7 +5,6 @@ import typing
 import aiohttp
 import asyncpg
 import discord
-from attr import define, field
 from discord.ext import commands
 from pydantic import BaseModel, validator
 
@@ -15,7 +14,7 @@ class BotModel(commands.Bot):
     session: aiohttp.ClientSession
     pool: asyncpg.Pool
     debug: bool = False
-    guild_id: int = 1061877505067327528
+    guild_id = 1061877505067327528
 
     prev: bool = False
 
