@@ -38,14 +38,12 @@ class EmojiStatsCog(commands.GroupCog, name="emoji"):
         # extract ALL emoji IDs from message content with regex
         # if there are two emojis with the same ID, count it as two
         # if there are multiple emojis in the message, extract all of their IDs
+        guild_emojis = {str(e.id): e for e in self.guild.emojis}
         emoji_ids: typing.List[str] = re.findall(r"<a?:\w+:(\d+)>", message.content)
 
         for e_id in emoji_ids:
-            if e_id not in self.emoji_ids:
-                try:
-                    emoji = await self.guild.fetch_emoji(int(e_id))
-                except discord.NotFound:
-                    continue
+            if e_id not in self.emoji_ids and e_id in guild_emojis:
+                emoji = guild_emojis[e_id]
                 await self.bot.pool.execute(
                     "INSERT INTO emoji_stats (emoji_id, emoji_name, animated) VALUES ($1, $2, $3)",
                     emoji.id,
@@ -70,6 +68,7 @@ class EmojiStatsCog(commands.GroupCog, name="emoji"):
     )
     @app_commands.command(name="stats", description="統計伺服器表情符號使用次數")
     async def emoji_stats(self, i: discord.Interaction, order: str = "DESC"):
+        await i.response.defer()
         assert i.guild and i.guild.icon
 
         rows = await self.bot.pool.fetch(
@@ -83,6 +82,7 @@ class EmojiStatsCog(commands.GroupCog, name="emoji"):
         embeds: typing.List[discord.Embed] = []
         rows = sorted(rows, key=lambda x: x["count"], reverse=True)
         div_rows = divide_chunks(rows, 10)
+        guild_emojis = {str(e.id): e for e in self.guild.emojis}
 
         for rows in div_rows:
             embed = DefaultEmbed("表情符號統計")
@@ -90,13 +90,12 @@ class EmojiStatsCog(commands.GroupCog, name="emoji"):
             embed.set_author(name=i.guild.name, icon_url=i.guild.icon.url)
             embed.set_footer(text=f"統計時間: {get_dt_now().strftime('%Y-%m-%d %H:%M:%S')}")
             for row in rows:
-                try:
-                    emoji = await i.guild.fetch_emoji(int(row["emoji_id"]))
-                except discord.NotFound:
+                if row["emoji_id"] not in guild_emojis:
                     await self.bot.pool.execute(
                         "DELETE FROM emoji_stats WHERE emoji_id = $1", row["emoji_id"]
                     )
                 else:
+                    emoji = guild_emojis[row["emoji_id"]]
                     count = row["count"]
                     emoji_string = (
                         f"<{'a' if emoji.animated else ''}:{emoji.name}:{emoji.id}>"
@@ -104,7 +103,7 @@ class EmojiStatsCog(commands.GroupCog, name="emoji"):
                     embed.description += f"{emoji_string} | {count}\n\n"
             embeds.append(embed)
 
-        await GeneralPaginator(i, embeds).start()
+        await GeneralPaginator(i, embeds).start(followup=True)
 
 
 async def setup(bot: commands.Bot):
