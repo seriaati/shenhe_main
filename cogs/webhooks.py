@@ -90,11 +90,7 @@ class WebhookCog(commands.Cog):
 
             ref_message = message.reference.resolved if message.reference else None
             if isinstance(ref_message, discord.Message):
-                message.content = f"""
-                [⬅️ 回應 {ref_message.author.mention} 的訊息]({ref_message.jump_url})
-                
-                {message.content}
-                """
+                message.content = f"⬅️ 回應 {ref_message.author.mention} 的訊息 ({ref_message.jump_url})\n\n{message.content}"
 
             view = DeleteMessage()
             view.author = message.author
