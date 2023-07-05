@@ -24,7 +24,7 @@ def fxtwitter_to_direct(url: str) -> str:
     image_extensions = ("png", "jpg", "jpeg", "gif", "webp")
     if any(ext in url for ext in image_extensions):
         return url
-    return url + ".jpg"
+    return url + ".png"
 
 
 def phixiv_to_direct(url: str) -> Optional[str]:
