@@ -16,7 +16,7 @@ url_pattern = re.compile(
 )
 
 
-def twitter_to_direct(url: str) -> str:
+def fxtwitter_to_direct(url: str) -> str:
     url = re.sub(r"\?.*", "", url)
     if "twitter" in url and "fxtwitter" not in url:
         url = url.replace("twitter", "fxtwitter")
@@ -27,7 +27,7 @@ def twitter_to_direct(url: str) -> str:
     return url + ".jpg"
 
 
-def pixiv_to_direct(url: str) -> Optional[str]:
+def phixiv_to_direct(url: str) -> Optional[str]:
     url = re.sub(r"\?.*", "", url)
     if "pixiv" in url and "phixiv" not in url:
         url = url.replace("pixiv", "phixiv")
@@ -58,9 +58,9 @@ def get_image_embeds(
     for image in images:
         image = re.sub(r"\?.*", "", image)
         if "twitter" in image:
-            image = twitter_to_direct(image)
+            image = fxtwitter_to_direct(image)
         elif "phixiv" in image or "pixiv" in image:
-            image = pixiv_to_direct(image)
+            image = phixiv_to_direct(image)
             if image is None:
                 continue
 
@@ -94,9 +94,9 @@ class DownloadImage(discord.ui.Button):
         fps: Dict[str, io.BytesIO] = {}
         for url in urls:
             if "twitter" in url:
-                url = twitter_to_direct(url)
+                url = fxtwitter_to_direct(url)
             elif "phixiv" in url or "pixiv" in url:
-                url = pixiv_to_direct(url)
+                url = phixiv_to_direct(url)
                 if url is None:
                     continue
 

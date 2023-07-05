@@ -60,7 +60,7 @@ class Music(commands.Cog):
             host="localhost",
             port=7009,
             password=password,
-            spotify_client_id=int(spotify_client_id),
+            spotify_client_id=spotify_client_id,
             spotify_client_secret=spotify_client_secret,
             identifier="MAIN",
         )

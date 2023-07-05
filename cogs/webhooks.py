@@ -5,7 +5,7 @@ from typing import Dict, List
 import discord
 from discord.ext import commands
 
-from cogs.image_manager import pixiv_to_direct, twitter_to_direct
+from cogs.image_manager import fxtwitter_to_direct, phixiv_to_direct
 from data.constants import fix_embeds
 from dev.model import BaseView, BotModel
 
@@ -43,19 +43,19 @@ class WebhookCog(commands.Cog):
         )
         if url_pattern.search(message.content):
             websites = ("twitter", "fxtwitter", "phixiv", "pixiv")
-            image_extensions = ("png", "jpg", "jpeg", "gif", "webp")
+            file_extensions = ("png", "jpg", "jpeg", "gif", "webp", "mp4")
             if any(website in message.content for website in websites) or any(
-                ext in message.content for ext in image_extensions
+                ext in message.content for ext in file_extensions
             ):
                 await message.delete()
                 urls: List[str] = url_pattern.findall(message.content)
                 for url in urls:
                     filename = url.split("/")[-1].split("?")[0]
                     if "twitter" in url:
-                        direct_url = twitter_to_direct(url)
-                        filename += ".jpg"
+                        direct_url = fxtwitter_to_direct(url)
+                        filename += ".png"
                     elif "pixiv" in url or "phixiv" in url:
-                        direct_url = pixiv_to_direct(url)
+                        direct_url = phixiv_to_direct(url)
                         filename += ".png"
                     else:
                         direct_url = url
@@ -88,11 +88,21 @@ class WebhookCog(commands.Cog):
             else:
                 webhook = webhooks[0]
 
+            ref_message = message.reference.resolved if message.reference else None
+            if isinstance(ref_message, discord.Message):
+                content = f"""
+                [⬅️ 回應 {ref_message.author.mention} 的訊息]({ref_message.jump_url})
+                
+                {message.content}
+                """
+            else:
+                content = message.content
+
             view = DeleteMessage()
             view.author = message.author
 
             view.message = await webhook.send(
-                content=message.content,
+                content=content,
                 files=files,
                 username=message.author.display_name,
                 avatar_url=message.author.display_avatar.url,
@@ -106,7 +116,7 @@ class WebhookCog(commands.Cog):
 
         return file_
 
-    # use fxtwitter and phixiv to send tweet
+    # use fxtwitter and phixiv
     @commands.Cog.listener("on_message")
     async def use_fxtwitter(self, message: discord.Message):
         if message.author.bot:
