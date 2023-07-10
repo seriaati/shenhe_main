@@ -146,6 +146,23 @@ class WebhookCog(commands.Cog):
                     view=view,
                 )
 
+    # webhook reply
+    @commands.Cog.listener("on_message")
+    async def on_webhook(self, message: discord.Message) -> None:
+        ref = message.reference.resolved if message.reference else None
+        if not isinstance(ref, discord.Message) or message.guild is None:
+            return
+        if not ref.webhook_id:
+            return
+
+        author_name = ref.author.display_name
+        author = message.guild.get_member_named(author_name)
+        if author:
+            await message.reply(
+                content=f"⬅️ 回應 {author.mention} 的訊息 ({ref.jump_url})",
+                mention_author=False,
+            )
+
 
 async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(WebhookCog(bot))
