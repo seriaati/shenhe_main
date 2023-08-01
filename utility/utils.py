@@ -1,5 +1,6 @@
 import re
 from datetime import datetime, time
+from typing import List
 
 import discord
 import pytz
@@ -62,7 +63,7 @@ def divide_chunks(l, n):
         yield l[i : i + n]
 
 
-def contains_url(url: str) -> bool:
+def find_urls(url: str) -> List[str]:
     url_regex = re.compile(
         r"^(?:http|ftp)s?://"  # http:// or https://
         # domain...
@@ -71,4 +72,4 @@ def contains_url(url: str) -> bool:
         r"(?:/[^\s]*)?$",
         re.IGNORECASE,
     )
-    return url_regex.match(url) is not None
+    return url_regex.findall(url)
