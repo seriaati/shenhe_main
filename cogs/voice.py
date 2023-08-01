@@ -1,4 +1,3 @@
-import logging
 import random
 
 import discord
@@ -49,17 +48,16 @@ class VoiceCog(commands.GroupCog, name="vc"):
         self.bot: BotModel = bot
         super().__init__()
         self.bot.loop.create_task(self.get_variables())
-        
+
         self.vc_role: discord.Role
         self.make_vc: discord.VoiceChannel
-    
+
     async def get_variables(self):
         await self.bot.wait_until_ready()
         guild = self.bot.get_guild(self.bot.guild_id)
-        self.vc_role = guild.get_role(1061955528349188147) # type: ignore
-        self.make_vc = guild.get_channel(1061881611450322954) # type: ignore
-        
-    
+        self.vc_role = guild.get_role(1061955528349188147)  # type: ignore
+        self.make_vc = guild.get_channel(1061881611450322954)  # type: ignore
+
     @commands.Cog.listener()
     async def on_voice_state_update(
         self,
@@ -75,7 +73,7 @@ class VoiceCog(commands.GroupCog, name="vc"):
         old = before.channel
         new = after.channel
 
-        if new: # joining a voice channel
+        if new:  # joining a voice channel
             await member.add_roles(vc_role)
             if new.id == make_vc.id:
                 member_vc = await member.guild.create_voice_channel(
@@ -87,9 +85,9 @@ class VoiceCog(commands.GroupCog, name="vc"):
                     member.id,
                     member_vc.id,
                 )
-        else: # disconnecting from a voice channel
+        else:  # disconnecting from a voice channel
             await member.remove_roles(vc_role)
-            
+
         # changing a voice channel or disconnecting from a voice channel
         if old is not None:
             owner_exist = await self.bot.pool.fetchval(
@@ -101,13 +99,13 @@ class VoiceCog(commands.GroupCog, name="vc"):
                     random.choice(old.members).id,
                     old.id,
                 )
-            
+
             if old.id != make_vc.id and len(old.members) == 0:
                 try:
                     await old.delete()
                 except discord.NotFound:
                     pass
-                
+
                 await self.bot.pool.execute(
                     "DELETE FROM voice WHERE channel_id = $1", old.id
                 )
