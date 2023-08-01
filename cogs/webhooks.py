@@ -104,8 +104,12 @@ class WebhookCog(commands.Cog):
             )
 
     async def download_image(self, url, file_name) -> Optional[discord.File]:
+        accept_content_types = ("image", "video")
         async with self.bot.session.get(url) as resp:
-            if "image" not in resp.content_type:
+            if not any(
+                (content_type in resp.content_type)
+                for content_type in accept_content_types
+            ):
                 return None
             bytes_obj = io.BytesIO(await resp.read())
             file_ = discord.File(bytes_obj, filename=file_name, spoiler=True)
