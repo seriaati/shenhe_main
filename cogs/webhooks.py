@@ -1,6 +1,6 @@
 import io
 import re
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 import discord
 from discord.ext import commands
@@ -62,8 +62,9 @@ class WebhookCog(commands.Cog):
 
                     if direct_url:
                         file_ = await self.download_image(direct_url, filename)
-                        files.append(file_)
-                        message.content = message.content.replace(url, f"<{url}>")
+                        if file_ is not None:
+                            files.append(file_)
+                            message.content = message.content.replace(url, f"<{url}>")
 
         if any(not a.is_spoiler() for a in message.attachments):
             url_dict: Dict[str, str] = {}
@@ -74,12 +75,11 @@ class WebhookCog(commands.Cog):
                     files.append(await a.to_file())
 
             await message.delete()
-            files.extend(
-                [
-                    await self.download_image(url, filename)
-                    for filename, url in url_dict.items()
-                ]
-            )
+            images = [
+                await self.download_image(url, filename)
+                for filename, url in url_dict.items()
+            ]
+            files.extend([i for i in images if i is not None])
 
         if files:
             webhooks = await message.channel.webhooks()
@@ -103,8 +103,10 @@ class WebhookCog(commands.Cog):
                 view=view,
             )
 
-    async def download_image(self, url, file_name):
+    async def download_image(self, url, file_name) -> Optional[discord.File]:
         async with self.bot.session.get(url) as resp:
+            if "image" not in resp.content_type:
+                return None
             bytes_obj = io.BytesIO(await resp.read())
             file_ = discord.File(bytes_obj, filename=file_name, spoiler=True)
 
