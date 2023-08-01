@@ -1,3 +1,4 @@
+import re
 from datetime import datetime, time
 
 import discord
@@ -59,3 +60,15 @@ def get_dt_now() -> datetime:
 def divide_chunks(l, n):
     for i in range(0, len(l), n):
         yield l[i : i + n]
+
+
+def contains_url(url: str) -> bool:
+    url_regex = re.compile(
+        r"^(?:http|ftp)s?://"  # http:// or https://
+        # domain...
+        r"(?:[a-z0-9]+(?:-[a-z0-9]+)*\.)+[a-z]{2,}"
+        r"(?::\d{2,5})?"  # optional port
+        r"(?:/[^\s]*)?$",
+        re.IGNORECASE,
+    )
+    return url_regex.match(url) is not None
