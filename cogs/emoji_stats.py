@@ -1,20 +1,20 @@
 import asyncio
 import re
+from typing import Dict, List
 
-from typing import List
 import discord
 from discord import app_commands
-from discord.ext import commands
+from discord.ext import commands, tasks
+from pydantic import BaseModel, Field
 
 from dev.model import BotModel, DefaultEmbed, ErrorEmbed
 from utility.paginator import GeneralPaginator
 from utility.utils import divide_chunks, get_dt_now
-from pydantic import BaseModel, Field
 
 
 class EmojiStatsModel(BaseModel):
-    name: str = Field(..., alias="emoji_name")
-    id: int = Field(..., alias="emoji_id")
+    name: str = Field(alias="emoji_name")
+    id: int = Field(alias="emoji_id")
     count: int = 1
     animated: bool
 
@@ -23,6 +23,7 @@ class EmojiStatsCog(commands.GroupCog, name="emoji"):
     def __init__(self, bot):
         self.bot: BotModel = bot
         self.guild: discord.Guild
+        self.guild_emojis: Dict[int, discord.Emoji] = {}
 
     async def cog_load(self) -> None:
         asyncio.create_task(self.load_guild())
@@ -30,6 +31,14 @@ class EmojiStatsCog(commands.GroupCog, name="emoji"):
     async def load_guild(self) -> None:
         await self.bot.wait_until_ready()
         self.guild = self.bot.get_guild(self.bot.guild_id)  # type: ignore
+
+    @tasks.loop(hours=1)
+    async def update_guild_emojis(self) -> None:
+        self.guild_emojis = {e.id: e for e in await self.guild.fetch_emojis()}
+
+    @update_guild_emojis.before_loop
+    async def before_update_guild_emojis(self) -> None:
+        await self.bot.wait_until_ready()
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
@@ -43,13 +52,12 @@ class EmojiStatsCog(commands.GroupCog, name="emoji"):
         # extract ALL emoji IDs from message content with regex
         # if there are two emojis with the same ID, count it as two
         # if there are multiple emojis in the message, extract all of their IDs
-        guild_emojis = {e.id: e for e in self.guild.emojis}
         emoji_ids: List[str] = re.findall(r"<a?:\w+:(\d+)>", message.content)
 
         for e_id in emoji_ids:
             emoji_id = int(e_id)
-            if emoji_id in guild_emojis:
-                emoji = guild_emojis[emoji_id]
+            emoji = self.guild_emojis.get(emoji_id)
+            if emoji is not None:
                 await self.bot.pool.execute(
                     "INSERT INTO emoji_stats (emoji_id, emoji_name, animated) VALUES ($1, $2, $3) ON CONFLICT UPDATE SET count = emoji_stats.count + 1",
                     emoji.id,
