@@ -59,7 +59,7 @@ class EmojiStatsCog(commands.GroupCog, name="emoji"):
             emoji = self.guild_emojis.get(emoji_id)
             if emoji is not None:
                 await self.bot.pool.execute(
-                    "INSERT INTO emoji_stats (emoji_id, emoji_name, animated) VALUES ($1, $2, $3) ON CONFLICT UPDATE SET count = emoji_stats.count + 1",
+                    "INSERT INTO emoji_stats (emoji_id, emoji_name, animated) VALUES ($1, $2, $3) ON CONFLICT DO UPDATE SET count = emoji_stats.count + 1",
                     emoji.id,
                     emoji.name,
                     emoji.animated,
