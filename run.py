@@ -31,16 +31,6 @@ intents.reactions = True
 intents.message_content = True
 intents.presences = True
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s %(levelname)s %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S",
-    handlers=[
-        logging.FileHandler("log.log"),
-        logging.StreamHandler(),
-    ],
-)
-
 
 class ShenheCommandTree(discord.app_commands.CommandTree):
     def __init__(self, bot: commands.Bot):
@@ -78,8 +68,16 @@ class ShenheBot(BotModel):
     async def setup_hook(self) -> None:
         self.session = aiohttp.ClientSession()
         self.debug = debug
-        if self.debug:
-            logging.basicConfig(level=logging.DEBUG)
+        logging.basicConfig(
+            level=logging.DEBUG if self.debug else logging.INFO,
+            format="%(asctime)s %(levelname)s %(message)s",
+            datefmt="%Y-%m-%d %H:%M:%S",
+            handlers=[
+                logging.FileHandler("log.log", encoding="utf-8"),
+                logging.StreamHandler(),
+            ],
+            encoding="utf-8",
+        )
 
         pool = await asyncpg.create_pool(os.getenv("DATABASE_URL"))
         assert pool
@@ -123,6 +121,13 @@ bot = ShenheBot()
 async def on_interaction(i: discord.Interaction):
     if i.guild and not i.guild.chunked:
         await i.guild.chunk()
+
+
+@bot.listen("on_message_edit")
+async def jishaku_edit_rerun(before: discord.Message, after: discord.Message) -> None:
+    if before.content == after.content or before.author.id != bot.owner_id:
+        return
+    await bot.process_commands(after)
 
 
 @bot.before_invoke
