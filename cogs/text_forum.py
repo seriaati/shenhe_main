@@ -15,7 +15,7 @@ class TextForum(commands.Cog):
 
     @commands.Cog.listener("on_message")
     async def auto_create_forum(self, message: discord.Message) -> Any:
-        if message.channel.id != CHANNEL_ID:
+        if message.channel.id != CHANNEL_ID or message.author.bot:
             return
 
         urls = find_urls(message.content)
