@@ -54,7 +54,7 @@ class WebhookCog(commands.Cog):
                     if "twitter" in url:
                         direct_url = fxtwitter_to_direct(url)
                         filename += ".png"
-                    elif "pixiv" in url or "phixiv" in url:
+                    elif "pixiv" in url:
                         direct_url = phixiv_to_direct(url)
                         filename += ".png"
                     else:
@@ -104,7 +104,7 @@ class WebhookCog(commands.Cog):
             )
 
     async def download_image(self, url, file_name) -> Optional[discord.File]:
-        accept_content_types = ("image", "video")
+        accept_content_types = ("image", "video", "octet-stream")
         async with self.bot.session.get(url) as resp:
             if not any(
                 (content_type in resp.content_type)
