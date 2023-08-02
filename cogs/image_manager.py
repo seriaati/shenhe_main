@@ -16,30 +16,26 @@ url_pattern = re.compile(
 )
 
 
-def fxtwitter_to_direct(url: str) -> str:
-    url = re.sub(r"\?.*", "", url)
+def post_url_to_image_url(url: str) -> str:
+    url = re.sub(r"\?.*", "", url)  # remove query string
     if "twitter" in url and "fxtwitter" not in url:
         url = url.replace("twitter", "fxtwitter")
-
-    image_extensions = ("png", "jpg", "jpeg", "gif", "webp")
-    if any(ext in url for ext in image_extensions):
-        return url
-    return url + ".png"
-
-
-def phixiv_to_direct(url: str) -> Optional[str]:
-    url = re.sub(r"\?.*", "", url)
-    if "pixiv" in url and "phixiv" not in url:
+        image_extensions = ("png", "jpg", "jpeg", "gif", "webp")
+        if any(ext in url for ext in image_extensions):
+            return url
+        return url + ".png"
+    elif "pixiv" in url and "phixiv" not in url:
         url = url.replace("pixiv", "phixiv")
+        id_pattern = re.compile(r"/(\d+)$")
+        match = id_pattern.search(url)
+        if not match:
+            return url
 
-    id_pattern = re.compile(r"/(\d+)$")
-    match = id_pattern.search(url)
-    if not match:
-        return None
-
-    artwork_id = match.group(1)
-    url = f"https://www.phixiv.net/d/{artwork_id}"
-    return url
+        artwork_id = match.group(1)
+        url = f"https://www.phixiv.net/d/{artwork_id}"
+        return url
+    else:
+        return url
 
 
 async def send_no_image_found(i: discord.Interaction):
@@ -55,21 +51,14 @@ def get_image_embeds(
     jump_url: Optional[str] = None,
 ) -> List[discord.Embed]:
     embeds: List[discord.Embed] = []
-    for image in images:
-        image = re.sub(r"\?.*", "", image)
-        if "twitter" in image:
-            image = fxtwitter_to_direct(image)
-        elif "phixiv" in image or "pixiv" in image:
-            image = phixiv_to_direct(image)
-            if image is None:
-                continue
-
-        embed = DefaultEmbed(title, image)
+    for image_url in images:
+        image_url = post_url_to_image_url(image_url)
+        embed = DefaultEmbed(title, image_url)
         assert embed.description
         if jump_url:
             embed.description += f"\n\n[點我回到訊息]({jump_url})"
         embed.set_author(name=user.display_name, icon_url=user.display_avatar.url)
-        embed.set_image(url=image)
+        embed.set_image(url=image_url)
         embed.set_footer(text=f"共 {len(images)} 張圖片")
         embeds.append(embed)
     return embeds
@@ -93,13 +82,7 @@ class DownloadImage(discord.ui.Button):
 
         fps: Dict[str, io.BytesIO] = {}
         for url in urls:
-            if "twitter" in url:
-                url = fxtwitter_to_direct(url)
-            elif "phixiv" in url or "pixiv" in url:
-                url = phixiv_to_direct(url)
-                if url is None:
-                    continue
-
+            url = post_url_to_image_url(url)
             artwork_id = url.split("/")[-1] + ".jpg"
             fp = io.BytesIO()
             async with i.client.session.get(url) as resp:

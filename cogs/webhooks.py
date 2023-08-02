@@ -5,7 +5,7 @@ from typing import Dict, List, Optional
 import discord
 from discord.ext import commands
 
-from cogs.image_manager import fxtwitter_to_direct, phixiv_to_direct
+from cogs.image_manager import post_url_to_image_url
 from data.constants import fix_embeds
 from dev.model import BaseView, BotModel
 
@@ -51,20 +51,11 @@ class WebhookCog(commands.Cog):
                 urls: List[str] = url_pattern.findall(message.content)
                 for url in urls:
                     filename = url.split("/")[-1].split("?")[0]
-                    if "twitter" in url:
-                        direct_url = fxtwitter_to_direct(url)
-                        filename += ".png"
-                    elif "pixiv" in url:
-                        direct_url = phixiv_to_direct(url)
-                        filename += ".png"
-                    else:
-                        direct_url = url
-
-                    if direct_url:
-                        file_ = await self.download_image(direct_url, filename)
-                        if file_ is not None:
-                            files.append(file_)
-                            message.content = message.content.replace(url, f"<{url}>")
+                    direct_url = post_url_to_image_url(url)
+                    file_ = await self.download_image(direct_url, filename)
+                    if file_ is not None:
+                        files.append(file_)
+                        message.content = message.content.replace(url, f"<{url}>")
 
         if any(not a.is_spoiler() for a in message.attachments):
             url_dict: Dict[str, str] = {}
@@ -104,14 +95,20 @@ class WebhookCog(commands.Cog):
             )
 
     async def download_image(self, url, file_name) -> Optional[discord.File]:
-        accept_content_types = ("image", "video", "octet-stream")
+        allowed_content_types = ("image", "video", "octet-stream")
         async with self.bot.session.get(url) as resp:
             if not any(
                 (content_type in resp.content_type)
-                for content_type in accept_content_types
+                for content_type in allowed_content_types
             ):
                 return None
             bytes_obj = io.BytesIO(await resp.read())
+            if resp.content_type == "octet-stream":
+                file_name += ".png"
+            elif resp.content_type == "video":
+                file_name += ".mp4"
+            elif resp.content_type == "image":
+                file_name += f".{resp.content_type.split('/')[-1]}"
             file_ = discord.File(bytes_obj, filename=file_name, spoiler=True)
 
         return file_
