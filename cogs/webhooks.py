@@ -94,7 +94,7 @@ class WebhookCog(commands.Cog):
                 view=view,
             )
 
-    async def download_image(self, url, file_name) -> Optional[discord.File]:
+    async def download_image(self, url: str, file_name: str) -> Optional[discord.File]:
         allowed_content_types = ("image", "video", "octet-stream")
         async with self.bot.session.get(url) as resp:
             if not any(
@@ -103,11 +103,11 @@ class WebhookCog(commands.Cog):
             ):
                 return None
             bytes_obj = io.BytesIO(await resp.read())
-            if resp.content_type == "octet-stream":
+            if "octet-stream" in resp.content_type:
                 file_name += ".png"
-            elif resp.content_type == "video":
+            elif "video" in resp.content_type:
                 file_name += ".mp4"
-            elif resp.content_type == "image":
+            elif "image" in resp.content_type:
                 file_name += f".{resp.content_type.split('/')[-1]}"
             file_ = discord.File(bytes_obj, filename=file_name, spoiler=True)
 
