@@ -32,7 +32,8 @@ class WebhookCog(commands.Cog):
         if (
             message.author.bot
             or not isinstance(message.channel, discord.TextChannel)
-            or (message.guild and message.guild.id != self.bot.guild_id)
+            or message.guild is None
+            or message.guild.id != self.bot.guild_id
             or message.channel.id != 1061898394446069852
         ):
             return
@@ -136,13 +137,13 @@ class WebhookCog(commands.Cog):
 
     # use fxtwitter and phixiv
     @commands.Cog.listener("on_message")
-    async def use_fxtwitter(self, message: discord.Message):
+    async def fix_embed(self, message: discord.Message):
         if (
             message.author.bot
             or message.guild is None
             or message.guild.id != self.bot.guild_id
             or not isinstance(message.channel, discord.TextChannel)
-            or message.channel.id != 1061898394446069852
+            or message.channel.id == 1061898394446069852
         ):
             return
 
