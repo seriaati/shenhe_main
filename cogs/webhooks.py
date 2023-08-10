@@ -8,6 +8,7 @@ from discord.ext import commands
 from cogs.image_manager import post_url_to_image_url
 from data.constants import fix_embeds
 from dev.model import BaseView, BotModel
+from utility.utils import find_urls
 
 
 class DeleteMessage(BaseView):
@@ -38,24 +39,26 @@ class WebhookCog(commands.Cog):
 
         files: List[discord.File] = []
 
-        url_pattern = re.compile(
-            r"http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+"
-        )
-        if url_pattern.search(message.content):
+        urls = find_urls(message.content)
+        if urls:
             websites = ("twitter", "fxtwitter", "phixiv", "pixiv")
             file_extensions = ("png", "jpg", "jpeg", "gif", "webp", "mp4")
             if any(website in message.content for website in websites) or any(
                 ext in message.content for ext in file_extensions
             ):
                 await message.delete()
-                urls: List[str] = url_pattern.findall(message.content)
                 for url in urls:
                     filename = url.split("/")[-1].split("?")[0]
-                    direct_url = post_url_to_image_url(url)
-                    file_ = await self.download_image(direct_url, filename)
-                    if file_ is not None:
-                        files.append(file_)
-                        message.content = message.content.replace(url, f"<{url}>")
+                    image_url = post_url_to_image_url(url)
+                    if "phixiv" in image_url:
+                        files.extend(
+                            await self.download_pixiv_images(image_url, filename)
+                        )
+                    else:
+                        file_ = await self.download_image(image_url, filename)
+                        if file_ is not None:
+                            files.append(file_)
+                    message.content = message.content.replace(url, f"<{url}>")
 
         if any(not a.is_spoiler() for a in message.attachments):
             url_dict: Dict[str, str] = {}
@@ -95,7 +98,7 @@ class WebhookCog(commands.Cog):
             )
 
     async def download_image(self, url: str, file_name: str) -> Optional[discord.File]:
-        allowed_content_types = ("image", "video", "octet-stream")
+        allowed_content_types = ("image", "video")
         async with self.bot.session.get(url) as resp:
             if not any(
                 (content_type in resp.content_type)
@@ -103,30 +106,48 @@ class WebhookCog(commands.Cog):
             ):
                 return None
             bytes_obj = io.BytesIO(await resp.read())
-            if "octet-stream" in resp.content_type:
-                file_name += ".png"
-            elif "video" in resp.content_type:
-                file_name += ".mp4"
-            elif "image" in resp.content_type:
-                file_name += f".{resp.content_type.split('/')[-1]}"
+            file_name += f".{resp.content_type.split('/')[-1]}"
             file_ = discord.File(bytes_obj, filename=file_name, spoiler=True)
 
         return file_
 
+    async def download_pixiv_images(
+        self, url: str, filename: str
+    ) -> List[discord.File]:
+        images: List[discord.File] = []
+        async with self.bot.session.get(url) as resp:
+            if resp.status != 200:
+                return images
+            index = 0
+            while True:
+                bytes_obj = io.BytesIO(await resp.read())
+                file_ = discord.File(
+                    bytes_obj, filename=f"{filename}_{index}.png", spoiler=True
+                )
+                images.append(file_)
+                index += 1
+                async with self.bot.session.get(
+                    str(resp.url).replace(f"p{index-1}", f"p{index}")
+                ) as resp:
+                    if resp.status != 200:
+                        break
+
+        return images
+
     # use fxtwitter and phixiv
     @commands.Cog.listener("on_message")
     async def use_fxtwitter(self, message: discord.Message):
-        if message.author.bot:
-            return
-        if message.guild and message.guild.id != self.bot.guild_id:
-            return
-        if not isinstance(message.channel, discord.TextChannel):
-            return
-        if message.channel.id == 1061898394446069852:
+        if (
+            message.author.bot
+            or message.guild is None
+            or message.guild.id != self.bot.guild_id
+            or not isinstance(message.channel, discord.TextChannel)
+            or message.channel.id != 1061898394446069852
+        ):
             return
 
         # check if message.content contains a URL using regex
-        if not re.search(r"(https?://[^\s]+)", message.content):
+        if not find_urls(message.content):
             return
 
         for website, fix in fix_embeds.items():
