@@ -2,6 +2,7 @@ import io
 import re
 from typing import Dict, List, Optional
 
+import aiohttp
 import discord
 from discord.ext import commands
 
@@ -76,27 +77,26 @@ class WebhookCog(commands.Cog):
             ]
             files.extend([i for i in images if i is not None])
 
-        if files:
-            webhooks = await message.channel.webhooks()
-            if not webhooks:
-                webhook = await message.channel.create_webhook(name="Auto-Spoiler")
-            else:
-                webhook = webhooks[0]
+        webhooks = await message.channel.webhooks()
+        if not webhooks:
+            webhook = await message.channel.create_webhook(name="Auto-Spoiler")
+        else:
+            webhook = webhooks[0]
 
-            ref_message = message.reference.resolved if message.reference else None
-            if isinstance(ref_message, discord.Message):
-                message.content = f"⬅️ 回應 {ref_message.author.mention} 的訊息 ({ref_message.jump_url})\n\n{message.content}"
+        ref_message = message.reference.resolved if message.reference else None
+        if isinstance(ref_message, discord.Message):
+            message.content = f"⬅️ 回應 {ref_message.author.mention} 的訊息 ({ref_message.jump_url})\n\n{message.content}"
 
-            view = DeleteMessage()
-            view.author = message.author
+        view = DeleteMessage()
+        view.author = message.author
 
-            view.message = await webhook.send(
-                content=message.content,
-                files=files,
-                username=message.author.display_name,
-                avatar_url=message.author.display_avatar.url,
-                view=view,
-            )
+        view.message = await webhook.send(
+            content=message.content,
+            files=files,
+            username=message.author.display_name,
+            avatar_url=message.author.display_avatar.url,
+            view=view,
+        )
 
     async def download_image(self, url: str, file_name: str) -> Optional[discord.File]:
         allowed_content_types = ("image", "video")
@@ -117,21 +117,17 @@ class WebhookCog(commands.Cog):
     ) -> List[discord.File]:
         images: List[discord.File] = []
         async with self.bot.session.get(url) as resp:
-            if resp.status != 200:
-                return images
             index = 0
-            while True:
+            while resp.status == 200:
                 bytes_obj = io.BytesIO(await resp.read())
                 file_ = discord.File(
                     bytes_obj, filename=f"{filename}_{index}.png", spoiler=True
                 )
                 images.append(file_)
                 index += 1
-                async with self.bot.session.get(
+                resp = await self.bot.session.get(
                     str(resp.url).replace(f"p{index-1}", f"p{index}")
-                ) as resp:
-                    if resp.status != 200:
-                        break
+                )
 
         return images
 
