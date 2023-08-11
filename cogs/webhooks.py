@@ -7,9 +7,8 @@ from discord.ext import commands
 from pydantic import BaseModel
 
 from cogs.image_manager import post_url_to_image_url
-from data.constants import fix_embeds
 from dev.model import BaseView, BotModel
-from utility.utils import find_urls
+from utility.utils import divide_chunks, find_urls
 
 
 class Author(BaseModel):
@@ -105,7 +104,8 @@ class WebhookCog(commands.Cog):
             ]
             files.extend([i for i in images if i is not None])
 
-        if files:
+        split_files: List[List[discord.File]] = list(divide_chunks(files, 10))
+        for split in split_files:
             ref_message = message.reference.resolved if message.reference else None
             if isinstance(ref_message, discord.Message):
                 message.content = f"⬅️ 回應 {ref_message.author.mention} 的訊息 ({ref_message.jump_url})\n\n{message.content}"
@@ -114,7 +114,7 @@ class WebhookCog(commands.Cog):
                 message.channel,
                 message.author,
                 message.content,
-                files=files,
+                files=split,
             )
 
     async def download_image(self, url: str, file_name: str) -> Optional[discord.File]:
