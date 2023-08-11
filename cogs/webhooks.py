@@ -142,6 +142,7 @@ class WebhookCog(commands.Cog):
             content=message,
             username=user.display_name,
             avatar_url=user.display_avatar.url,
+            view=view,
             **kwargs,
         )
 
