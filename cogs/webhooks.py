@@ -170,9 +170,6 @@ class WebhookCog(commands.Cog):
             return
 
         urls = find_urls(message.content)
-        if urls:
-            return
-
         for url in urls:
             if any((website in message.content for website in ("pixiv", "phixiv"))):
                 try:
