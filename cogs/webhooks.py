@@ -1,13 +1,34 @@
 import io
 from typing import Dict, List, Optional
 
+import aiohttp
 import discord
 from discord.ext import commands
+from pydantic import BaseModel
 
 from cogs.image_manager import post_url_to_image_url
 from data.constants import fix_embeds
 from dev.model import BaseView, BotModel
 from utility.utils import find_urls
+
+
+class Author(BaseModel):
+    id: str
+    name: str
+
+
+class Artwork(BaseModel):
+    urls: List[str]
+    title: str
+    description: str
+    tags: List[str]
+    author: Author
+
+
+async def fetch_artwork_info(id: str) -> Artwork:
+    async with aiohttp.ClientSession() as session:
+        async with session.get(f"https://www.phixiv.net/api/info?id={id}") as resp:
+            return Artwork(**await resp.json())
 
 
 class DeleteMessage(BaseView):
@@ -52,13 +73,22 @@ class WebhookCog(commands.Cog):
                     image_url = post_url_to_image_url(url)
                     message.content = message.content.replace(url, f"<{url}>")
 
-                    file_ = await self.download_image(image_url, filename)
-                    if file_ is None:
-                        await self.fake_user_send(
-                            message.channel, message.author, message.content
-                        )
+                    if "phixiv" in image_url:
+                        artwork = await fetch_artwork_info(filename)
+                        urls_ = artwork.urls
                     else:
-                        files.append(file_)
+                        urls_ = [image_url]
+
+                    for index, u in enumerate(urls_):
+                        file_ = await self.download_image(u, f"{filename}_{index}")
+                        if file_ is None:
+                            await self.fake_user_send(
+                                message.channel,
+                                message.author,
+                                message.content,
+                            )
+                        else:
+                            files.append(file_)
 
         if any(not a.is_spoiler() for a in message.attachments):
             url_dict: Dict[str, str] = {}
@@ -103,25 +133,6 @@ class WebhookCog(commands.Cog):
             file_ = discord.File(bytes_obj, filename=file_name, spoiler=True)
 
         return file_
-
-    async def download_pixiv_images(
-        self, url: str, filename: str
-    ) -> List[discord.File]:
-        images: List[discord.File] = []
-        async with self.bot.session.get(url) as resp:
-            index = 0
-            while resp.status == 200:
-                bytes_obj = io.BytesIO(await resp.read())
-                file_ = discord.File(
-                    bytes_obj, filename=f"{filename}_{index}.png", spoiler=True
-                )
-                images.append(file_)
-                index += 1
-                resp = await self.bot.session.get(
-                    str(resp.url).replace(f"p{index-1}", f"p{index}")
-                )
-
-        return images
 
     async def fake_user_send(
         self,
