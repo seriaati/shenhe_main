@@ -51,18 +51,14 @@ class WebhookCog(commands.Cog):
                     filename = url.split("/")[-1].split("?")[0]
                     image_url = post_url_to_image_url(url)
                     message.content = message.content.replace(url, f"<{url}>")
-                    if "phixiv" in image_url:
-                        files.extend(
-                            await self.download_pixiv_images(image_url, filename)
+
+                    file_ = await self.download_image(image_url, filename)
+                    if file_ is None:
+                        await self.fake_user_send(
+                            message.channel, message.author, message.content
                         )
                     else:
-                        file_ = await self.download_image(image_url, filename)
-                        if file_ is None:
-                            await self.fake_user_send(
-                                message.channel, message.author, message.content
-                            )
-                        else:
-                            files.append(file_)
+                        files.append(file_)
 
         if any(not a.is_spoiler() for a in message.attachments):
             url_dict: Dict[str, str] = {}
@@ -84,18 +80,15 @@ class WebhookCog(commands.Cog):
             if isinstance(ref_message, discord.Message):
                 message.content = f"⬅️ 回應 {ref_message.author.mention} 的訊息 ({ref_message.jump_url})\n\n{message.content}"
 
-            view = DeleteMessage()
-            view.author = message.author
-            view.message = await self.fake_user_send(
+            await self.fake_user_send(
                 message.channel,
                 message.author,
                 message.content,
                 files=files,
-                view=view,
             )
 
     async def download_image(self, url: str, file_name: str) -> Optional[discord.File]:
-        allowed_content_types = ("image", "video")
+        allowed_content_types = ("image", "video", "application/octet-stream")
         async with self.bot.session.get(url) as resp:
             if not any(
                 (content_type in resp.content_type)
@@ -103,7 +96,10 @@ class WebhookCog(commands.Cog):
             ):
                 return None
             bytes_obj = io.BytesIO(await resp.read())
-            file_name += f".{resp.content_type.split('/')[-1]}"
+            if resp.content_type == "application/octet-stream":
+                file_name += ".png"
+            else:
+                file_name += f".{resp.content_type.split('/')[-1]}"
             file_ = discord.File(bytes_obj, filename=file_name, spoiler=True)
 
         return file_
@@ -133,14 +129,16 @@ class WebhookCog(commands.Cog):
         user: discord.User | discord.Member,
         message: str,
         **kwargs,
-    ) -> discord.Message:
+    ) -> None:
         webhooks = await channel.webhooks()
         if not webhooks:
             webhook = await channel.create_webhook(name="Fake User")
         else:
             webhook = webhooks[0]
 
-        return await webhook.send(
+        view = DeleteMessage()
+        view.author = user
+        view.message = await webhook.send(
             content=message,
             username=user.display_name,
             avatar_url=user.display_avatar.url,
@@ -166,14 +164,10 @@ class WebhookCog(commands.Cog):
         for website, fix in fix_embeds.items():
             if website in message.content and fix not in message.content:
                 await message.delete()
-
-                view = DeleteMessage()
-                view.author = message.author
-                view.message = await self.fake_user_send(
+                await self.fake_user_send(
                     message.channel,
                     message.author,
                     message.content.replace(website, fix),
-                    view=view,
                 )
 
     # webhook reply
