@@ -1,8 +1,6 @@
 import io
-import re
 from typing import Dict, List, Optional
 
-import aiohttp
 import discord
 from discord.ext import commands
 
@@ -52,15 +50,19 @@ class WebhookCog(commands.Cog):
                 for url in urls:
                     filename = url.split("/")[-1].split("?")[0]
                     image_url = post_url_to_image_url(url)
+                    message.content = message.content.replace(url, f"<{url}>")
                     if "phixiv" in image_url:
                         files.extend(
                             await self.download_pixiv_images(image_url, filename)
                         )
                     else:
                         file_ = await self.download_image(image_url, filename)
-                        if file_ is not None:
+                        if file_ is None:
+                            await self.fake_user_send(
+                                message.channel, message.author, message.content
+                            )
+                        else:
                             files.append(file_)
-                    message.content = message.content.replace(url, f"<{url}>")
 
         if any(not a.is_spoiler() for a in message.attachments):
             url_dict: Dict[str, str] = {}
@@ -77,26 +79,20 @@ class WebhookCog(commands.Cog):
             ]
             files.extend([i for i in images if i is not None])
 
-        webhooks = await message.channel.webhooks()
-        if not webhooks:
-            webhook = await message.channel.create_webhook(name="Auto-Spoiler")
-        else:
-            webhook = webhooks[0]
+        if files:
+            ref_message = message.reference.resolved if message.reference else None
+            if isinstance(ref_message, discord.Message):
+                message.content = f"⬅️ 回應 {ref_message.author.mention} 的訊息 ({ref_message.jump_url})\n\n{message.content}"
 
-        ref_message = message.reference.resolved if message.reference else None
-        if isinstance(ref_message, discord.Message):
-            message.content = f"⬅️ 回應 {ref_message.author.mention} 的訊息 ({ref_message.jump_url})\n\n{message.content}"
-
-        view = DeleteMessage()
-        view.author = message.author
-
-        view.message = await webhook.send(
-            content=message.content,
-            files=files,
-            username=message.author.display_name,
-            avatar_url=message.author.display_avatar.url,
-            view=view,
-        )
+            view = DeleteMessage()
+            view.author = message.author
+            view.message = await self.fake_user_send(
+                message.channel,
+                message.author,
+                message.content,
+                files=files,
+                view=view,
+            )
 
     async def download_image(self, url: str, file_name: str) -> Optional[discord.File]:
         allowed_content_types = ("image", "video")
@@ -131,6 +127,26 @@ class WebhookCog(commands.Cog):
 
         return images
 
+    async def fake_user_send(
+        self,
+        channel: discord.TextChannel,
+        user: discord.User | discord.Member,
+        message: str,
+        **kwargs,
+    ) -> discord.Message:
+        webhooks = await channel.webhooks()
+        if not webhooks:
+            webhook = await channel.create_webhook(name="Fake User")
+        else:
+            webhook = webhooks[0]
+
+        return await webhook.send(
+            content=message,
+            username=user.display_name,
+            avatar_url=user.display_avatar.url,
+            **kwargs,
+        )
+
     # use fxtwitter and phixiv
     @commands.Cog.listener("on_message")
     async def fix_embed(self, message: discord.Message):
@@ -149,21 +165,14 @@ class WebhookCog(commands.Cog):
 
         for website, fix in fix_embeds.items():
             if website in message.content and fix not in message.content:
-                webhooks = await message.channel.webhooks()
-                if not webhooks:
-                    webhook = await message.channel.create_webhook(name="Fix Embed")
-                else:
-                    webhook = webhooks[0]
-
                 await message.delete()
 
                 view = DeleteMessage()
                 view.author = message.author
-
-                view.message = await webhook.send(
-                    content=message.content.replace(website, fix),
-                    username=message.author.display_name,
-                    avatar_url=message.author.display_avatar.url,
+                view.message = await self.fake_user_send(
+                    message.channel,
+                    message.author,
+                    message.content.replace(website, fix),
                     view=view,
                 )
 
