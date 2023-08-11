@@ -189,7 +189,10 @@ class WebhookCog(commands.Cog):
                             message.channel,
                             message.author,
                             message.content.replace(
-                                url, url.replace(artwork_id, f"{artwork_id}/{index}")
+                                url,
+                                url.replace(
+                                    artwork_id, f"{artwork_id}/{index}"
+                                ).replace("pixiv", "phixiv"),
                             ),
                         )
 
