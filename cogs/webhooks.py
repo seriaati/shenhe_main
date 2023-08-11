@@ -169,17 +169,43 @@ class WebhookCog(commands.Cog):
         ):
             return
 
-        # check if message.content contains a URL using regex
-        if not find_urls(message.content):
+        urls = find_urls(message.content)
+        if urls:
             return
 
-        for website, fix in fix_embeds.items():
-            if website in message.content and fix not in message.content:
-                await message.delete()
+        for url in urls:
+            if any((website in message.content for website in ("pixiv", "phixiv"))):
+                try:
+                    await message.delete()
+                except discord.NotFound:
+                    pass
+                artwork_id = url.split("/")[-1].split("?")[0]
+                artwork = await fetch_artwork_info(artwork_id)
+                if "R-18" in artwork.tags:
+                    await message.channel.send(
+                        content=f"{message.author.mention} 這張圖片包含 R-18 標籤，請在 <#1061898394446069852> 分享！",
+                        delete_after=10,
+                    )
+                else:
+                    for index in range(1, len(artwork.urls) + 1):
+                        await self.fake_user_send(
+                            message.channel,
+                            message.author,
+                            message.content.replace(
+                                url, url.replace(artwork_id, f"{artwork_id}/{index}")
+                            ),
+                        )
+
+            if "twitter" in message.content and "fxtwitter" not in message.content:
+                try:
+                    await message.delete()
+                except discord.NotFound:
+                    pass
+
                 await self.fake_user_send(
                     message.channel,
                     message.author,
-                    message.content.replace(website, fix),
+                    message.content.replace("twitter", "fxtwitter"),
                 )
 
     # webhook reply
