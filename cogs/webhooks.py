@@ -61,21 +61,23 @@ class WebhookCog(commands.Cog):
 
         # auto spoiler url images or videos
         urls = find_urls(message.content)
+        webs = ("twitter", "fxtwitter", "phixiv", "pixiv")
+        exts = ("png", "jpg", "jpeg", "gif", "webp", "mp4")
         for url in urls:
-            webs = ("twitter", "fxtwitter", "phixiv", "pixiv")
-            exts = ("png", "jpg", "jpeg", "gif", "webp", "mp4")
             if any(w in url for w in webs) or any(f".{e}" in url for e in exts):
                 await self.del_message(message)
                 message.content = message.content.replace(url, f"<{url}>")
-
                 filename = url.split("/")[-1].split("?")[0]
-                image_url = post_url_to_image_url(url)
 
-                if "phixiv" in image_url:
+                if "pixiv" in url or "phixiv" in url:
                     artwork = await fetch_artwork_info(filename)
                     urls_ = artwork.urls
+                elif "twitter" in url:
+                    if "fxtwitter" not in url:
+                        url = url.replace("twitter", "fxtwitter")
+                    urls_ = [url.replace(filename, f"{filename}.png")]
                 else:
-                    urls_ = [image_url]
+                    urls_ = [url]
 
                 for index, u in enumerate(urls_):
                     file_ = await self.download_image(u, f"{filename}_{index}")
