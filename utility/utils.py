@@ -63,13 +63,9 @@ def divide_chunks(l, n):
         yield l[i : i + n]
 
 
-def find_urls(url: str) -> List[str]:
-    url_regex = re.compile(
-        r"^(?:http|ftp)s?://"  # http:// or https://
-        # domain...
-        r"(?:[a-z0-9]+(?:-[a-z0-9]+)*\.)+[a-z]{2,}"
-        r"(?::\d{2,5})?"  # optional port
-        r"(?:/[^\s]*)?$",
-        re.IGNORECASE,
+def find_urls(string: str) -> List[str]:
+    url_pattern = re.compile(
+        r"http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+"
     )
-    return url_regex.findall(url)
+    urls = re.findall(url_pattern, string)
+    return urls
