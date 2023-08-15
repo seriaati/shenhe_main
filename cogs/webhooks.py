@@ -26,7 +26,9 @@ class Artwork(BaseModel):
 
 async def fetch_artwork_info(id: str) -> Artwork:
     async with aiohttp.ClientSession() as session:
-        async with session.get(f"https://www.phixiv.net/api/info?id={id}") as resp:
+        async with session.get(
+            "https://www.phixiv.net/api/info?id={id}".format(id=id)
+        ) as resp:
             return Artwork(**await resp.json())
 
 
@@ -68,7 +70,6 @@ class WebhookCog(commands.Cog):
                 await self.del_message(message)
                 message.content = message.content.replace(url, f"<{url}>")
                 filename = url.split("/")[-1].split("?")[0]
-                print(filename)
 
                 if "pixiv" in url or "phixiv" in url:
                     artwork = await fetch_artwork_info(filename)
@@ -181,8 +182,8 @@ class WebhookCog(commands.Cog):
                 mention_author=False,
             )
 
-    async def download_image(self, url: str, file_name: str) -> Optional[discord.File]:
-        allowed_content_types = ("image", "video")
+    async def download_image(self, url: str, filename: str) -> Optional[discord.File]:
+        allowed_content_types = ("image", "video", "application/octet-stream")
         async with self.bot.session.get(url) as resp:
             if not any(
                 (content_type in resp.content_type)
@@ -191,8 +192,11 @@ class WebhookCog(commands.Cog):
                 return None
 
             bytes_obj = io.BytesIO(await resp.read())
-            file_name += f".{resp.content_type.split('/')[-1]}"
-            file_ = discord.File(bytes_obj, filename=file_name, spoiler=True)
+            if resp.content_type == "application/octet-stream":
+                filename += ".png"
+            else:
+                filename += f".{resp.content_type.split('/')[-1]}"
+            file_ = discord.File(bytes_obj, filename=filename, spoiler=True)
 
         return file_
 
