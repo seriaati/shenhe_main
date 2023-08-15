@@ -68,6 +68,7 @@ class WebhookCog(commands.Cog):
                 await self.del_message(message)
                 message.content = message.content.replace(url, f"<{url}>")
                 filename = url.split("/")[-1].split("?")[0]
+                print(filename)
 
                 if "pixiv" in url or "phixiv" in url:
                     artwork = await fetch_artwork_info(filename)
