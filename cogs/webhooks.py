@@ -99,7 +99,7 @@ class WebhookCog(commands.Cog):
                 await self.del_message(message)
                 url_dict[a.filename] = a.url
             else:
-                files.append(await a.to_file())
+                files.append(await a.to_file(spoiler=True))
         images = [
             await self.download_image(url, filename)
             for filename, url in url_dict.items()
