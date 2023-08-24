@@ -181,7 +181,7 @@ class ReactionRoles(commands.Cog):
             view = self.other_view
 
         embed = default_embed(message=embed_description).set_author(name=embed_title)
-        await ctx.send(embed=embed, view=view)
+        await ctx.send(embed=embed, view=view)  # type: ignore
 
 
 async def setup(bot: commands.Bot) -> None:

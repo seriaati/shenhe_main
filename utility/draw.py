@@ -37,7 +37,7 @@ def pil_draw_ship_image(
 
     # draw the inner bar
     percentage_width = int((292 / 100) * percentage)
-    draw.rounded_rectangle((85, 174, 85+percentage_width, 197), 20, fill="#F98D8D")
+    draw.rounded_rectangle((85, 174, 85 + percentage_width, 197), 20, fill="#F98D8D")
 
     # draw the percentage text
     font = ImageFont.truetype("assets/fonts/Noto_Sans/NotoSans-Regular.ttf", 26)
@@ -48,14 +48,12 @@ def pil_draw_ship_image(
     return fp
 
 
-def circular_crop(
-    image: Image.Image
-) -> Image.Image:
+def circular_crop(image: Image.Image) -> Image.Image:
     """Crop an image into a circle with transparent background."""
     mask = Image.new("L", image.size, 0)
     draw = ImageDraw.Draw(mask)
     draw.ellipse((0, 0) + image.size, fill=255)
-    mask = mask.resize(image.size, Image.ANTIALIAS)
+    mask = mask.resize(image.size)
     result = image.copy()
     result.putalpha(mask)
     return result
