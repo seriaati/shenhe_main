@@ -1,8 +1,9 @@
 asyncpg
 discord.py
+saucenao-api
+jishaku
 python-dotenv
 pytz
-saucenao-api
 pomice
 Pillow
 pydantic==1.10.12
