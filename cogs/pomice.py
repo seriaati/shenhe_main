@@ -56,8 +56,8 @@ class PlayerView(ui.View):
         return True
 
     async def interaction_check(self, i: discord.Interaction) -> bool:
-        await self.check_in_vc(i)
-        return i.user.id == self.author_id
+        in_vc = await self.check_in_vc(i)
+        return i.user.id == self.author_id and in_vc
 
     async def update(self, i: discord.Interaction) -> Any:
         self.add_items()
