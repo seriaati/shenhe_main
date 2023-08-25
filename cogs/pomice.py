@@ -44,8 +44,7 @@ class PlayerView(ui.View):
             return False
         if not self.check_player(i):
             await i.user.voice.channel.connect(cls=Player)
-            self.player = i.guild.voice_client  # type: ignore
-            return True
+        self.player = i.guild.voice_client  # type: ignore
         return True
 
     async def interaction_check(self, i: discord.Interaction) -> bool:
@@ -290,7 +289,7 @@ class AddSong(ui.Button):
             await i.followup.send(f"{i.user.mention} 已新增歌曲 {results.name}")
         else:
             view = SongSelectView(i.user.id, results)
-            await i.followup.send(f"{i.user.mention} 請選擇歌曲", view=view)
+            await i.followup.send(f"{i.user.mention} 請選擇歌曲", view=view, ephemeral=True)
             await view.wait()
             if view.track:
                 self.player.queue.put(view.track)
@@ -314,14 +313,16 @@ class PomiceCog(commands.Cog):
 
         # You can pass in Spotify credentials to enable Spotify querying.
         # If you do not pass in valid Spotify credentials, Spotify querying will not work
-        await self.pomice.create_node(
-            bot=self.bot,
-            host="127.0.0.1",
-            port=7009,
-            password=os.getenv("LAVALINK_PASSWORD"),  # type: ignore
-            identifier="MAIN",
-        )
-        logging.info("Connected to MAIN node.")
+        try:
+            await self.pomice.create_node(
+                bot=self.bot,
+                host="127.0.0.1",
+                port=7009,
+                password=os.getenv("LAVALINK_PASSWORD"),  # type: ignore
+                identifier="MAIN",
+            )
+        except pomice.NodeCreationError:
+            pass
 
     @commands.Cog.listener()
     async def on_pomice_track_end(self, player: Player, _, __):
