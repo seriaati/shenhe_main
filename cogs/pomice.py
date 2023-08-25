@@ -56,11 +56,11 @@ class PlayerView(ui.View):
         self.add_items()
         try:
             await i.response.edit_message(
-                embeds=[self.gen_queue_embed(), self.gen_status_embed()], view=self
+                embeds=[self.gen_queue_embed(), self.gen_playing_embed()], view=self
             )
         except discord.InteractionResponded:
             await i.edit_original_response(
-                embeds=[self.gen_queue_embed(), self.gen_status_embed()], view=self
+                embeds=[self.gen_queue_embed(), self.gen_playing_embed()], view=self
             )
 
     def add_items(self) -> None:
@@ -87,7 +87,7 @@ class PlayerView(ui.View):
             embed.description = "待播清單內目前沒有歌曲"
         return embed
 
-    def gen_status_embed(self) -> discord.Embed:
+    def gen_playing_embed(self) -> discord.Embed:
         embed = discord.Embed(title="目前播放")
         if not self.player.current:
             embed.description = "目前沒有正在播放的歌曲"
@@ -97,6 +97,7 @@ class PlayerView(ui.View):
             value=str(self.player.current.uri),
             inline=False,
         )
+        embed.set_image(url=self.player.current.thumbnail)
         return embed
 
     @staticmethod
@@ -256,9 +257,15 @@ class AddSong(ui.Button):
         if isinstance(results, pomice.Playlist):
             for track in results.tracks:
                 self.player.queue.put(track)
+            await i.followup.send(
+                f"{i.user.mention} 已新增歌曲 {results.name}", ephemeral=True
+            )
         else:
             track = results[0]
             self.player.queue.put(track)
+            await i.followup.send(
+                f"{i.user.mention} 已新增歌曲 {track.title}", ephemeral=True
+            )
 
         if not self.player.is_playing:
             await self.player.do_next()
@@ -307,7 +314,7 @@ class PomiceCog(commands.Cog):
             return
         view.add_items()
         await i.response.send_message(
-            embeds=[view.gen_queue_embed(), view.gen_status_embed()], view=view
+            embeds=[view.gen_queue_embed(), view.gen_playing_embed()], view=view
         )
 
 
