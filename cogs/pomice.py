@@ -31,9 +31,10 @@ class Player(pomice.Player):
 
 
 class PlayerView(ui.View):
-    def __init__(self) -> None:
-        self.player: Player = None  # type: ignore
+    def __init__(self, author_id: int) -> None:
         super().__init__()
+        self.player: Player = None  # type: ignore
+        self.author_id = author_id
 
     async def start(self, i: discord.Interaction) -> bool:
         if not isinstance(i.user, discord.Member):
@@ -50,7 +51,7 @@ class PlayerView(ui.View):
     async def interaction_check(self, i: discord.Interaction) -> bool:
         if not self.check_player(i):
             await self.start(i)
-        return True
+        return i.user.id == self.author_id
 
     async def update(self, i: discord.Interaction) -> Any:
         self.add_items()
@@ -66,12 +67,13 @@ class PlayerView(ui.View):
     def add_items(self) -> None:
         self.clear_items()
         self.add_item(AddSong(self.player))
-        if self.player.is_paused:
-            self.add_item(Resume(self.player))
         if self.player.queue.size > 1:
             self.add_item(Next(self.player))
+        if self.player.is_paused:
+            self.add_item(Resume(self.player))
         if self.player.is_playing:
-            self.add_item(Pause(self.player))
+            if not self.player.is_paused:
+                self.add_item(Pause(self.player))
             self.add_item(Stop(self.player))
 
     def gen_queue_embed(self) -> discord.Embed:
@@ -308,7 +310,7 @@ class PomiceCog(commands.Cog):
 
     @app_commands.command(name="music", description="音樂")
     async def music(self, i: discord.Interaction) -> Any:
-        view = PlayerView()
+        view = PlayerView(i.user.id)
         success = await view.start(i)
         if not success:
             return
