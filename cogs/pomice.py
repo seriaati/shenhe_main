@@ -66,7 +66,7 @@ class PlayerView(ui.View):
     def add_items(self) -> None:
         self.clear_items()
         self.add_item(AddSong(self.player))
-        if self.player.queue.size > 1:
+        if self.player.queue.size >= 1:
             self.add_item(Next(self.player))
         if self.player.is_paused:
             self.add_item(Resume(self.player))
