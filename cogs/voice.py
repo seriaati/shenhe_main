@@ -100,7 +100,9 @@ class VoiceCog(commands.GroupCog, name="vc"):
                     old.id,
                 )
 
-            if old.id != make_vc.id and (len(old.members) == 0 or old.members[0].bot):
+            if old.id != make_vc.id and (
+                len(old.members) == 0 or (len(old.members) == 1 and old.members[0].bot)
+            ):
                 try:
                     if member.guild.voice_client:
                         await member.guild.voice_client.destroy()  # type: ignore

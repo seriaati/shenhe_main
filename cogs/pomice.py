@@ -37,19 +37,26 @@ class PlayerView(ui.View):
         self.author_id = author_id
 
     async def start(self, i: discord.Interaction) -> bool:
-        if not isinstance(i.user, discord.Member):
-            raise RuntimeError("Member not found")
-        if not i.user.voice or not i.user.voice.channel:
-            await i.response.send_message("你必須先加入一個語音頻道", ephemeral=True)
-            return False
+        assert isinstance(i.user, discord.Member)
+        await self.check_in_vc(i)
+        assert i.user.voice and i.user.voice.channel
         if not self.check_player(i):
             await i.user.voice.channel.connect(cls=Player)
         self.player = i.guild.voice_client  # type: ignore
         return True
 
+    async def check_in_vc(self, i: discord.Interaction) -> bool:
+        assert isinstance(i.user, discord.Member)
+        if not i.user.voice or not i.user.voice.channel:
+            await i.response.send_message(
+                "你必須先加入一個語音頻道",
+                ephemeral=True,
+            )
+            return False
+        return True
+
     async def interaction_check(self, i: discord.Interaction) -> bool:
-        if not self.check_player(i):
-            await self.start(i)
+        await self.check_in_vc(i)
         return i.user.id == self.author_id
 
     async def update(self, i: discord.Interaction) -> Any:
@@ -124,8 +131,7 @@ class PlayerView(ui.View):
 
     @staticmethod
     def check_player(i: discord.Interaction) -> bool:
-        if not i.guild:
-            raise RuntimeError("Guild not found")
+        assert i.guild
         return i.guild.voice_client is not None
 
     @staticmethod
@@ -160,10 +166,9 @@ class VoteView(ui.View):
     async def vote(self, i: discord.Interaction, _) -> Any:
         self.vote_set.add(i.user.id)
         passed = self._check_required()
-        if passed:
-            await i.delete_original_response()
-            return self.stop()
         await self.update_embed(i)
+        if passed and i.message:
+            await i.message.delete()
 
 
 class Resume(ui.Button):
@@ -175,7 +180,11 @@ class Resume(ui.Button):
     async def callback(self, i: discord.Interaction) -> Any:
         if not self.view.is_privileged(i):
             view = VoteView(self.view.required(i), "取消暫停")
-            await i.response.send_message(embed=view.gen_embed(), view=view)
+            await i.response.send_message(
+                content=" ".join([m.mention for m in self.player.channel.members]),
+                embed=view.gen_embed(),
+                view=view,
+            )
             await view.wait()
         await self.player.set_pause(False)
         await self.view.update(i)
@@ -190,7 +199,11 @@ class Pause(ui.Button):
     async def callback(self, i: discord.Interaction) -> Any:
         if not self.view.is_privileged(i):
             view = VoteView(self.view.required(i), "暫停")
-            await i.response.send_message(embed=view.gen_embed(), view=view)
+            await i.response.send_message(
+                content=" ".join([m.mention for m in self.player.channel.members]),
+                embed=view.gen_embed(),
+                view=view,
+            )
             await view.wait()
         await self.player.set_pause(True)
         await self.view.update(i)
@@ -205,7 +218,11 @@ class Next(ui.Button):
     async def callback(self, i: discord.Interaction) -> Any:
         if not self.view.is_privileged(i):
             view = VoteView(self.view.required(i), "下一首")
-            await i.response.send_message(embed=view.gen_embed(), view=view)
+            await i.response.send_message(
+                content=" ".join([m.mention for m in self.player.channel.members]),
+                embed=view.gen_embed(),
+                view=view,
+            )
             await view.wait()
         await self.player.stop()
         await self.view.update(i)
@@ -220,7 +237,11 @@ class Stop(ui.Button):
     async def callback(self, i: discord.Interaction) -> Any:
         if not self.view.is_privileged(i):
             view = VoteView(self.view.required(i, is_stop=True), "停止播放")
-            await i.response.send_message(embed=view.gen_embed(), view=view)
+            await i.response.send_message(
+                content=" ".join([m.mention for m in self.player.channel.members]),
+                embed=view.gen_embed(),
+                view=view,
+            )
             await view.wait()
         await self.player.destroy()
 
@@ -288,12 +309,18 @@ class AddSong(ui.Button):
                 self.player.queue.put(track)
             await i.followup.send(f"{i.user.mention} 已新增歌曲 {results.name}")
         else:
-            view = SongSelectView(i.user.id, results)
-            await i.followup.send(f"{i.user.mention} 請選擇歌曲", view=view, ephemeral=True)
-            await view.wait()
-            if view.track:
-                self.player.queue.put(view.track)
-                await i.followup.send(f"{i.user.mention} 已新增歌曲 {view.track.title}")
+            if len(results) == 1:
+                track = results[0]
+            else:
+                view = SongSelectView(i.user.id, results)
+                await i.followup.send(
+                    f"{i.user.mention} 請選擇歌曲", view=view, ephemeral=True
+                )
+                await view.wait()
+                track = view.track
+            if track:
+                self.player.queue.put(track)
+                await i.followup.send(f"{i.user.mention} 已新增歌曲 {track.title}")
 
         if not self.player.is_playing:
             await self.player.do_next()
