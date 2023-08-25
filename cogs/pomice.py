@@ -7,7 +7,6 @@ import discord
 import pomice
 from discord import app_commands, ui
 from discord.ext import commands
-from discord.interactions import Interaction
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -35,19 +34,26 @@ class PlayerView(ui.View):
     def __init__(self) -> None:
         self.player: Player = None  # type: ignore
 
-    async def start(self, i: discord.Interaction) -> Any:
+    async def start(self, i: discord.Interaction) -> bool:
         if not isinstance(i.user, discord.Member):
             raise RuntimeError("Member not found")
         if not i.user.voice or not i.user.voice.channel:
-            return await i.response.send_message("你必須先加入一個語音頻道", ephemeral=True)
+            await i.response.send_message("你必須先加入一個語音頻道", ephemeral=True)
+            return False
         if not self.check_player(i):
             await i.user.voice.channel.connect(cls=Player)
             self.player = i.guild.voice_client  # type: ignore
+            return True
+        return True
 
-    async def interaction_check(self, i: Interaction) -> bool:
+    async def interaction_check(self, i: discord.Interaction) -> bool:
         if not self.check_player(i):
             await self.start(i)
         return True
+
+    async def update(self, i: discord.Interaction) -> Any:
+        self.add_items()
+        await i.edit_original_response(embed=self.gen_queue_embed(), view=self)
 
     def add_items(self) -> None:
         self.clear_items()
@@ -131,6 +137,7 @@ class VoteView(ui.View):
         self.vote_set.add(i.user.id)
         passed = self._check_required()
         if passed:
+            await i.delete_original_response()
             return self.stop()
         await self.update_embed(i)
 
@@ -147,6 +154,7 @@ class Resume(ui.Button):
             await i.response.send_message(embed=view.gen_embed(), view=view)
             await view.wait()
         await self.player.set_pause(False)
+        await self.view.update(i)
 
 
 class Pause(ui.Button):
@@ -161,6 +169,7 @@ class Pause(ui.Button):
             await i.response.send_message(embed=view.gen_embed(), view=view)
             await view.wait()
         await self.player.set_pause(True)
+        await self.view.update(i)
 
 
 class Next(ui.Button):
@@ -175,6 +184,7 @@ class Next(ui.Button):
             await i.response.send_message(embed=view.gen_embed(), view=view)
             await view.wait()
         await self.player.stop()
+        await self.view.update(i)
 
 
 class Stop(ui.Button):
@@ -230,6 +240,7 @@ class AddSong(ui.Button):
 
         if not self.player.is_playing:
             await self.player.do_next()
+        await self.view.update(i)
 
 
 class PomiceCog(commands.Cog):
@@ -269,7 +280,10 @@ class PomiceCog(commands.Cog):
     @app_commands.command(name="music", description="音樂")
     async def music(self, i: discord.Interaction) -> Any:
         view = PlayerView()
-        await view.start(i)
+        success = await view.start(i)
+        if not success:
+            return
+        view.add_items()
         await i.response.send_message(embed=view.gen_queue_embed(), view=view)
 
 
