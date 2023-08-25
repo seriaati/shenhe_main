@@ -33,6 +33,7 @@ class Player(pomice.Player):
 class PlayerView(ui.View):
     def __init__(self) -> None:
         self.player: Player = None  # type: ignore
+        super().__init__()
 
     async def start(self, i: discord.Interaction) -> bool:
         if not isinstance(i.user, discord.Member):
@@ -118,6 +119,7 @@ class VoteView(ui.View):
         self.vote_set: Set[int] = set()
         self.required = required
         self.action = action
+        super().__init__()
 
     def _check_required(self) -> bool:
         return len(self.vote_set) >= self.required
