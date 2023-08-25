@@ -243,7 +243,7 @@ class SongSelector(ui.Select):
         self.tracks = tracks
         options = [
             discord.SelectOption(label=track.title, value=str(i))
-            for i, track in enumerate(tracks)
+            for i, track in enumerate(tracks[:25])
         ]
         super().__init__(placeholder="選擇歌曲", options=options)
         self.view: "SongSelectView"
