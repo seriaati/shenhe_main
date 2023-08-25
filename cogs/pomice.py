@@ -54,18 +54,24 @@ class PlayerView(ui.View):
 
     async def update(self, i: discord.Interaction) -> Any:
         self.add_items()
-        await i.edit_original_response(embed=self.gen_queue_embed(), view=self)
+        try:
+            await i.response.edit_message(
+                embeds=[self.gen_queue_embed(), self.gen_status_embed()], view=self
+            )
+        except discord.InteractionResponded:
+            await i.edit_original_response(
+                embeds=[self.gen_queue_embed(), self.gen_status_embed()], view=self
+            )
 
     def add_items(self) -> None:
         self.clear_items()
         self.add_item(AddSong(self.player))
         if self.player.is_paused:
             self.add_item(Resume(self.player))
-        else:
-            self.add_item(Pause(self.player))
         if self.player.queue.size > 1:
             self.add_item(Next(self.player))
         if self.player.is_playing:
+            self.add_item(Pause(self.player))
             self.add_item(Stop(self.player))
 
     def gen_queue_embed(self) -> discord.Embed:
@@ -77,6 +83,20 @@ class PlayerView(ui.View):
                 value=str(track.uri),
                 inline=False,
             )
+        if not embed.fields:
+            embed.description = "待播清單內目前沒有歌曲"
+        return embed
+
+    def gen_status_embed(self) -> discord.Embed:
+        embed = discord.Embed(title="目前播放")
+        if not self.player.current:
+            embed.description = "目前沒有正在播放的歌曲"
+            return embed
+        embed.add_field(
+            name=f"{self.player.current.author} - {self.player.current.title}",
+            value=str(self.player.current.uri),
+            inline=False,
+        )
         return embed
 
     @staticmethod
@@ -286,7 +306,9 @@ class PomiceCog(commands.Cog):
         if not success:
             return
         view.add_items()
-        await i.response.send_message(embed=view.gen_queue_embed(), view=view)
+        await i.response.send_message(
+            embeds=[view.gen_queue_embed(), view.gen_status_embed()], view=view
+        )
 
 
 async def setup(bot: commands.Bot):
