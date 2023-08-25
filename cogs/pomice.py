@@ -1,7 +1,7 @@
 import logging
 import math
 import os
-from typing import Any, Optional, Set
+from typing import Any, List, Optional, Set
 
 import discord
 import pomice
@@ -239,6 +239,34 @@ class SearchModal(ui.Modal):
         self.stop()
 
 
+class SongSelector(ui.Select):
+    def __init__(self, tracks: List[pomice.Track]) -> None:
+        self.tracks = tracks
+        options = [
+            discord.SelectOption(label=track.title, value=str(i))
+            for i, track in enumerate(tracks)
+        ]
+        super().__init__(placeholder="選擇歌曲", options=options)
+        self.view: "SongSelectView"
+        self.track: pomice.Track
+
+    async def callback(self, i: discord.Interaction) -> Any:
+        await i.response.defer()
+        self.view.track = self.tracks[int(self.values[0])]
+        self.view.stop()
+
+
+class SongSelectView(ui.View):
+    def __init__(self, author_id: int, tracks: List[pomice.Track]) -> None:
+        super().__init__()
+        self.author_id = author_id
+        self.add_item(SongSelector(tracks))
+        self.track: Optional[pomice.Track] = None
+
+    async def interection_check(self, i: discord.Interaction) -> bool:
+        return i.user.id == self.author_id
+
+
 class AddSong(ui.Button):
     def __init__(self, player: Player) -> None:
         self.player = player
@@ -259,15 +287,14 @@ class AddSong(ui.Button):
         if isinstance(results, pomice.Playlist):
             for track in results.tracks:
                 self.player.queue.put(track)
-            await i.followup.send(
-                f"{i.user.mention} 已新增歌曲 {results.name}", ephemeral=True
-            )
+            await i.followup.send(f"{i.user.mention} 已新增歌曲 {results.name}")
         else:
-            track = results[0]
-            self.player.queue.put(track)
-            await i.followup.send(
-                f"{i.user.mention} 已新增歌曲 {track.title}", ephemeral=True
-            )
+            view = SongSelectView(i.user.id, results)
+            await i.followup.send(f"{i.user.mention} 請選擇歌曲", view=view)
+            await view.wait()
+            if view.track:
+                self.player.queue.put(view.track)
+                await i.followup.send(f"{i.user.mention} 已新增歌曲 {view.track.title}")
 
         if not self.player.is_playing:
             await self.player.do_next()
