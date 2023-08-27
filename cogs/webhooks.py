@@ -93,20 +93,15 @@ class WebhookCog(commands.Cog):
                         files.append(file_)
 
         # auto spoiler attachments
-        url_dict: Dict[str, str] = {}
-        for a in message.attachments:
-            if not a.is_spoiler():
-                await self.del_message(message)
-                url_dict[a.filename] = a.url
-            else:
-                files.append(await a.to_file(spoiler=True))
+        url_dict: Dict[str, str] = {a.filename: a.url for a in message.attachments}
         images = [
             await self.download_image(url, filename)
             for filename, url in url_dict.items()
         ]
         files.extend([i for i in images if i is not None])
 
-        # send files by 10 per message
+        if files:
+            await self.del_message(message)
         split_files: List[List[discord.File]] = list(divide_chunks(files, 10))
         for split in split_files:
             ref_message = message.reference.resolved if message.reference else None
