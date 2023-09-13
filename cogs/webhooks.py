@@ -63,7 +63,14 @@ class WebhookCog(commands.Cog):
 
         # auto spoiler url images or videos
         urls = find_urls(message.content)
-        webs = ("twitter", "fxtwitter", "phixiv", "pixiv")
+        webs = (
+            "twitter.com",
+            "fxtwitter.com",
+            "phixiv.net",
+            "pixiv.net",
+            "x.com",
+            "fixupx.com",
+        )
         exts = ("png", "jpg", "jpeg", "gif", "webp", "mp4")
         for url in urls:
             if any(w in url for w in webs) or any(f".{e}" in url for e in exts):
@@ -71,12 +78,16 @@ class WebhookCog(commands.Cog):
                 message.content = message.content.replace(url, f"<{url}>")
                 filename = url.split("/")[-1].split("?")[0]
 
-                if "pixiv" in url or "phixiv" in url:
+                if "pixiv.net" in url or "phixiv.net" in url:
                     artwork = await fetch_artwork_info(filename)
                     urls_ = artwork.urls
-                elif "twitter" in url:
-                    if "fxtwitter" not in url:
-                        url = url.replace("twitter", "fxtwitter")
+                elif "twitter.com" in url:
+                    if "fxtwitter.com" not in url:
+                        url = url.replace("twitter.com", "fxtwitter.com")
+                    urls_ = [url.replace(filename, f"{filename}.png")]
+                elif "x.com" in url:
+                    if "fixupx.com" not in url:
+                        url = url.replace("x.com", "fixupx.com")
                     urls_ = [url.replace(filename, f"{filename}.png")]
                 else:
                     urls_ = [url]
@@ -150,14 +161,24 @@ class WebhookCog(commands.Cog):
                                 ).replace("pixiv", "phixiv"),
                             ),
                         )
-
-            if "twitter" in message.content and "fxtwitter" not in message.content:
+            elif (
+                "twitter.com" in message.content
+                and "fxtwitter.com" not in message.content
+            ):
                 await self.del_message(message)
 
                 await self.fake_user_send(
                     message.channel,
                     message.author,
-                    message.content.replace("twitter", "fxtwitter"),
+                    message.content.replace("twitter.com", "fxtwitter.com"),
+                )
+            elif "x.com" in message.content and "fixupx.com" not in message.content:
+                await self.del_message(message)
+
+                await self.fake_user_send(
+                    message.channel,
+                    message.author,
+                    message.content.replace("x.com", "fixupx.com"),
                 )
 
     # webhook reply
