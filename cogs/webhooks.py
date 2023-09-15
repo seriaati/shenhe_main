@@ -6,7 +6,6 @@ import discord
 from discord.ext import commands
 from pydantic import BaseModel
 
-from cogs.image_manager import post_url_to_image_url
 from dev.model import BaseView, BotModel
 from utility.utils import divide_chunks, find_urls
 
