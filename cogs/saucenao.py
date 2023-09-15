@@ -1,4 +1,5 @@
 import os
+import re
 from typing import List
 
 import discord
@@ -11,7 +12,9 @@ from saucenao_api.saucenao_api import SauceResponse
 from dev.model import DefaultEmbed, ErrorEmbed
 from utility.paginator import GeneralPaginator
 
-from .image_manager import url_pattern
+url_pattern = re.compile(
+    r"http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+"
+)
 
 
 class SauceNao(commands.Cog):
