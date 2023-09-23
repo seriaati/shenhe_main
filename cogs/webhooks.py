@@ -117,12 +117,16 @@ class WebhookCog(commands.Cog):
                     urls_ = artwork.urls
                 elif "twitter.com" in url:
                     if "fxtwitter.com" not in url:
-                        url = url.replace("twitter.com", "fxtwitter.com")
-                    urls_ = [url.replace(filename, f"{filename}.png")]
+                        url = url.replace("twitter.com", "d.fxtwitter.com")
+                    else:
+                        url = url.replace("fxtwitter.com", "d.fxtwitter.com")
+                    urls_ = [url]
                 elif "x.com" in url:
                     if "fixupx.com" not in url:
-                        url = url.replace("x.com", "fixupx.com")
-                    urls_ = [url.replace(filename, f"{filename}.png")]
+                        url = url.replace("x.com", "d.fixupx.com")
+                    else:
+                        url = url.replace("fixupx.com", "d.fixupx.com")
+                    urls_ = [url]
                 else:
                     urls_ = [url]
 
