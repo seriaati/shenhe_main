@@ -287,5 +287,3 @@ class WebhookCog(commands.Cog):
 
 async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(WebhookCog(bot))
-
-    await bot.add_cog(WebhookCog(bot))
