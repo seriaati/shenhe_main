@@ -79,6 +79,7 @@ class WebhookCog(commands.Cog):
     async def add_reactions_to_message(message: discord.Message):
         await message.add_reaction("👍")
         await message.add_reaction("🤔")
+        await message.add_reaction("<a:ganyuLick:1154951202073739364>")
         await message.add_reaction("<:hasuhasu:1067657689846534275>")
 
     @commands.Cog.listener("on_message")
