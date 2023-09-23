@@ -50,8 +50,7 @@ class WebhookCog(commands.Cog):
     @commands.Cog.listener("on_message")
     async def auto_add_reactions(self, message: discord.Message):
         if (
-            message.author.bot
-            or message.guild is None
+            message.guild is None
             or message.guild.id != self.bot.guild_id
         ):
             return
