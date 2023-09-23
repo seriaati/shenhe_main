@@ -49,10 +49,7 @@ class WebhookCog(commands.Cog):
     # auto add reactions
     @commands.Cog.listener("on_message")
     async def auto_add_reactions(self, message: discord.Message):
-        if (
-            message.guild is None
-            or message.guild.id != self.bot.guild_id
-        ):
+        if message.guild is None or message.guild.id != self.bot.guild_id:
             return
 
         # check for attachments
@@ -73,7 +70,7 @@ class WebhookCog(commands.Cog):
         for url in urls:
             if any(w in url for w in webs) or any(f".{e}" in url for e in exts):
                 return await self.add_reactions_to_message(message)
-        
+
     @staticmethod
     async def add_reactions_to_message(message: discord.Message):
         try:
@@ -139,6 +136,7 @@ class WebhookCog(commands.Cog):
                             message.channel,
                             message.author,
                             message.content,
+                            message.reference,
                         )
                     else:
                         files.append(file_)
@@ -154,16 +152,13 @@ class WebhookCog(commands.Cog):
         if files:
             await self.del_message(message)
         split_files: List[List[discord.File]] = list(divide_chunks(files, 10))
-        
-        for split in split_files:
-            ref_message = message.reference.resolved if message.reference else None
-            if isinstance(ref_message, discord.Message):
-                message.content = f"⬅️ 回應 {ref_message.author.mention} 的訊息 ({ref_message.jump_url})\n\n{message.content}"
 
+        for split in split_files:
             await self.fake_user_send(
                 message.channel,
                 message.author,
                 message.content,
+                message.reference,
                 files=split,
             )
 
@@ -201,6 +196,7 @@ class WebhookCog(commands.Cog):
                                     artwork_id, f"{artwork_id}/{index}"
                                 ).replace("pixiv", "phixiv"),
                             ),
+                            message.reference,
                         )
             elif (
                 "twitter.com" in message.content
@@ -212,6 +208,7 @@ class WebhookCog(commands.Cog):
                     message.channel,
                     message.author,
                     message.content.replace("twitter.com", "fxtwitter.com"),
+                    message.reference,
                 )
             elif "x.com" in message.content and "fixupx.com" not in message.content:
                 await self.del_message(message)
@@ -220,6 +217,7 @@ class WebhookCog(commands.Cog):
                     message.channel,
                     message.author,
                     message.content.replace("x.com", "fixupx.com"),
+                    message.reference,
                 )
 
     # webhook reply
@@ -261,7 +259,8 @@ class WebhookCog(commands.Cog):
         self,
         channel: discord.TextChannel,
         user: discord.User | discord.Member,
-        message: str,
+        content: str,
+        reference: Optional[discord.MessageReference],
         **kwargs,
     ) -> None:
         webhooks = await channel.webhooks()
@@ -270,10 +269,14 @@ class WebhookCog(commands.Cog):
         else:
             webhook = webhooks[0]
 
+        ref_message = reference.resolved if reference else None
+        if isinstance(ref_message, discord.Message):
+            content = f"⬅️ 回應 {ref_message.author.mention} 的訊息 ({ref_message.jump_url})\n\n{content}"
+
         view = DeleteMessage()
         view.author = user
         view.message = await webhook.send(
-            content=message,
+            content=content,
             username=user.display_name,
             avatar_url=user.display_avatar.url,
             view=view,
