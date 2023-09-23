@@ -57,15 +57,11 @@ class WebhookCog(commands.Cog):
             return
 
         # check for attachments
-        if not message.attachments:
-            return
+        if message.attachments:
+            return await self.add_reactions_to_message(message)
 
-        # check for urls
+        # check for image/video urls or twitter/x/pixiv urls
         urls = find_urls(message.content)
-        if not urls:
-            return
-
-        # check for image/video urls or pixiv/twitter urls
         webs = (
             "twitter.com",
             "fxtwitter.com",
@@ -75,13 +71,12 @@ class WebhookCog(commands.Cog):
             "fixupx.com",
         )
         exts = ("png", "jpg", "jpeg", "gif", "webp", "mp4")
-        if not any(
-            any(w in url for w in webs) or any(f".{e}" in url for e in exts)
-            for url in urls
-        ):
-            return
-
-        # add reactions
+        for url in urls:
+            if any(w in url for w in webs) or any(f".{e}" in url for e in exts):
+                return await self.add_reactions_to_message(message)
+        
+    @staticmethod
+    async def add_reactions_to_message(message: discord.Message):
         await message.add_reaction("👍")
         await message.add_reaction("🤔")
         await message.add_reaction("<:hasuhasu:1067657689846534275>")
