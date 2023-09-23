@@ -76,10 +76,13 @@ class WebhookCog(commands.Cog):
         
     @staticmethod
     async def add_reactions_to_message(message: discord.Message):
-        await message.add_reaction("👍")
-        await message.add_reaction("🤔")
-        await message.add_reaction("<a:ganyuLick:1154951202073739364>")
-        await message.add_reaction("<:hasuhasu:1067657689846534275>")
+        try:
+            await message.add_reaction("👍")
+            await message.add_reaction("🤔")
+            await message.add_reaction("<a:ganyuLick:1154951202073739364>")
+            await message.add_reaction("<:hasuhasu:1067657689846534275>")
+        except discord.HTTPException:
+            pass
 
     @commands.Cog.listener("on_message")
     async def auto_spoiler(self, message: discord.Message):
