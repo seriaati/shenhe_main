@@ -46,7 +46,46 @@ class WebhookCog(commands.Cog):
     def __init__(self, bot):
         self.bot: BotModel = bot
 
-    # auto spoiler
+    # auto add reactions
+    @commands.Cog.listener("on_message")
+    async def auto_add_reactions(self, message: discord.Message):
+        if (
+            message.author.bot
+            or message.guild is None
+            or message.guild.id != self.bot.guild_id
+        ):
+            return
+
+        # check for attachments
+        if not message.attachments:
+            return
+
+        # check for urls
+        urls = find_urls(message.content)
+        if not urls:
+            return
+
+        # check for image/video urls or pixiv/twitter urls
+        webs = (
+            "twitter.com",
+            "fxtwitter.com",
+            "phixiv.net",
+            "pixiv.net",
+            "x.com",
+            "fixupx.com",
+        )
+        exts = ("png", "jpg", "jpeg", "gif", "webp", "mp4")
+        if not any(
+            any(w in url for w in webs) or any(f".{e}" in url for e in exts)
+            for url in urls
+        ):
+            return
+
+        # add reactions
+        await message.add_reaction("👍")
+        await message.add_reaction("🤔")
+        await message.add_reaction("<:hasuhasu:1067657689846534275>")
+
     @commands.Cog.listener("on_message")
     async def auto_spoiler(self, message: discord.Message):
         if (
@@ -113,6 +152,7 @@ class WebhookCog(commands.Cog):
         if files:
             await self.del_message(message)
         split_files: List[List[discord.File]] = list(divide_chunks(files, 10))
+        
         for split in split_files:
             ref_message = message.reference.resolved if message.reference else None
             if isinstance(ref_message, discord.Message):
@@ -246,4 +286,6 @@ class WebhookCog(commands.Cog):
 
 
 async def setup(bot: commands.Bot) -> None:
+    await bot.add_cog(WebhookCog(bot))
+
     await bot.add_cog(WebhookCog(bot))
