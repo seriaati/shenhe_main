@@ -55,6 +55,9 @@ class WebhookCog(commands.Cog):
         if "/stickers" in message.content or "/emojis" in message.content:
             return
 
+        if message.channel.id not in (1061881404167815249, 1061881404167815249):
+            return
+
         # check for attachments
         if message.attachments:
             return await self.add_reactions_to_message(message)
