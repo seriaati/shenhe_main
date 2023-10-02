@@ -52,6 +52,9 @@ class WebhookCog(commands.Cog):
         if message.guild is None or message.guild.id != self.bot.guild_id:
             return
 
+        if "/stickers" in message.content or "/emojis" in message.content:
+            return
+
         # check for attachments
         if message.attachments:
             return await self.add_reactions_to_message(message)
