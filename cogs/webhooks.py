@@ -282,6 +282,8 @@ class WebhookCog(commands.Cog):
 
         view = DeleteMessage()
         view.author = user
+        if sauce:
+            view.add_item(discord.ui.Button(label="醬汁", url=sauce))
         view.message = await webhook.send(
             content=content,
             username=user.display_name,
@@ -289,8 +291,6 @@ class WebhookCog(commands.Cog):
             view=view,
             **kwargs,
         )
-        if sauce:
-            view.add_item(discord.ui.Button(label="醬汁", url=sauce))
 
     async def del_message(self, message: discord.Message) -> None:
         try:
