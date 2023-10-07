@@ -4,27 +4,21 @@ from typing import Dict, List, Optional
 import aiohttp
 import discord
 from discord.ext import commands
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from dev.model import BaseView, BotModel
 from utility.utils import divide_chunks, find_urls
 
 
 class Artwork(BaseModel):
-    image_proxy_urls: List[str] = Field(alias="urls")
+    ai_generated: bool
+    author_id: str
+    author_name: str
+    description: str
+    image_proxy_urls: List[str]
     tags: List[str]
-    ai_generated: bool = False
-
-
-# class Artwork(BaseModel):
-#     ai_generated: bool
-#     author_id: str
-#     author_name: str
-#     description: str
-#     image_proxy_urls: List[str]
-#     tags: List[str]
-#     title: str
-#     url: str
+    title: str
+    url: str
 
 
 async def fetch_artwork_info(id: str) -> Artwork:
