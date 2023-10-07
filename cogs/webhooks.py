@@ -53,7 +53,7 @@ class WebhookCog(commands.Cog):
         if "/stickers" in message.content or "/emojis" in message.content:
             return
 
-        if message.channel.id not in (1061881404167815249, 1061881404167815249):
+        if message.channel.id not in (1061881404167815249, 1061898394446069852):
             return
 
         # check for attachments
