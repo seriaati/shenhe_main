@@ -203,7 +203,7 @@ class WebhookCog(commands.Cog):
                             message.author,
                             image_url,
                             message.reference,
-                            image_url,
+                            url,
                         )
             elif "twitter.com" in url and "fxtwitter.com" not in url:
                 await self.del_message(message)
