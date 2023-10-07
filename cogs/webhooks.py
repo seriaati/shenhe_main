@@ -10,17 +10,15 @@ from dev.model import BaseView, BotModel
 from utility.utils import divide_chunks, find_urls
 
 
-class Author(BaseModel):
-    id: str
-    name: str
-
-
 class Artwork(BaseModel):
-    urls: List[str]
-    title: str
+    ai_generated: bool
+    author_id: str
+    author_name: str
     description: str
+    image_proxy_urls: List[str]
     tags: List[str]
-    author: Author
+    title: str
+    url: str
 
 
 async def fetch_artwork_info(id: str) -> Artwork:
@@ -119,7 +117,7 @@ class WebhookCog(commands.Cog):
 
                 if "pixiv.net" in url or "phixiv.net" in url:
                     artwork = await fetch_artwork_info(filename)
-                    urls_ = artwork.urls
+                    urls_ = artwork.image_proxy_urls
                 elif "twitter.com" in url:
                     if "fxtwitter.com" not in url:
                         url = url.replace("twitter.com", "d.fxtwitter.com")
@@ -188,11 +186,16 @@ class WebhookCog(commands.Cog):
                 artwork = await fetch_artwork_info(artwork_id)
                 if "R-18" in artwork.tags:
                     await message.channel.send(
-                        content=f"{message.author.mention} 你所傳送的圖片 (<{url}>) 包含 R-18 標籤，請在 <#1061898394446069852> 分享！",
+                        content=f"{message.author.mention} 你所傳送的圖片 (<{url}>) 包含 R-18 標籤, 請在 <#1061898394446069852> 分享。",
+                        delete_after=10,
+                    )
+                elif artwork.ai_generated:
+                    await message.channel.send(
+                        content=f"{message.author.mention} 你所傳送的圖片 (<{url}>) 為 AI 生成, 我們不允許 AI 生成圖片。",
                         delete_after=10,
                     )
                 else:
-                    for index in range(1, len(artwork.urls) + 1):
+                    for index in range(1, len(artwork.image_proxy_urls) + 1):
                         await self.fake_user_send(
                             message.channel,
                             message.author,
