@@ -182,8 +182,10 @@ class WebhookCog(commands.Cog):
         for url in urls:
             if "pixiv" in url or "phixiv" in url:
                 await self.del_message(message)
+
                 artwork_id = url.split("/")[-1].split("?")[0]
                 artwork = await fetch_artwork_info(artwork_id)
+
                 if "R-18" in artwork.tags:
                     await message.channel.send(
                         content=f"{message.author.mention} 你所傳送的圖片 (<{url}>) 包含 R-18 標籤, 請在 <#1061898394446069852> 分享。",
@@ -195,38 +197,33 @@ class WebhookCog(commands.Cog):
                         delete_after=10,
                     )
                 else:
-                    for index in range(1, len(artwork.image_proxy_urls) + 1):
+                    for image_url in artwork.image_proxy_urls:
                         await self.fake_user_send(
                             message.channel,
                             message.author,
-                            message.content.replace(
-                                url,
-                                url.replace(
-                                    artwork_id, f"{artwork_id}/{index}"
-                                ).replace("pixiv", "phixiv"),
-                            ),
+                            image_url,
                             message.reference,
+                            image_url,
                         )
-            elif (
-                "twitter.com" in message.content
-                and "fxtwitter.com" not in message.content
-            ):
+            elif "twitter.com" in url and "fxtwitter.com" not in url:
                 await self.del_message(message)
 
                 await self.fake_user_send(
                     message.channel,
                     message.author,
-                    message.content.replace("twitter.com", "fxtwitter.com"),
+                    url.replace("twitter.com", "d.fxtwitter.com"),
                     message.reference,
+                    url,
                 )
-            elif "x.com" in message.content and "fixupx.com" not in message.content:
+            elif "x.com" in url and "fixupx.com" not in url:
                 await self.del_message(message)
 
                 await self.fake_user_send(
                     message.channel,
                     message.author,
-                    message.content.replace("x.com", "fixupx.com"),
+                    url.replace("x.com", "d.fixupx.com"),
                     message.reference,
+                    url,
                 )
 
     # webhook reply
@@ -270,6 +267,7 @@ class WebhookCog(commands.Cog):
         user: discord.User | discord.Member,
         content: str,
         reference: Optional[discord.MessageReference],
+        sauce: Optional[str] = None,
         **kwargs,
     ) -> None:
         webhooks = await channel.webhooks()
@@ -291,6 +289,8 @@ class WebhookCog(commands.Cog):
             view=view,
             **kwargs,
         )
+        if sauce:
+            view.add_item(discord.ui.Button(label="醬汁", url=sauce))
 
     async def del_message(self, message: discord.Message) -> None:
         try:
