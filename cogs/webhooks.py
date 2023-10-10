@@ -23,9 +23,7 @@ class Artwork(BaseModel):
 
 async def fetch_artwork_info(id: str) -> Artwork:
     async with aiohttp.ClientSession() as session:
-        async with session.get(
-            "https://www.phixiv.net/api/info?id={id}".format(id=id)
-        ) as resp:
+        async with session.get(f"https://www.phixiv.net/api/info?id={id}") as resp:
             return Artwork(**await resp.json())
 
 
