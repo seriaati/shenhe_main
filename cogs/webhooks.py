@@ -186,12 +186,12 @@ class WebhookCog(commands.Cog):
 
                 if "R-18" in artwork.tags:
                     await message.channel.send(
-                        content=f"{message.author.mention} 你所傳送的圖片 (<{url}>) 包含 R-18 標籤, 請在 <#1061898394446069852> 分享。",
+                        content=f"{message.author.mention} 你所傳送的圖片包含 R-18 標籤, 請在 <#1061898394446069852> 分享。",
                         delete_after=10,
                     )
                 elif artwork.ai_generated:
                     await message.channel.send(
-                        content=f"{message.author.mention} 你所傳送的圖片 (<{url}>) 為 AI 生成, 我們不允許 AI 生成圖片。",
+                        content=f"{message.author.mention} 你所傳送的圖片為 AI 生成, 我們不允許 AI 生成圖片。",
                         delete_after=10,
                     )
                 else:
