@@ -8,6 +8,28 @@ from discord.interactions import Interaction
 from discord.ui.item import Item
 
 
+class ChoiceModal(discord.ui.Modal):
+    response = discord.ui.TextInput(label="回答", placeholder="請輸入回答")
+
+    async def on_submit(self, i: Interaction) -> None:
+        await i.response.defer()
+        self.stop()
+
+
+class OpenChoiceModal(discord.ui.Button):
+    async def callback(self, i: discord.Interaction) -> Any:
+        modal = ChoiceModal()
+        await i.response.send_modal(modal)
+        await modal.wait()
+        user_response = modal.response.value
+        self.view: "ChoiceSelector"
+        self.view.disable_all_items()
+        await i.edit_original_response(content="正在生成劇情中...", view=self.view)
+        response = await self.view.get_gpt_response(user_response)
+        self.view.enable_all_items()
+        await i.edit_original_response(content=response, view=self.view)
+
+
 class ChoiceButton(discord.ui.Button):
     def __init__(self, label: str):
         super().__init__(style=discord.ButtonStyle.primary, label=label)
@@ -15,9 +37,11 @@ class ChoiceButton(discord.ui.Button):
 
     async def callback(self, i: discord.Interaction) -> Any:
         self.view: "ChoiceSelector"
-        await i.response.edit_message(content="正在計算劇情中...")
+        self.view.disable_all_items()
+        await i.response.edit_message(content="正在生成劇情中...", view=self.view)
         response = await self.view.get_gpt_response(self.button_label)
-        await i.edit_original_response(content=response)
+        self.view.enable_all_items()
+        await i.edit_original_response(content=response, view=self.view)
 
 
 class ChoiceSelector(discord.ui.View):
@@ -29,12 +53,21 @@ class ChoiceSelector(discord.ui.View):
         self.add_item(ChoiceButton("一"))
         self.add_item(ChoiceButton("二"))
         self.add_item(ChoiceButton("三"))
+        self.add_item(OpenChoiceModal())
+
+    def disable_all_items(self) -> None:
+        for item in self.children:
+            if isinstance(item, discord.ui.Button):
+                item.disabled = True
+
+    def enable_all_items(self) -> None:
+        for item in self.children:
+            if isinstance(item, discord.ui.Button):
+                item.disabled = False
 
     async def on_timeout(self) -> None:
         if self.message:
-            for item in self.children:
-                if isinstance(item, ChoiceButton):
-                    item.disabled = True
+            self.disable_all_items()
             await self.message.edit(view=self)
 
     async def interaction_check(self, interaction: Interaction) -> bool:
@@ -70,7 +103,7 @@ class TRPG(commands.Cog):
         self, i: discord.Interaction, starting_prompt: Optional[str] = None
     ) -> Any:
         await i.response.defer()
-        base_prompt = "用戶將在你的幫助下玩一款文字角色扮演冒險遊戲。 你是這個遊戲的敘述者。 您將提供故事情節供用戶遊玩。 每次講完故事後，您都會給出三個選項供用戶選擇以繼續遊戲，用戶會回答「一」、「二」、或「三」來告訴您他的選擇，你會接著用戶的選擇將故事繼續下去，並再給出三個選擇，不停循環，直到故事達到結局。 現在，產生一個基礎故事，供用戶開始他的冒險。"
+        base_prompt = "用戶將在你的幫助下玩一款文字角色扮演冒險遊戲。 你是這個遊戲的敘述者。 您將提供故事情節供用戶遊玩。 每次講完故事後，您都會給出三個選項供用戶選擇以繼續遊戲，用戶會回答「一」、「二」、或「三」來表示他的選擇。用戶同時也會用文字和你互動對話，因此你可以給出謎題相關的故事情節來增加趣味性。現在，產生一個基礎故事，供用戶開始他的冒險。故事將會在十次選擇後結束，你將會寫出「結局」二字來表示遊戲已結束。"
         if starting_prompt:
             base_prompt += f"另外，用戶提供了額外的資訊來定義這個冒險中世界的樣貌：{starting_prompt}。"
 
