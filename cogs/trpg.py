@@ -15,9 +15,9 @@ class ChoiceButton(discord.ui.Button):
 
     async def callback(self, i: discord.Interaction) -> Any:
         self.view: "ChoiceSelector"
-        await i.response.defer()
+        await i.response.edit_message(content="正在計算劇情中...")
         response = await self.view.get_gpt_response(self.button_label)
-        await i.response.edit_message(content=response)
+        await i.edit_original_response(content=response)
 
 
 class ChoiceSelector(discord.ui.View):
