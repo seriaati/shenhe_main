@@ -78,3 +78,7 @@ class TRPG(commands.Cog):
         response = await view.get_gpt_response(base_prompt)
         await i.followup.send(response, view=view)
         view.message = await i.original_response()
+
+
+async def setup(bot: commands.Bot) -> None:
+    await bot.add_cog(TRPG(bot))
