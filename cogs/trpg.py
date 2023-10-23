@@ -11,6 +11,9 @@ from discord.ui.item import Item
 class ChoiceModal(discord.ui.Modal):
     response = discord.ui.TextInput(label="回答", placeholder="請輸入回答")
 
+    def __init__(self):
+        super().__init__(title="用文字回答")
+
     async def on_submit(self, i: Interaction) -> None:
         await i.response.defer()
         self.stop()
@@ -18,7 +21,7 @@ class ChoiceModal(discord.ui.Modal):
 
 class OpenChoiceModal(discord.ui.Button):
     def __init__(self):
-        super().__init__(label="回答")
+        super().__init__(label="用文字回答")
 
     async def callback(self, i: discord.Interaction) -> Any:
         modal = ChoiceModal()
@@ -26,11 +29,7 @@ class OpenChoiceModal(discord.ui.Button):
         await modal.wait()
         user_response = modal.response.value
         self.view: "ChoiceSelector"
-        self.view.disable_all_items()
-        await i.edit_original_response(content="正在生成劇情中...", view=self.view)
-        response = await self.view.get_gpt_response(user_response)
-        self.view.enable_all_items()
-        await i.edit_original_response(content=response, view=self.view)
+        await self.view.generate_story(i, user_response)
 
 
 class ChoiceButton(discord.ui.Button):
@@ -40,11 +39,8 @@ class ChoiceButton(discord.ui.Button):
 
     async def callback(self, i: discord.Interaction) -> Any:
         self.view: "ChoiceSelector"
-        self.view.disable_all_items()
-        await i.response.edit_message(content="正在生成劇情中...", view=self.view)
-        response = await self.view.get_gpt_response(self.button_label)
-        self.view.enable_all_items()
-        await i.edit_original_response(content=response, view=self.view)
+        await i.response.defer()
+        await self.view.generate_story(i, self.button_label)
 
 
 class ChoiceSelector(discord.ui.View):
@@ -93,6 +89,13 @@ class ChoiceSelector(discord.ui.View):
             raise ValueError
         self.messages.append({"role": "narrator", "content": response})
         return response
+
+    async def generate_story(self, i: discord.Interaction, prompt: str) -> None:
+        self.disable_all_items()
+        await i.edit_original_response(content="正在生成劇情中...", view=self)
+        response = await self.get_gpt_response(prompt)
+        self.enable_all_items()
+        await i.edit_original_response(content=response, view=self)
 
 
 class TRPG(commands.Cog):
