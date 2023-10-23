@@ -7,3 +7,4 @@ pytz
 pomice
 Pillow
 pydantic==1.10.12
+g4f
