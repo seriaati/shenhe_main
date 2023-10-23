@@ -17,6 +17,9 @@ class ChoiceModal(discord.ui.Modal):
 
 
 class OpenChoiceModal(discord.ui.Button):
+    def __init__(self):
+        super().__init__(label="回答")
+
     async def callback(self, i: discord.Interaction) -> Any:
         modal = ChoiceModal()
         await i.response.send_modal(modal)
