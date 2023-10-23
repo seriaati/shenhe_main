@@ -50,7 +50,7 @@ class ChoiceSelector(discord.ui.View):
 
     async def get_gpt_response(self, prompt: str) -> str:
         self.messages.append({"role": "user", "content": prompt})
-        response = g4f.ChatCompletion.create(
+        response = await g4f.ChatCompletion.create_async(
             model="gpt-3.5-turbo", messages=self.messages
         )
         if not isinstance(response, str):
