@@ -119,6 +119,8 @@ class WebhookCog(commands.Cog):
                 elif "twitter.com" in url:
                     if "fxtwitter.com" not in url:
                         url = url.replace("twitter.com", "d.fxtwitter.com")
+                    elif "vxtwitter.com" in url:
+                        url = url.replace("vxtwitter.com", "d.fxtwitter.com")
                     else:
                         url = url.replace("fxtwitter.com", "d.fxtwitter.com")
                     urls_ = [url]
