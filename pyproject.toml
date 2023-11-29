@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "shenhe-main"
+version = "0.1.0"
+description = ""
+authors = ["seriaati <seria.ati@gmail.com>"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+asyncpg = "^0.29.0"
+discord-py = "^2.3.2"
+jishaku = "^2.5.2"
+python-dotenv = "^1.0.0"
+pydantic = "^2.5.2"
+g4f = "^0.1.9.0"
+pomice = "^2.7.2"
+pysaucenao = "^1.6.2"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
