@@ -6,8 +6,8 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 from dotenv import load_dotenv
-from saucenao_api import AIOSauceNao
-from saucenao_api.saucenao_api import SauceResponse
+from pysaucenao import SauceNao as SauceNaoAPI
+from pysaucenao.containers import SauceNaoResults
 
 from dev.model import DefaultEmbed, ErrorEmbed
 from utility.paginator import GeneralPaginator
@@ -33,25 +33,20 @@ class SauceNao(commands.Cog):
     async def cog_unload(self) -> None:
         self.bot.tree.remove_command(self.ctx_menu.name, type=self.ctx_menu.type)
 
-    def _make_embeds(self, resp: SauceResponse) -> List[discord.Embed]:
+    def _make_embeds(self, results: SauceNaoResults) -> List[discord.Embed]:
         embeds: List[discord.Embed] = []
 
-        for result in resp.results:
-            urls = [f"• {url}" for url in result.urls]
-            embed = DefaultEmbed(result.title, "\n".join(urls))
-            if result.author:
-                embed.set_author(name=result.author)
-            embed.set_image(url=result.thumbnail)
+        for result in results.results:
+            embed = DefaultEmbed(result.title, result.url)
             embed.set_footer(text=f"相似度: {result.similarity:.2f}%")
             embeds.append(embed)
 
         return embeds
 
-    async def _search(self, url: str) -> SauceResponse:
-        client = AIOSauceNao(self.api_key)
-        async with client:
-            resp = await client.from_url(url)
-            return resp
+    async def _search(self, url: str) -> SauceNaoResults:
+        client = SauceNaoAPI(api_key=self.api_key)
+        results = await client.from_url(url)
+        return results
 
     async def _make_search_response(self, i: discord.Interaction, ephemeral: bool):
         embed = DefaultEmbed()
