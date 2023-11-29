@@ -1,9 +1,8 @@
+import datetime
 import re
-from datetime import datetime, time
 from typing import List
 
 import discord
-import pytz
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -21,7 +20,7 @@ def error_embed(title: str = "", message: str = ""):
     return discord.Embed(title=title, description=message, color=0xFC5165)
 
 
-def time_in_range(start: time, end: time, x: time) -> bool:
+def time_in_range(start: datetime.time, end: datetime.time, x: datetime.time) -> bool:
     """Return true if x is in the range [start, end]"""
     if start <= end:
         return start <= x <= end
@@ -31,7 +30,7 @@ def time_in_range(start: time, end: time, x: time) -> bool:
 
 def log(is_system: bool, is_error: bool, log_type: str, log_msg: str):
     now = get_dt_now()
-    today = datetime.today()
+    today = datetime.datetime.today()
     current_date = today.strftime("%Y-%m-%d")
     current_time = now.strftime("%H:%M:%S")
     system = "SYSTEM"
@@ -48,14 +47,8 @@ def log(is_system: bool, is_error: bool, log_type: str, log_msg: str):
     return log_str
 
 
-def get_dt_now() -> datetime:
-    """Get current datetime in UTC+8"""
-    tz = pytz.timezone("Asia/Shanghai")  # UTC+8 timezone
-    utc_now = datetime.utcnow()  # get current UTC time
-    utc8_now = utc_now.replace(tzinfo=pytz.utc).astimezone(
-        tz
-    )  # convert to UTC+8 timezone
-    return utc8_now.replace(tzinfo=None)
+def get_dt_now() -> datetime.datetime:
+    return datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=8)))
 
 
 def divide_chunks(l, n):
