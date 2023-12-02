@@ -48,7 +48,9 @@ def log(is_system: bool, is_error: bool, log_type: str, log_msg: str):
 
 
 def get_dt_now() -> datetime.datetime:
-    return datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=8)))
+    return datetime.datetime.now(
+        datetime.timezone(datetime.timedelta(hours=8))
+    ).replace(tzinfo=None)
 
 
 def divide_chunks(l, n):
