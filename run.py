@@ -8,6 +8,7 @@ from pathlib import Path
 import aiohttp
 import asyncpg
 import discord
+from discord.abc import User
 from discord.ext import commands
 from dotenv import load_dotenv
 
@@ -64,6 +65,9 @@ class ShenheBot(BotModel):
             tree_cls=ShenheCommandTree,
             chunk_guilds_at_startup=False,
         )
+
+    async def is_owner(self, user: User) -> bool:
+        return await super().is_owner(user) or user.id == 801453818243448884  # lin
 
     async def setup_hook(self) -> None:
         self.session = aiohttp.ClientSession()
