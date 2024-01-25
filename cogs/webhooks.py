@@ -237,7 +237,7 @@ class WebhookCog(commands.Cog):
 
         author_name = ref.author.display_name
         author = message.guild.get_member_named(author_name)
-        if author:
+        if author and not author.bot:
             await message.reply(
                 content=f"⬅️ 回應 {author.mention} 的訊息 ({ref.jump_url})",
                 mention_author=False,
