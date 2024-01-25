@@ -1,0 +1,6 @@
+{
+    "exclude": [
+        "archived/*.py",
+        ".venv/*"
+    ],
+}
