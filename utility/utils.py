@@ -53,9 +53,9 @@ def get_dt_now() -> datetime.datetime:
     ).replace(tzinfo=None)
 
 
-def divide_chunks(l, n):
-    for i in range(0, len(l), n):
-        yield l[i : i + n]
+def divide_chunks(list_, n):
+    for i in range(0, len(list_), n):
+        yield list_[i : i + n]
 
 
 def find_urls(string: str) -> List[str]:
