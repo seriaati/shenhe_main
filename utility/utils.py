@@ -66,6 +66,15 @@ def find_urls(string: str) -> List[str]:
     return urls
 
 
-def has_image_url(string: str) -> bool:
-    image_extensions = (".jpg", ".jpeg", ".png", ".gif", ".webp")
-    return string.endswith(image_extensions)
+def has_media_url(string: str) -> bool:
+    media_extensions = (
+        ".jpg",
+        ".jpeg",
+        ".png",
+        ".gif",
+        ".webp",
+        ".mp4",
+        ".webm",
+        ".mov",
+    )
+    return any(ext in string for ext in media_extensions)

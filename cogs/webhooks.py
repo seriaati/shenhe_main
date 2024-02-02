@@ -8,7 +8,7 @@ from discord.ext import commands
 from pydantic import BaseModel
 
 from dev.model import BaseView, BotModel
-from utility.utils import divide_chunks, find_urls, has_image_url
+from utility.utils import divide_chunks, find_urls, has_media_url
 
 
 class Artwork(BaseModel):
@@ -46,14 +46,20 @@ class WebhookCog(commands.Cog):
     # auto add reactions
     @commands.Cog.listener("on_message")
     async def auto_add_reactions(self, message: discord.Message):
+        """
+        Automatically add reactions to messages with medias.
+        Works in all channels.
+        """
         if message.guild is None or message.guild.id != self.bot.guild_id:
             return
 
-        if message.channel.id not in (1061881404167815249, 1061898394446069852):
-            return
-
         # check for attachments
-        if message.attachments or has_image_url(message.content):
+        content = message.content
+        if (
+            message.attachments
+            or has_media_url(content)
+            or "d.fxtwitter.com" in content
+        ):
             await self.add_reactions_to_message(message)
 
     @staticmethod
@@ -67,78 +73,77 @@ class WebhookCog(commands.Cog):
 
     @commands.Cog.listener("on_message")
     async def auto_spoiler(self, message: discord.Message):
+        """
+        Automatically spoiler pixiv, twitter, and x images, uploaded images, and videos.
+        Only works in 色即是空.
+        """
         if (
             message.author.bot
             or not isinstance(message.channel, discord.TextChannel)
             or message.guild is None
             or message.guild.id != self.bot.guild_id
-            or message.channel.id != 1061898394446069852
+            or message.channel.id != 1061898394446069852  # 色即是空
         ):
             return
 
         files: List[discord.File] = []
+        media_urls: List[str] = []
 
         # auto spoiler url images or videos
         urls = find_urls(message.content)
-        webs = (
-            "twitter.com",
-            "fxtwitter.com",
-            "phixiv.net",
-            "pixiv.net",
-            "x.com",
-            "fixupx.com",
-        )
-        exts = ("png", "jpg", "jpeg", "gif", "webp", "mp4")
         for url in urls:
-            if any(w in url for w in webs) or any(f".{e}" in url for e in exts):
-                await self.del_message(message)
-                message.content = message.content.replace(url, f"<{url}>")
-                filename = url.split("/")[-1].split("?")[0]
+            message.content = message.content.replace(url, f"<{url}>")
+            filename = url.split("/")[-1].split("?")[0]
 
-                if "pixiv.net" in url or "phixiv.net" in url:
-                    artwork = await fetch_artwork_info(filename)
-                    urls_ = artwork.image_proxy_urls
-                elif "twitter.com" in url:
-                    if "fxtwitter.com" not in url:
-                        url = url.replace("twitter.com", "d.fxtwitter.com")
-                    elif "vxtwitter.com" in url:
-                        url = url.replace("vxtwitter.com", "d.fxtwitter.com")
-                    else:
-                        url = url.replace("fxtwitter.com", "d.fxtwitter.com")
-                    urls_ = [url]
-                elif "x.com" in url:
-                    if "fixupx.com" not in url:
-                        url = url.replace("x.com", "d.fixupx.com")
-                    else:
-                        url = url.replace("fixupx.com", "d.fixupx.com")
-                    urls_ = [url]
+            # extracts image from pixiv, twitter, and x
+            if "pixiv.net" in url or "phixiv.net" in url:
+                artwork = await fetch_artwork_info(filename)
+                media_urls.extend(artwork.image_proxy_urls)
+            elif "twitter.com" in url:
+                if "fxtwitter.com" in url or "vxtwitter.com" in url:
+                    url = url.replace("fxtwitter.com", "d.fxtwitter.com").replace(
+                        "vxtwitter.com", "d.fxtwitter.com"
+                    )
                 else:
-                    urls_ = [url]
+                    url = url.replace("twitter.com", "d.fxtwitter.com")
+                media_urls.append(url)
+            elif "x.com" in url:
+                if "fixupx.com" in url:
+                    url = url.replace("fixupx.com", "d.fixupx.com")
+                else:
+                    url = url.replace("x.com", "d.fixupx.com")
+                media_urls.append(url)
 
-                for index, u in enumerate(urls_):
-                    file_ = await self.download_image(u, f"{filename}_{index}")
-                    if file_ is None:
-                        await self.fake_user_send(
-                            message.channel,
-                            message.author,
-                            message.content,
-                            message.reference,
-                        )
-                    else:
-                        files.append(file_)
+            # normal media url
+            elif has_media_url(url):
+                media_urls.append(url)
+
+            for index, u in enumerate(media_urls):
+                file_ = await self.download_media(u, f"{filename}_{index}")
+                if file_ is None:
+                    # download failed, send the message as is
+                    await self.fake_user_send(
+                        message.channel,
+                        message.author,
+                        message.content,
+                        message.reference,
+                    )
+                else:
+                    files.append(file_)
 
         # auto spoiler attachments
         url_dict: Dict[str, str] = {a.filename: a.url for a in message.attachments}
         images = [
-            await self.download_image(url, filename)
+            await self.download_media(url, filename)
             for filename, url in url_dict.items()
         ]
         files.extend([i for i in images if i is not None])
 
         if files:
-            await self.del_message(message)
+            await self.delete_message(message)
         split_files: List[List[discord.File]] = list(divide_chunks(files, 10))
 
+        # send the files in chunks of 10
         for split in split_files:
             await self.fake_user_send(
                 message.channel,
@@ -148,23 +153,46 @@ class WebhookCog(commands.Cog):
                 files=split,
             )
 
-    # use fxtwitter and phixiv
     @commands.Cog.listener("on_message")
-    async def embed_fixer(self, message: discord.Message):
+    async def art_extractor(self, message: discord.Message) -> None:
+        """
+        Extract image URLs from pixiv, twitter, and x.
+        Only works in 美圖展版.
+        """
         if (
             message.author.bot
             or message.guild is None
             or message.guild.id != self.bot.guild_id
             or not isinstance(message.channel, discord.TextChannel)
-            or message.channel.id == 1061898394446069852
+            or message.channel.id != 1061881404167815249  # 美圖展版
         ):
             return
 
-        urls = find_urls(message.content)
+        content = message.content
+        urls = find_urls(content)
         for url in urls:
-            if "pixiv" in url or "phixiv" in url:
-                await self.del_message(message)
-
+            if "twitter.com" in url and "status" in url:
+                await self.delete_message(message)
+                if "fxtwitter.com" in url or "vxtwitter.com" in url:
+                    await self.fake_user_send(
+                        message.channel,
+                        message.author,
+                        url.replace("fxtwitter.com", "d.fxtwitter.com").replace(
+                            "vxtwitter.com", "d.fxtwitter.com"
+                        ),
+                        message.reference,
+                        sauce=url,
+                    )
+                else:
+                    await self.fake_user_send(
+                        message.channel,
+                        message.author,
+                        url.replace("twitter.com", "d.fxtwitter.com"),
+                        message.reference,
+                        sauce=url,
+                    )
+            elif ("pixiv" in url or "phixiv" in url) and "artworks" in url:
+                await self.delete_message(message)
                 artwork_id = url.split("/")[-1].split("?")[0]
                 artwork = await fetch_artwork_info(artwork_id)
 
@@ -182,25 +210,61 @@ class WebhookCog(commands.Cog):
                             message.reference,
                             sauce=url,
                         )
-            elif "twitter.com" in url and "fxtwitter.com" not in url:
-                await self.del_message(message)
-
-                await self.fake_user_send(
-                    message.channel,
-                    message.author,
-                    url.replace("twitter.com", "d.fxtwitter.com"),
-                    message.reference,
-                    sauce=url if message.channel.id == 1061881404167815249 else None,
-                )
-            elif "x.com" in url and "fixupx.com" not in url:
-                await self.del_message(message)
-
+            elif "x.com" in url and "status" in url:
+                await self.delete_message(message)
                 await self.fake_user_send(
                     message.channel,
                     message.author,
                     url.replace("x.com", "d.fixupx.com"),
                     message.reference,
-                    sauce=url if message.channel.id == 1061881404167815249 else None,
+                    sauce=url,
+                )
+
+    @commands.Cog.listener("on_message")
+    async def embed_fixer(self, message: discord.Message):
+        """
+        Fix embeds for twitter (with fxtwitter.com), x (with fixupx.com), and pixiv (with phixiv.net).
+        Works in channels other than 美圖展版 and 色即是空.
+        """
+        if (
+            message.author.bot
+            or message.guild is None
+            or message.guild.id != self.bot.guild_id
+            or not isinstance(message.channel, discord.TextChannel)
+            or message.channel.id
+            in (1061881404167815249, 1061898394446069852)  # 美圖展版, 色即是空
+        ):
+            return
+
+        urls = find_urls(message.content)
+        for url in urls:
+            if "pixiv" in url and "phixiv" not in url:
+                await self.delete_message(message)
+                await self.fake_user_send(
+                    message.channel,
+                    message.author,
+                    url.replace("pixiv.net", "phixiv.net"),
+                    message.reference,
+                )
+            elif (
+                "twitter.com" in url
+                and "fxtwitter.com" not in url
+                and "vxtwitter.com" not in url
+            ):
+                await self.delete_message(message)
+                await self.fake_user_send(
+                    message.channel,
+                    message.author,
+                    url.replace("twitter.com", "d.fxtwitter.com"),
+                    message.reference,
+                )
+            elif "x.com" in url and "fixupx.com" not in url:
+                await self.delete_message(message)
+                await self.fake_user_send(
+                    message.channel,
+                    message.author,
+                    url.replace("x.com", "d.fixupx.com"),
+                    message.reference,
                 )
 
     # webhook reply
@@ -220,7 +284,7 @@ class WebhookCog(commands.Cog):
                 mention_author=False,
             )
 
-    async def download_image(self, url: str, filename: str) -> Optional[discord.File]:
+    async def download_media(self, url: str, filename: str) -> Optional[discord.File]:
         allowed_content_types = ("image", "video", "application/octet-stream")
         async with self.bot.session.get(url) as resp:
             if not any(
@@ -270,7 +334,7 @@ class WebhookCog(commands.Cog):
             **kwargs,
         )
 
-    async def del_message(self, message: discord.Message) -> None:
+    async def delete_message(self, message: discord.Message) -> None:
         try:
             await message.delete()
         except discord.NotFound:
