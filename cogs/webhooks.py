@@ -193,7 +193,7 @@ class WebhookCog(commands.Cog):
                     message.author,
                     url.replace("twitter.com", "d.fxtwitter.com"),
                     message.reference,
-                    sauce=url,
+                    sauce=url if message.channel.id == 1061881404167815249 else None,
                 )
             elif "x.com" in url and "fixupx.com" not in url:
                 await self.del_message(message)
@@ -203,7 +203,7 @@ class WebhookCog(commands.Cog):
                     message.author,
                     url.replace("x.com", "d.fixupx.com"),
                     message.reference,
-                    sauce=url,
+                    sauce=url if message.channel.id == 1061881404167815249 else None,
                 )
 
     # webhook reply
