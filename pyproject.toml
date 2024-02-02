@@ -17,6 +17,11 @@ pomice = "^2.7.2"
 pysaucenao = "^1.6.2"
 pillow = "^10.2.0"
 
+[tool.poetry.group.dev]
+optional = true
+
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.2.0"
 
 [build-system]
 requires = ["poetry-core"]
