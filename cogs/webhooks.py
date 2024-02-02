@@ -183,7 +183,7 @@ class WebhookCog(commands.Cog):
                             message.author,
                             image_url,
                             message.reference,
-                            url,
+                            sauce=url,
                         )
             elif "twitter.com" in url and "fxtwitter.com" not in url:
                 await self.del_message(message)
@@ -193,7 +193,7 @@ class WebhookCog(commands.Cog):
                     message.author,
                     url.replace("twitter.com", "d.fxtwitter.com"),
                     message.reference,
-                    url,
+                    sauce=url,
                 )
             elif "x.com" in url and "fixupx.com" not in url:
                 await self.del_message(message)
@@ -203,7 +203,7 @@ class WebhookCog(commands.Cog):
                     message.author,
                     url.replace("x.com", "d.fixupx.com"),
                     message.reference,
-                    url,
+                    sauce=url,
                 )
 
     # webhook reply
@@ -247,6 +247,7 @@ class WebhookCog(commands.Cog):
         user: discord.User | discord.Member,
         content: str,
         reference: Optional[discord.MessageReference],
+        *,
         sauce: Optional[str] = None,
         **kwargs,
     ) -> None:
