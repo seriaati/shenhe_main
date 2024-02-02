@@ -64,3 +64,8 @@ def find_urls(string: str) -> List[str]:
     )
     urls = re.findall(url_pattern, string)
     return urls
+
+
+def has_image_url(string: str) -> bool:
+    image_extensions = (".jpg", ".jpeg", ".png", ".gif", ".webp")
+    return string.endswith(image_extensions)

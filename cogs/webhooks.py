@@ -8,7 +8,7 @@ from discord.ext import commands
 from pydantic import BaseModel
 
 from dev.model import BaseView, BotModel
-from utility.utils import divide_chunks, find_urls
+from utility.utils import divide_chunks, find_urls, has_image_url
 
 
 class Artwork(BaseModel):
@@ -49,15 +49,12 @@ class WebhookCog(commands.Cog):
         if message.guild is None or message.guild.id != self.bot.guild_id:
             return
 
-        if "/stickers" in message.content or "/emojis" in message.content:
-            return
-
         if message.channel.id not in (1061881404167815249, 1061898394446069852):
             return
 
         # check for attachments
-        if message.attachments:
-            return await self.add_reactions_to_message(message)
+        if message.attachments or has_image_url(message.content):
+            await self.add_reactions_to_message(message)
 
     @staticmethod
     async def add_reactions_to_message(message: discord.Message):
