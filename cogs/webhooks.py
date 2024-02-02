@@ -58,21 +58,6 @@ class WebhookCog(commands.Cog):
         if message.attachments:
             return await self.add_reactions_to_message(message)
 
-        # check for image/video urls or twitter/x/pixiv urls
-        urls = find_urls(message.content)
-        webs = (
-            "twitter.com",
-            "fxtwitter.com",
-            "phixiv.net",
-            "pixiv.net",
-            "x.com",
-            "fixupx.com",
-        )
-        exts = ("png", "jpg", "jpeg", "gif", "webp", "mp4")
-        for url in urls:
-            if any(w in url for w in webs) or any(f".{e}" in url for e in exts):
-                return await self.add_reactions_to_message(message)
-
     @staticmethod
     async def add_reactions_to_message(message: discord.Message):
         try:
