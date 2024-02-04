@@ -22,10 +22,31 @@ class Artwork(BaseModel):
     url: str
 
 
-async def fetch_artwork_info(id: str) -> Artwork:
-    async with aiohttp.ClientSession() as session:
-        async with session.get(f"https://www.phixiv.net/api/info?id={id}") as resp:
-            return Artwork(**await resp.json())
+async def fetch_artwork_info(id: str, session: aiohttp.ClientSession) -> Artwork:
+    async with session.get(f"https://www.phixiv.net/api/info?id={id}") as resp:
+        return Artwork(**await resp.json())
+
+
+async def fetch_media_urls_from_twitter_post(
+    url: str, session: aiohttp.ClientSession
+) -> list[str]:
+    if "fxtwitter.com" in url:
+        url = url.replace("fxtwitter.com", "api.fxtwitter.com")
+    elif "vxtwitter.com" in url:
+        url = url.replace("vxtwitter.com", "api.fxtwitter.com")
+    elif "twitter.com" in url:
+        url = url.replace("twitter.com", "api.fxtwitter.com")
+    elif "x.com" in url:
+        url = url.replace("x.com", "api.fixupx.com")
+    else:
+        return []
+
+    async with session.get(url) as resp:
+        data = await resp.json()
+        media = data.get("media")
+        if media is not None:
+            return [m["url"] for m in media]
+        return []
 
 
 class DeleteMessage(BaseView):
@@ -97,23 +118,12 @@ class WebhookCog(commands.Cog):
 
             # extracts image from pixiv, twitter, and x
             if "pixiv.net" in url or "phixiv.net" in url:
-                artwork = await fetch_artwork_info(filename)
+                artwork = await fetch_artwork_info(filename, self.bot.session)
                 media_urls.extend(artwork.image_proxy_urls)
-            elif "twitter.com" in url:
-                if "fxtwitter.com" in url or "vxtwitter.com" in url:
-                    url = url.replace("fxtwitter.com", "d.fxtwitter.com").replace(
-                        "vxtwitter.com", "d.fxtwitter.com"
-                    )
-                else:
-                    url = url.replace("twitter.com", "d.fxtwitter.com")
-                media_urls.append(url)
-            elif "x.com" in url:
-                if "fixupx.com" in url:
-                    url = url.replace("fixupx.com", "d.fixupx.com")
-                else:
-                    url = url.replace("x.com", "d.fixupx.com")
-                media_urls.append(url)
-
+            elif ("twitter.com" in url or "x.com" in url) and "status" in url:
+                media_urls.extend(
+                    await fetch_media_urls_from_twitter_post(url, self.bot.session)
+                )
             # normal media url
             elif has_media_url(url):
                 media_urls.append(url)
@@ -171,30 +181,23 @@ class WebhookCog(commands.Cog):
         content = message.content
         urls = find_urls(content)
         for url in urls:
-            if "twitter.com" in url and "status" in url:
+            if ("twitter.com" in url or "x.com" in url) and "status" in url:
                 await self.delete_message(message)
-                if "fxtwitter.com" in url or "vxtwitter.com" in url:
+                media_urls = await fetch_media_urls_from_twitter_post(
+                    url, self.bot.session
+                )
+                for media_url in media_urls:
                     await self.fake_user_send(
                         message.channel,
                         message.author,
-                        url.replace("fxtwitter.com", "d.fxtwitter.com").replace(
-                            "vxtwitter.com", "d.fxtwitter.com"
-                        ),
-                        message.reference,
-                        sauce=url,
-                    )
-                else:
-                    await self.fake_user_send(
-                        message.channel,
-                        message.author,
-                        url.replace("twitter.com", "d.fxtwitter.com"),
+                        media_url,
                         message.reference,
                         sauce=url,
                     )
             elif ("pixiv" in url or "phixiv" in url) and "artworks" in url:
                 await self.delete_message(message)
                 artwork_id = url.split("/")[-1].split("?")[0]
-                artwork = await fetch_artwork_info(artwork_id)
+                artwork = await fetch_artwork_info(artwork_id, self.bot.session)
 
                 if "#R-18" in artwork.tags:
                     await message.channel.send(
