@@ -1,6 +1,6 @@
 import contextlib
 import io
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 import aiohttp
 import discord
@@ -37,13 +37,13 @@ async def fetch_media_urls_from_twitter_post(
     elif "twitter.com" in url:
         url = url.replace("twitter.com", "api.fxtwitter.com")
     elif "x.com" in url:
-        url = url.replace("x.com", "api.fixupx.com")
+        url = url.replace("x.com", "api.fxtwitter.com")
     else:
         return []
 
     async with session.get(url) as resp:
-        data = await resp.json()
-        media = data.get("media")
+        data: dict[str, Any] = await resp.json()
+        media = data.get("tweet", {}).get("media", {}).get("all")
         if media is not None:
             return [m["url"] for m in media]
         return []
@@ -180,9 +180,10 @@ class WebhookCog(commands.Cog):
 
         content = message.content
         urls = find_urls(content)
+        delete_message = False
         for url in urls:
             if ("twitter.com" in url or "x.com" in url) and "status" in url:
-                await self.delete_message(message)
+                delete_message = True
                 media_urls = await fetch_media_urls_from_twitter_post(
                     url, self.bot.session
                 )
@@ -195,7 +196,7 @@ class WebhookCog(commands.Cog):
                         sauce=url,
                     )
             elif ("pixiv" in url or "phixiv" in url) and "artworks" in url:
-                await self.delete_message(message)
+                delete_message = True
                 artwork_id = url.split("/")[-1].split("?")[0]
                 artwork = await fetch_artwork_info(artwork_id, self.bot.session)
 
@@ -213,15 +214,9 @@ class WebhookCog(commands.Cog):
                             message.reference,
                             sauce=url,
                         )
-            elif "x.com" in url and "status" in url:
-                await self.delete_message(message)
-                await self.fake_user_send(
-                    message.channel,
-                    message.author,
-                    url.replace("x.com", "d.fixupx.com"),
-                    message.reference,
-                    sauce=url,
-                )
+
+        if delete_message:
+            await message.delete()
 
     @commands.Cog.listener("on_message")
     async def embed_fixer(self, message: discord.Message):
