@@ -69,18 +69,18 @@ class WebhookCog(commands.Cog):
     async def auto_add_reactions(self, message: discord.Message):
         """
         Automatically add reactions to messages with medias.
-        Works in all channels.
+        Only works in 美圖展版 and 色即是空.
         """
-        if message.guild is None or message.guild.id != self.bot.guild_id:
+        if (
+            message.guild is None
+            or message.guild.id != self.bot.guild_id
+            or message.author.id not in {1061881404167815249, 1061898394446069852}
+        ):
             return
 
         # check for attachments
         content = message.content
-        if (
-            message.attachments
-            or has_media_url(content)
-            or "d.fxtwitter.com" in content
-        ):
+        if message.attachments or has_media_url(content):
             await self.add_reactions_to_message(message)
 
     @staticmethod
