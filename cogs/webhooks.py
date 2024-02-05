@@ -74,7 +74,7 @@ class WebhookCog(commands.Cog):
         if (
             message.guild is None
             or message.guild.id != self.bot.guild_id
-            or message.author.id not in {1061881404167815249, 1061898394446069852}
+            or message.channel.id not in {1061881404167815249, 1061898394446069852}
         ):
             return
 
