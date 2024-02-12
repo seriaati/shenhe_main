@@ -58,15 +58,11 @@ def divide_chunks(list_, n):
         yield list_[i : i + n]
 
 
-def find_urls(string: str) -> List[str]:
-    url_pattern = re.compile(
-        r"http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+"
-    )
-    urls = re.findall(url_pattern, string)
-    return urls
+def extract_urls(text: str) -> list[str]:
+    return re.findall(r"https?://\S+", text)
 
 
-def has_media_url(string: str) -> bool:
+def extract_media_urls(string: str) -> List[str]:
     media_extensions = (
         ".jpg",
         ".jpeg",
@@ -77,4 +73,8 @@ def has_media_url(string: str) -> bool:
         ".webm",
         ".mov",
     )
-    return any(ext in string for ext in media_extensions)
+    return [
+        url
+        for url in extract_urls(string)
+        if any(ext in url for ext in media_extensions)
+    ]
