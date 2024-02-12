@@ -48,7 +48,7 @@ class WebhookCog(commands.Cog):
         Only works in 色即是空.
         """
         if (
-            message.author.bot
+            (message.author.bot and "(Embed Fixer)" not in message.author.name)
             or not isinstance(message.channel, discord.TextChannel)
             or message.guild is None
             or message.guild.id != self.bot.guild_id
