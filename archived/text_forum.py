@@ -4,7 +4,7 @@ from typing import Any
 import discord
 from discord.ext import commands
 
-from utility.utils import find_urls
+from utility.utils import extract_urls
 
 CHANNEL_ID = 1061899087525458031
 
@@ -18,9 +18,11 @@ class TextForum(commands.Cog):
         if message.channel.id != CHANNEL_ID or message.author.bot:
             return
 
-        urls = find_urls(message.content)
+        urls = extract_urls(message.content)
         if not urls:
-            return await self.delete_after_5_sec(message, "請在討論串中討論影片相關內容，此頻道只用於發布影片連結")
+            return await self.delete_after_5_sec(
+                message, "請在討論串中討論影片相關內容，此頻道只用於發布影片連結"
+            )
         keywords = ("youtube", "youtu.be")
         if not any((keyword in message.content.lower() for keyword in keywords)):
             return await self.delete_after_5_sec(message, "目前只支援 YouTube 連結")
