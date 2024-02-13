@@ -44,7 +44,7 @@ class WebhookCog(commands.Cog):
     @commands.Cog.listener("on_message")
     async def auto_spoiler(self, message: discord.Message):
         """
-        Automatically spoiler pixiv, twitter, and x images, uploaded images, and videos.
+        Automatically spoiler uploaded images and videos.
         Only works in 色即是空.
         """
         if (
