@@ -47,9 +47,11 @@ class WebhookCog(commands.Cog):
         Automatically spoiler media urls and uploaded images and videos.
         Only works in 色即是空.
         """
+        if message.author.bot and "(Embed Fixer)" not in message.author.name:
+            return
+
         if (
-            "(Embed Fixer)" in message.author.name
-            and isinstance(message.channel, discord.TextChannel)
+            isinstance(message.channel, discord.TextChannel)
             and message.guild is not None
             and message.guild.id == self.bot.guild_id
             and message.channel.id == 1061898394446069852  # 色即是空
