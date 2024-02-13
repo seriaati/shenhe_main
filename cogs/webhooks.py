@@ -94,7 +94,7 @@ class WebhookCog(commands.Cog):
 
                 await webhook.send(
                     content=message.content,
-                    username=message.author.display_name,
+                    username=message.author.display_name.replace(" (Embed Fixer)", ""),
                     avatar_url=message.author.display_avatar.url,
                     files=split_file,
                 )
