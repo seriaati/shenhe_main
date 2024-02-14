@@ -6,10 +6,11 @@ import discord
 from discord import app_commands
 from discord.ext import commands, tasks
 from pydantic import BaseModel, Field
+from seria.utils import split_list_to_chunks
 
 from dev.model import BotModel, DefaultEmbed, ErrorEmbed
 from utility.paginator import GeneralPaginator
-from utility.utils import divide_chunks, get_dt_now
+from utility.utils import get_dt_now
 
 
 class EmojiStatsModel(BaseModel):
@@ -89,14 +90,16 @@ class EmojiStatsCog(commands.GroupCog, name="emoji"):
         emojis = [EmojiStatsModel(**row) for row in rows]
 
         embeds: List[discord.Embed] = []
-        div_emojis: List[List[EmojiStatsModel]] = list(divide_chunks(emojis, 10))
+        div_emojis = split_list_to_chunks(emojis, 10)
         guild_emojis: List[int] = [e.id for e in i.guild.emojis]
 
         for emojis in div_emojis:
             embed = DefaultEmbed("表情符號統計")
             embed.description = ""
             embed.set_author(name=i.guild.name, icon_url=i.guild.icon.url)
-            embed.set_footer(text=f"統計時間: {get_dt_now().strftime('%Y-%m-%d %H:%M:%S')}")
+            embed.set_footer(
+                text=f"統計時間: {get_dt_now().strftime('%Y-%m-%d %H:%M:%S')}"
+            )
             for emoji in emojis:
                 if emoji.id in guild_emojis:
                     emoji_string = (

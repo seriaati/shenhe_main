@@ -5,10 +5,11 @@ from typing import Any, List, Optional, Union
 import discord
 from discord import app_commands
 from discord.ext import commands, tasks
+from seria.utils import split_list_to_chunks
 
 from dev.model import BaseView, BotModel, DefaultEmbed, ErrorEmbed, Inter
 from utility.paginator import GeneralPaginator
-from utility.utils import divide_chunks, get_dt_now
+from utility.utils import get_dt_now
 
 
 class LevelSetting(BaseView):
@@ -245,7 +246,7 @@ class LevelCog(commands.GroupCog, name="level"):
         stats.sort(key=lambda x: x[query], reverse=True)
 
         embeds: List[discord.Embed] = []
-        div_stats = list(divide_chunks(stats, 10))
+        div_stats = split_list_to_chunks(stats, 10)
         word = "聊天" if order_by_chat else "語音"
         rank = 1
         self_rank = None
@@ -271,7 +272,7 @@ class LevelCog(commands.GroupCog, name="level"):
                 )
                 rank += 1
             embeds.append(embed)
-        
+
         for embed in embeds:
             embed.set_footer(text=f"你的排名: {self_rank if self_rank else '(未上榜)'}")
 

@@ -4,6 +4,7 @@ import typing
 import discord
 from discord import app_commands, utils
 from discord.ext import commands
+from seria.utils import split_list_to_chunks
 
 import dev.model as model
 from apps.c4.ui import ColorSelectView
@@ -11,7 +12,7 @@ from apps.flow import flow_transaction, get_balance
 from dev.enum import GameType
 from ui.guess_num import GuessNumView
 from utility.paginator import GeneralPaginator
-from utility.utils import divide_chunks, get_dt_now
+from utility.utils import get_dt_now
 
 game_name = {GameType.GUESS_NUM: "猜數字", GameType.CONNECT_FOUR: "屏風式四子棋"}
 
@@ -82,12 +83,16 @@ class GameCog(commands.GroupCog, name="game"):
             match = model.GuessNumMatch.from_row(row)
 
             if match.p2_guess + 1 > match.p1_guess and message.author.id != match.p1:
-                return await message.reply(embed=model.ErrorEmbed("現在是輪到玩家一猜測"))
+                return await message.reply(
+                    embed=model.ErrorEmbed("現在是輪到玩家一猜測")
+                )
             if (
                 match.p1_guess + 1 > match.p2_guess + 1
                 and message.author.id != match.p2
             ):
-                return await message.reply(embed=model.ErrorEmbed("現在是輪到玩家二猜測"))
+                return await message.reply(
+                    embed=model.ErrorEmbed("現在是輪到玩家二猜測")
+                )
 
             answer = None
             is_p1 = False
@@ -171,7 +176,11 @@ class GameCog(commands.GroupCog, name="game"):
             app_commands.Choice(name="屏風式四子棋", value="connect_four"),
         ]
     )
-    @app_commands.describe(game="要遊玩的小遊戲", opponent="小遊戲的對手（玩家二）", flow="要下賭的暴幣數量")
+    @app_commands.describe(
+        game="要遊玩的小遊戲",
+        opponent="小遊戲的對手（玩家二）",
+        flow="要下賭的暴幣數量",
+    )
     async def start(
         self,
         inter: discord.Interaction,
@@ -185,13 +194,16 @@ class GameCog(commands.GroupCog, name="game"):
         user_flow = await get_balance(i.user.id, self.bot.pool)
         if flow and flow > user_flow:
             return await i.response.send_message(
-                embed=model.ErrorEmbed("你擁有的暴幣不足以承擔這個賭注", f"所需暴幣: {flow}"),
+                embed=model.ErrorEmbed(
+                    "你擁有的暴幣不足以承擔這個賭注", f"所需暴幣: {flow}"
+                ),
                 ephemeral=True,
             )
 
         if opponent.bot:
             return await i.response.send_message(
-                embed=model.ErrorEmbed("錯誤", "對手不能是機器人 （雖然那樣會蠻酷的）"), ephemeral=True
+                embed=model.ErrorEmbed("錯誤", "對手不能是機器人 （雖然那樣會蠻酷的）"),
+                ephemeral=True,
             )
         if opponent == i.user:
             return await i.response.send_message(
@@ -230,7 +242,9 @@ class GameCog(commands.GroupCog, name="game"):
                 name="玩家一", value=f"{i.user.mention} - *正在選擇顏色*", inline=False
             )
             embed.add_field(
-                name="玩家二", value=f"{opponent.mention} - *正在選擇顏色*", inline=False
+                name="玩家二",
+                value=f"{opponent.mention} - *正在選擇顏色*",
+                inline=False,
             )
             if flow:
                 embed.add_field(name="賭注", value=f"{flow} 暴幣", inline=False)
@@ -306,7 +320,7 @@ class GameCog(commands.GroupCog, name="game"):
 
         # sort by win_rate attribute, desc
         all_players = sorted(all_players, key=lambda x: x.win_rate, reverse=True)
-        div_players = divide_chunks(all_players, 10)
+        div_players = split_list_to_chunks(all_players, 10)
 
         embeds: typing.List[discord.Embed] = []
         rank = 0
@@ -328,7 +342,8 @@ class GameCog(commands.GroupCog, name="game"):
 
         if not embeds:
             return await i.followup.send(
-                embed=model.ErrorEmbed("錯誤", "目前該遊戲沒有排行榜資料"), ephemeral=True
+                embed=model.ErrorEmbed("錯誤", "目前該遊戲沒有排行榜資料"),
+                ephemeral=True,
             )
 
         await GeneralPaginator(i, embeds).start(followup=True)
@@ -362,7 +377,7 @@ class GameCog(commands.GroupCog, name="game"):
         histories: typing.List[model.GameHistory] = [
             model.GameHistory.from_row(row) for row in rows
         ]
-        div_histories = divide_chunks(histories, 10)
+        div_histories = split_list_to_chunks(histories, 10)
 
         embeds: typing.List[discord.Embed] = []
         for histories in div_histories:
@@ -382,7 +397,9 @@ class GameCog(commands.GroupCog, name="game"):
                     p2_name = f"{p2.display_name} （平）"
                 else:
                     p1_name = (
-                        f"{p1.display_name} （勝）" if history.p1_win else p1.display_name
+                        f"{p1.display_name} （勝）"
+                        if history.p1_win
+                        else p1.display_name
                     )
                     p2_name = (
                         f"{p2.display_name} （勝）"
@@ -399,7 +416,8 @@ class GameCog(commands.GroupCog, name="game"):
 
         if not embeds:
             return await i.followup.send(
-                embed=model.ErrorEmbed("錯誤", "你目前在該遊戲沒有對戰紀錄"), ephemeral=True
+                embed=model.ErrorEmbed("錯誤", "你目前在該遊戲沒有對戰紀錄"),
+                ephemeral=True,
             )
 
         await GeneralPaginator(i, embeds).start(followup=True)

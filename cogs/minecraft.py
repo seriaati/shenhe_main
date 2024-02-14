@@ -7,10 +7,10 @@ from attr import define
 from discord import app_commands, ui
 from discord.ext import commands
 from pydantic import BaseModel, validator
+from seria.utils import split_list_to_chunks
 
 from dev.model import BaseModal, BaseView, BotModel, DefaultEmbed, Inter
 from utility.paginator import GeneralPaginator
-from utility.utils import divide_chunks
 
 
 class Player(BaseModel):
@@ -82,7 +82,8 @@ class ServerStatus(BaseView):
         )
         if response.players.sample:
             embed.add_field(
-                name="玩家", value="\n".join([f"`{p.name}`" for p in response.players.sample])
+                name="玩家",
+                value="\n".join([f"`{p.name}`" for p in response.players.sample]),
             )
         return embed
 
@@ -105,11 +106,13 @@ class Coord:
 
 
 class AddCoord(BaseModal):
-    name = ui.TextInput(label="座標名稱", placeholder="輸入座標名稱", min_length=1, max_length=50)
+    name = ui.TextInput(
+        label="座標名稱", placeholder="輸入座標名稱", min_length=1, max_length=50
+    )
     x = ui.TextInput(label="X", placeholder="輸入X座標", min_length=1, max_length=50)
     y = ui.TextInput(label="Y", placeholder="輸入Y座標", min_length=1, max_length=50)
     z = ui.TextInput(label="Z", placeholder="輸入Z座標", min_length=1, max_length=50)
-    
+
     def __init__(self):
         super().__init__(title="新增座標", custom_id="add_coord")
 
@@ -132,6 +135,7 @@ class RemoveCord(BaseModal):
     coord_id = ui.TextInput(
         label="座標ID", placeholder="輸入座標ID", min_length=1, max_length=50
     )
+
     def __init__(self):
         super().__init__(title="移除座標", custom_id="remove_coord")
 
@@ -169,7 +173,7 @@ class CoordsSystem(BaseView):
         if not coords:
             return [DefaultEmbed("座標系統", "目前沒有座標")]
 
-        div_coords = list(divide_chunks(coords, 9))
+        div_coords = split_list_to_chunks(coords, 9)
         embeds: List[DefaultEmbed] = []
         for div in div_coords:
             embed = DefaultEmbed("座標系統")
@@ -186,14 +190,18 @@ class CoordsSystem(BaseView):
         paginator = GeneralPaginator(i, embeds, self.children)  # type: ignore
         await paginator.start(edit=True)
 
-    @ui.button(label="新增座標", style=discord.ButtonStyle.green, custom_id="add_coord_btn")
+    @ui.button(
+        label="新增座標", style=discord.ButtonStyle.green, custom_id="add_coord_btn"
+    )
     async def add_coord(self, i: discord.Interaction, _):
         modal = AddCoord()
         await i.response.send_modal(modal)
         await modal.wait()
         await self._update_interaction(i)
 
-    @ui.button(label="刪除座標", style=discord.ButtonStyle.red, custom_id="remove_coord_btn")
+    @ui.button(
+        label="刪除座標", style=discord.ButtonStyle.red, custom_id="remove_coord_btn"
+    )
     async def remove_coord(self, i: discord.Interaction, _):
         modal = RemoveCord()
         await i.response.send_modal(modal)
@@ -221,7 +229,7 @@ class Minecraft(commands.Cog):
         await i.response.send_message(
             embed=view.create_embed(await view._fetch_data(self.bot.session))
         )
-    
+
     @app_commands.command(name="coords", description="座標系統")
     async def coords_slash(self, i: discord.Interaction):
         await i.response.defer()

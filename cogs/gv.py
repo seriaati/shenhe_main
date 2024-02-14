@@ -6,11 +6,11 @@ import discord
 from attrs import define, field
 from discord import app_commands, ui
 from discord.ext import commands
+from seria.utils import split_list_to_chunks
 
 from apps.flow import flow_transaction, get_balance
 from dev.model import BotModel, DefaultEmbed, ErrorEmbed, Inter
 from utility.paginator import GeneralPaginator
-from utility.utils import divide_chunks
 
 
 @define
@@ -100,7 +100,9 @@ class GiveAwayView(ui.View):
         embed.add_field(name="得獎者", value="\n".join(f"<@{w}>" for w in winners))
 
         self.join_gv.disabled = True
-        await i.response.edit_message(embed=embed, view=self, content="**🎊 抽獎結束！ 🎊**")
+        await i.response.edit_message(
+            embed=embed, view=self, content="**🎊 抽獎結束！ 🎊**"
+        )
 
         winner_mentions = ", ".join(f"<@{w}>" for w in winners)
         winner_embed = DefaultEmbed(
@@ -124,7 +126,8 @@ class GiveAwayView(ui.View):
             bao = await get_balance(i.user.id, i.client.pool)
             if bao < self.gv.bao:
                 embed = ErrorEmbed(
-                    "暴幣不足", f"你的暴幣不足以參加此抽獎\n需要 **{self.gv.bao}** 暴幣，你現在有 **{bao}** 暴幣"
+                    "暴幣不足",
+                    f"你的暴幣不足以參加此抽獎\n需要 **{self.gv.bao}** 暴幣，你現在有 **{bao}** 暴幣",
                 )
                 return await i.response.send_message(embed=embed, ephemeral=True)
 
@@ -152,7 +155,7 @@ class GiveAwayView(ui.View):
         else:
             # 10 participants per embed
             embeds: typing.List[discord.Embed] = []
-            participants = list(divide_chunks(self.gv.participants.copy(), 10))
+            participants = split_list_to_chunks(self.gv.participants.copy(), 10)
             index = 1
             for div in participants:
                 embed = DefaultEmbed("參加者")
@@ -168,7 +171,9 @@ class GiveAwayView(ui.View):
     @ui.button(label="結束抽獎", style=discord.ButtonStyle.red, custom_id="end_gv")
     async def end_gv(self, i: discord.Interaction, button: ui.Button):
         if i.user.id != self.gv.author:
-            embed = ErrorEmbed("你不是主辦人，無法結束抽獎", f"主辦人: <@{self.gv.author}>")
+            embed = ErrorEmbed(
+                "你不是主辦人，無法結束抽獎", f"主辦人: <@{self.gv.author}>"
+            )
             await i.response.send_message(embed=embed, ephemeral=True)
         else:
             if not self.gv.participants:
@@ -193,7 +198,9 @@ class RerollWinners(ui.Button):
 
     async def callback(self, i: discord.Interaction) -> typing.Any:
         if i.user.id != self.view.gv.author:
-            embed = ErrorEmbed("你不是主辦人，無法重新抽獎", f"主辦人: <@{self.view.gv.author}>")
+            embed = ErrorEmbed(
+                "你不是主辦人，無法重新抽獎", f"主辦人: <@{self.view.gv.author}>"
+            )
             await i.response.send_message(embed=embed, ephemeral=True)
         else:
             await self.view.announce_winners(i)
@@ -209,7 +216,9 @@ class GiveAwayCog(commands.Cog):
             gv = Giveaway(**row)
             self.bot.add_view(GiveAwayView(gv), message_id=gv.message_id)
 
-    @app_commands.rename(prize="獎品名稱", prize_num="獎品數量", extra_info="其他資訊", bao="暴幣")
+    @app_commands.rename(
+        prize="獎品名稱", prize_num="獎品數量", extra_info="其他資訊", bao="暴幣"
+    )
     @app_commands.describe(
         prize="要抽獎的獎品名稱",
         prize_num="要抽獎的獎品數量",

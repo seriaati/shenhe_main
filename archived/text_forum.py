@@ -3,8 +3,7 @@ from typing import Any
 
 import discord
 from discord.ext import commands
-
-from utility.utils import extract_urls
+from seria.utils import extract_urls
 
 CHANNEL_ID = 1061899087525458031
 

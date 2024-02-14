@@ -4,9 +4,9 @@ from typing import List
 
 import discord
 from discord.ext import commands
+from seria.utils import extract_media_urls, split_list_to_chunks
 
 from dev.model import BotModel
-from utility.utils import divide_chunks, extract_media_urls
 
 
 class WebhookCog(commands.Cog):
@@ -88,7 +88,7 @@ class WebhookCog(commands.Cog):
                 )
 
                 # send the files in chunks of 10
-                split_files: List[List[discord.File]] = list(divide_chunks(files, 10))
+                split_files = split_list_to_chunks(files, 10)
                 for split_file in split_files:
                     webhooks = await message.channel.webhooks()
                     webhook = discord.utils.get(webhooks, name="Auto Spoiler")

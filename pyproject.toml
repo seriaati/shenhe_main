@@ -16,6 +16,7 @@ pydantic = "^2.5.2"
 pomice = "^2.7.2"
 pysaucenao = "^1.6.2"
 pillow = "^10.2.0"
+seria-library = {git = "https://github.com/seriaati/seria-library"}
 
 [tool.poetry.group.dev]
 optional = true

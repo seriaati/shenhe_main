@@ -5,12 +5,12 @@ from typing import List, Optional
 import discord
 from discord import app_commands
 from discord.ext import commands
+from seria.utils import split_list_to_chunks
 
 import apps.flow as flow_app
 from dev.enum import TimeType
 from dev.model import BotModel, DefaultEmbed, ErrorEmbed, Inter
 from utility.paginator import GeneralPaginator
-from utility.utils import divide_chunks
 
 
 def bao_check():
@@ -106,7 +106,7 @@ class BaoCog(commands.GroupCog, name="bao"):
     @app_commands.command(name="poke", description="戳戳")
     @app_commands.rename(member="使用者")
     @app_commands.describe(member="被戳的使用者")
-    async def poke(self, i: discord.Interaction, member: discord.Member):        
+    async def poke(self, i: discord.Interaction, member: discord.Member):
         success = True if randint(1, 2) == 1 else False
         flow_num = randint(1, 3)
 
@@ -141,7 +141,12 @@ class BaoCog(commands.GroupCog, name="bao"):
     @app_commands.command(name="give", description="給予其他使用者暴幣")
     @app_commands.rename(member="使用者", amount="數量")
     @app_commands.describe(member="被給予暴幣的使用者", amount="給予的暴幣數量")
-    async def give(self, i: discord.Interaction, member: discord.Member, amount: app_commands.Range[int, 0]):
+    async def give(
+        self,
+        i: discord.Interaction,
+        member: discord.Member,
+        amount: app_commands.Range[int, 0],
+    ):
         flow_user = await flow_app.get_balance(i.user.id, self.bot.pool)
         if flow_user < amount:
             return await i.response.send_message(
@@ -256,7 +261,9 @@ class BaoCog(commands.GroupCog, name="bao"):
         ephemeral = True if private == 1 else False
         await i.response.send_message(embed=embed, ephemeral=ephemeral)
 
-    @app_commands.command(name="total", description="查看目前群組帳號及銀行暴幣分配情況")
+    @app_commands.command(
+        name="total", description="查看目前群組帳號及銀行暴幣分配情況"
+    )
     async def total(self, i: discord.Interaction):
         bank = await flow_app.get_bank(self.bot.pool)
         acc_count = await self.bot.pool.fetchval("SELECT COUNT(*) FROM flow_accounts")
@@ -276,7 +283,7 @@ class BaoCog(commands.GroupCog, name="bao"):
             "SELECT user_id, flow FROM flow_accounts ORDER BY flow DESC"
         )
         embeds: List[discord.Embed] = []
-        div_rows = list(divide_chunks(rows, 10))
+        div_rows = split_list_to_chunks(rows, 10)
 
         rank = 1
         for page_number, page in enumerate(div_rows):
