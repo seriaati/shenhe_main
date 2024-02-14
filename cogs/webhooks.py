@@ -62,45 +62,49 @@ class WebhookCog(commands.Cog):
             ):
                 await message.delete()
 
-            files: List[discord.File] = []
+                files: List[discord.File] = []
 
-            # auto spoiler media urls
-            for url in media_urls:
-                async with self.bot.session.get(url) as resp:
-                    if resp.status != 200:
-                        continue
+                # auto spoiler media urls
+                for url in media_urls:
+                    async with self.bot.session.get(url) as resp:
+                        if resp.status != 200:
+                            continue
 
-                    message.content = message.content.replace(url, "")
-                    files.append(
-                        discord.File(
-                            io.BytesIO(await resp.read()),
-                            filename=url.split("/")[-1].split("?")[0],
-                            spoiler=True,
+                        message.content = message.content.replace(url, "")
+                        files.append(
+                            discord.File(
+                                io.BytesIO(await resp.read()),
+                                filename=url.split("/")[-1].split("?")[0],
+                                spoiler=True,
+                            )
                         )
-                    )
 
-            # auto spoiler attachments
-            files.extend(
-                [
-                    await attachment.to_file(spoiler=True)
-                    for attachment in message.attachments
-                ]
-            )
-
-            # send the files in chunks of 10
-            split_files: List[List[discord.File]] = list(divide_chunks(files, 10))
-            for split_file in split_files:
-                webhooks = await message.channel.webhooks()
-                webhook = discord.utils.get(webhooks, name="Auto Spoiler")
-                if webhook is None:
-                    webhook = await message.channel.create_webhook(name="Auto Spoiler")
-
-                await webhook.send(
-                    content=message.content,
-                    username=message.author.display_name.replace(" (Embed Fixer)", ""),
-                    avatar_url=message.author.display_avatar.url,
-                    files=split_file,
+                # auto spoiler attachments
+                files.extend(
+                    [
+                        await attachment.to_file(spoiler=True)
+                        for attachment in message.attachments
+                    ]
                 )
+
+                # send the files in chunks of 10
+                split_files: List[List[discord.File]] = list(divide_chunks(files, 10))
+                for split_file in split_files:
+                    webhooks = await message.channel.webhooks()
+                    webhook = discord.utils.get(webhooks, name="Auto Spoiler")
+                    if webhook is None:
+                        webhook = await message.channel.create_webhook(
+                            name="Auto Spoiler"
+                        )
+
+                    await webhook.send(
+                        content=message.content,
+                        username=message.author.display_name.replace(
+                            " (Embed Fixer)", ""
+                        ),
+                        avatar_url=message.author.display_avatar.url,
+                        files=split_file,
+                    )
 
 
 async def setup(bot: commands.Bot) -> None:
