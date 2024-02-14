@@ -57,7 +57,9 @@ class WebhookCog(commands.Cog):
             and message.channel.id == 1061898394446069852  # 色即是空
         ):
             media_urls = extract_media_urls(message.content)
-            if media_urls or message.attachments:
+            if media_urls or any(
+                not attachment.is_spoiler() for attachment in message.attachments
+            ):
                 await message.delete()
 
             files: List[discord.File] = []
@@ -73,13 +75,14 @@ class WebhookCog(commands.Cog):
                         discord.File(
                             io.BytesIO(await resp.read()),
                             filename=url.split("/")[-1].split("?")[0],
+                            spoiler=True,
                         )
                     )
 
             # auto spoiler attachments
             files.extend(
                 [
-                    await attachment.to_file(spoiler=not attachment.is_spoiler())
+                    await attachment.to_file(spoiler=True)
                     for attachment in message.attachments
                 ]
             )
