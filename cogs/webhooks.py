@@ -4,7 +4,7 @@ from typing import List
 
 import discord
 from discord.ext import commands
-from seria.utils import extract_media_urls, split_list_to_chunks
+from seria.utils import clean_url, extract_media_urls, split_list_to_chunks
 
 from dev.model import BotModel
 
@@ -56,7 +56,7 @@ class WebhookCog(commands.Cog):
             and message.guild.id == self.bot.guild_id
             and message.channel.id == 1061898394446069852  # 色即是空
         ):
-            media_urls = extract_media_urls(message.content)
+            media_urls = extract_media_urls(message.content, clean=False)
             if media_urls or any(
                 not attachment.is_spoiler() for attachment in message.attachments
             ):
@@ -74,7 +74,7 @@ class WebhookCog(commands.Cog):
                         files.append(
                             discord.File(
                                 io.BytesIO(await resp.read()),
-                                filename=url.split("/")[-1].split("?")[0],
+                                filename=clean_url(url).split("/")[-1],
                                 spoiler=True,
                             )
                         )
