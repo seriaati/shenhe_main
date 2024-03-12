@@ -86,13 +86,15 @@ class WebhookCog(commands.Cog):
 
         if (
             isinstance(message.channel, discord.TextChannel)
-            and message.guild is not None
-            and message.guild.id == self.bot.guild_id
             and message.channel.id == 1061898394446069852  # 色即是空
         ):
             media_urls = extract_media_urls(message.content, clean=False)
-            if media_urls or any(
-                not attachment.is_spoiler() for attachment in message.attachments
+            if (
+                media_urls
+                or any(
+                    not attachment.is_spoiler() for attachment in message.attachments
+                )
+                or self._match_kemono(message)
             ):
                 await message.delete()
 
