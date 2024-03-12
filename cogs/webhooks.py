@@ -1,6 +1,7 @@
 import asyncio
 import contextlib
 import io
+import logging
 import re
 from typing import List
 
@@ -11,6 +12,7 @@ from seria.utils import extract_media_urls, split_list_to_chunks
 from dev.model import BotModel
 
 KEMONO_REGEX = r"https:\/\/kemono\.su\/(fanbox|[a-zA-Z]+)\/user\/\d+\/post\/\d+"
+LOGGER_ = logging.getLogger(__name__)
 
 
 class WebhookCog(commands.Cog):
@@ -24,8 +26,13 @@ class WebhookCog(commands.Cog):
         self, image_url: str, files: list[discord.File]
     ) -> None:
         async with self.bot.session.get(image_url) as resp:
+            LOGGER_.info("Downloading image from %s", image_url)
             if resp.status != 200:
+                LOGGER_.error(
+                    "Failed to download %s, status: %s", image_url, resp.status
+                )
                 return
+
             file_ = discord.File(io.BytesIO(await resp.read()), spoiler=True)
         files.append(file_)
 
