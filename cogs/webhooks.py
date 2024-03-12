@@ -7,7 +7,7 @@ from typing import List
 
 import discord
 from discord.ext import commands
-from seria.utils import extract_media_urls, split_list_to_chunks
+from seria.utils import clean_url, extract_media_urls, split_list_to_chunks
 
 from dev.model import BotModel
 
@@ -23,7 +23,7 @@ class WebhookCog(commands.Cog):
         return re.search(KEMONO_REGEX, message.content)
 
     async def _download_image_task(
-        self, image_url: str, files: list[discord.File]
+        self, image_url: str, files: list[discord.File], filename: str
     ) -> None:
         async with self.bot.session.get(image_url) as resp:
             LOGGER_.info("Downloading image from %s", image_url)
@@ -33,7 +33,9 @@ class WebhookCog(commands.Cog):
                 )
                 return
 
-            file_ = discord.File(io.BytesIO(await resp.read()), spoiler=True)
+            file_ = discord.File(
+                io.BytesIO(await resp.read()), spoiler=True, filename=filename
+            )
         files.append(file_)
 
     async def _fetch_kemono_images(self, kemono_url: str) -> list[discord.File]:
@@ -46,10 +48,12 @@ class WebhookCog(commands.Cog):
         files: list[discord.File] = []
         tasks: list[asyncio.Task] = []
         for attachment in attachments:
-            url = (
-                f"https://c4.kemono.su/data/{attachment['path']}?f={attachment['name']}"
+            url = f"https://img.kemono.su/thumbnail/data/{attachment['path']}"
+            tasks.append(
+                asyncio.create_task(
+                    self._download_image_task(url, files, attachment["name"])
+                )
             )
-            tasks.append(asyncio.create_task(self._download_image_task(url, files)))
 
         await asyncio.gather(*tasks, return_exceptions=True)
         return files
@@ -106,14 +110,20 @@ class WebhookCog(commands.Cog):
                 await message.delete()
 
                 files: List[discord.File] = []
-                tasks: List[asyncio.Task] = []
 
                 # auto spoiler media urls
-                for url in media_urls:
-                    tasks.append(
-                        asyncio.create_task(self._download_image_task(url, files))
-                    )
-                    message.content = message.content.replace(url, "")
+                if media_urls:
+                    tasks: List[asyncio.Task] = []
+                    for url in media_urls:
+                        tasks.append(
+                            asyncio.create_task(
+                                self._download_image_task(
+                                    url, files, filename=clean_url(url).split("/")[-1]
+                                )
+                            )
+                        )
+                        message.content = message.content.replace(url, "")
+                    await asyncio.gather(*tasks, return_exceptions=True)
 
                 # extract keomo images
                 kemono_match = self._match_kemono(message)
@@ -127,8 +137,6 @@ class WebhookCog(commands.Cog):
                         for attachment in message.attachments
                     ]
                 )
-
-                await asyncio.gather(*tasks, return_exceptions=True)
 
                 # send the files in chunks of 10
                 split_files = split_list_to_chunks(files, 10)
