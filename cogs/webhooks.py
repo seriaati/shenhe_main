@@ -155,6 +155,7 @@ class WebhookCog(commands.Cog):
                         ),
                         avatar_url=message.author.display_avatar.url,
                         files=split_file,
+                        suppress_embeds=True,
                     )
 
 
