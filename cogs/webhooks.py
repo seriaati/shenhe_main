@@ -84,7 +84,9 @@ class WebhookCog(commands.Cog):
             await message.add_reaction("🤔")
             await message.add_reaction("<a:ganyuLick:1154951202073739364>")
             await message.add_reaction("<:hasuhasu:1067657689846534275>")
-            await message.add_reaction("<:poinkoHmm:1175282036286705674>")
+            await message.add_reaction("❤️")
+            await message.add_reaction("👀")
+            await message.add_reaction("<:p_hug:1062081072449466498>")
 
     @commands.Cog.listener("on_message")
     async def auto_spoiler(self, message: discord.Message) -> None:
