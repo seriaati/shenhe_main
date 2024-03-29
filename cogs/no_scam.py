@@ -12,6 +12,7 @@ class NoScam(commands.Cog):
         self.user_messages: DefaultDict[int, DefaultDict[str, list[int]]] = defaultdict(
             lambda: defaultdict(list)
         )
+        # [user_id][message_content] = [channel_id1, channel_id2, ...]
 
         self.guild_id = 1061877505067327528
         self.owner_id = 410036441129943050
@@ -85,7 +86,7 @@ class NoScam(commands.Cog):
 
     @commands.Cog.listener("on_message")
     async def track_message(self, message: discord.Message) -> None:
-        if message.author.bot or message.guild is None:
+        if message.author.bot or message.guild is None or not message.content:
             return
 
         user_id = message.author.id
