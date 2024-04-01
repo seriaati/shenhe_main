@@ -9,8 +9,8 @@ from discord.ext import commands
 class NoScam(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot: commands.Bot = bot
-        self.user_messages: DefaultDict[int, DefaultDict[str, list[int]]] = defaultdict(
-            lambda: defaultdict(list)
+        self.user_messages: DefaultDict[int, DefaultDict[str, set[int]]] = defaultdict(
+            lambda: defaultdict(set)
         )
         # [user_id][message_content] = [channel_id1, channel_id2, ...]
 
@@ -20,16 +20,16 @@ class NoScam(commands.Cog):
         self.owner: discord.User
 
         # max number of messages to track per user
-        self.max_messages = 3
+        self.max_messages = 8
         # if the user sends the same message in this many channels, they will be timed out
         self.max_channels = 3
         # how long to timeout the user for
         self.timeout_length = timedelta(minutes=15)
 
-    async def cog_load(self):
+    async def cog_load(self) -> None:
         self.bot.loop.create_task(self.get_guild())
 
-    async def get_guild(self):
+    async def get_guild(self) -> None:
         await self.bot.wait_until_ready()
         guild = self.bot.get_guild(self.guild_id)
         if guild is None:
@@ -93,7 +93,7 @@ class NoScam(commands.Cog):
         channel_id = message.channel.id
         messages = self.user_messages[user_id]
         channels = messages[message.content]
-        channels.append(channel_id)
+        channels.add(channel_id)
 
         # Remove the message from the list if it's too old
         if len(messages) > self.max_messages:
