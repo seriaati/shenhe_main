@@ -46,19 +46,19 @@ class NoScam(commands.Cog):
         messages = self.user_messages[user_id]
 
         # Check if the user has sent the same message in at least 3 different channels
-        for content, channels in messages.items():
-            if len(channels) >= self.max_channels:
+        for content, channel_ids in messages.items():
+            if len(channel_ids) >= self.max_channels:
                 # Get the member object for the user
                 member = self.guild.get_member(user_id)
                 if member is None:
                     continue
 
-                # Timeout the user for sending scam links
+                # Timeout the user
                 await member.timeout(self.timeout_length, reason="Sending scam links")
 
                 # Get the URLs of the channels where the user sent the message
                 channel_urls: list[str] = []
-                for channel_id in channels:
+                for channel_id in channel_ids:
                     channel = self.bot.get_channel(channel_id)
                     if not isinstance(channel, discord.TextChannel):
                         continue
@@ -72,17 +72,18 @@ class NoScam(commands.Cog):
 
                 # Send a message to the owner with details about the spam
                 urls = "\n".join(channel_urls)
-                embed = discord.Embed(title="Spam detected")
-                embed.description = f"""
-                Message: {content}
-                Channels:
-                {urls}
-                """
+                embed = discord.Embed(
+                    title="Spam detected",
+                    description=f"Message: {content}\nChannels:\n{urls}",
+                )
                 embed.set_author(
                     name=member.display_name, icon_url=member.display_avatar.url
                 )
                 embed.set_footer(text=f"ID: {member.id}")
                 await self.owner.send(embed=embed)
+
+                # Reset the user's messages
+                self.user_messages[user_id].clear()
 
     @commands.Cog.listener("on_message")
     async def track_message(self, message: discord.Message) -> None:
