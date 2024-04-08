@@ -20,7 +20,7 @@ class NoScam(commands.Cog):
         self.owner: discord.User
 
         # max number of messages to track per user
-        self.max_messages = 8
+        self.max_messages = 3
         # if the user sends the same message in this many channels, they will be timed out
         self.max_channels = 3
         # how long to timeout the user for
