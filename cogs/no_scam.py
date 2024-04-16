@@ -87,7 +87,12 @@ class NoScam(commands.Cog):
 
     @commands.Cog.listener("on_message")
     async def track_message(self, message: discord.Message) -> None:
-        if message.author.bot or message.guild is None or not message.content:
+        if (
+            message.author.bot
+            or message.guild is None
+            or not message.content
+            or "discord.gg" not in message.content
+        ):
             return
 
         user_id = message.author.id
