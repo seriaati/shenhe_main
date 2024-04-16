@@ -25,6 +25,8 @@ class NoScam(commands.Cog):
         self.max_channels = 3
         # how long to timeout the user for
         self.timeout_length = timedelta(minutes=15)
+        # keywords
+        self.keywords = ("discord.gg", "discord.com/invite")
 
     async def cog_load(self) -> None:
         self.bot.loop.create_task(self.get_guild())
@@ -91,7 +93,7 @@ class NoScam(commands.Cog):
             message.author.bot
             or message.guild is None
             or not message.content
-            or "discord.gg" not in message.content
+            or not any(keyword in message.content for keyword in self.keywords)
         ):
             return
 
