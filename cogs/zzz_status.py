@@ -9,6 +9,7 @@ class ZZZStatusCog(commands.Cog):
         self.bot: BotModel = bot
         self.channel_id = 1232100232255373403
         self.user_ids = {410036441129943050, 546588835018964994}
+        self.play_status: dict[int, bool] = {}
 
     async def _send_start_playing_msg(self, user: discord.Member):
         channel = self.bot.get_channel(self.channel_id)
@@ -44,9 +45,11 @@ class ZZZStatusCog(commands.Cog):
                 in_after = True
                 break
 
-        if in_before and not in_after:
+        if in_before and not in_after and self.play_status.get(before.id, True):
+            self.play_status[before.id] = False
             await self._send_stop_playing_msg(after)
-        elif not in_before and in_after:
+        elif not in_before and in_after and not self.play_status.get(before.id, False):
+            self.play_status[before.id] = True
             await self._send_start_playing_msg(after)
 
 
