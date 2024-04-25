@@ -1,3 +1,4 @@
+import logging
 import math
 import os
 from typing import Any, List, Optional, Set
@@ -36,8 +37,8 @@ class PlayerView(ui.View):
         self.author_id = author_id
 
     async def start(self, i: discord.Interaction) -> bool:
-        assert isinstance(i.user, discord.Member)
         await self.check_in_vc(i)
+        assert isinstance(i.user, discord.Member)
         assert i.user.voice and i.user.voice.channel
         if not self.check_player(i):
             await i.user.voice.channel.connect(cls=Player)
@@ -109,6 +110,7 @@ class PlayerView(ui.View):
 
     @staticmethod
     async def on_error(i: discord.Interaction, e: Exception, _) -> None:
+        logging.error("Error in music player", exc_info=e)
         try:
             await i.response.send_message(f"錯誤: {e}", ephemeral=True)
         except discord.InteractionResponded:
