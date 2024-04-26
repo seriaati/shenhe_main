@@ -37,9 +37,13 @@ class PlayerView(ui.View):
         self.author_id = author_id
 
     async def start(self, i: discord.Interaction) -> bool:
-        await self.check_in_vc(i)
-        assert isinstance(i.user, discord.Member)
-        assert i.user.voice and i.user.voice.channel
+        in_vc = await self.check_in_vc(i)
+        if not in_vc:
+            return False
+
+        assert (
+            isinstance(i.user, discord.Member) and i.user.voice and i.user.voice.channel
+        )
         if not self.check_player(i):
             await i.user.voice.channel.connect(cls=Player)
         self.player = i.guild.voice_client  # type: ignore
