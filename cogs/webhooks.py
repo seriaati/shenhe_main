@@ -22,11 +22,10 @@ class WebhookCog(commands.Cog):
     def _match_kemono(self, message: discord.Message) -> re.Match[str] | None:
         return re.search(KEMONO_REGEX, message.content)
 
-    async def _download_image_task(
+    async def _download_image(
         self, image_url: str, files: list[discord.File], filename: str
     ) -> None:
         async with self.bot.session.get(image_url) as resp:
-            LOGGER_.info("Downloading image from %s", image_url)
             if resp.status != 200:
                 LOGGER_.error(
                     "Failed to download %s, status: %s", image_url, resp.status
@@ -38,7 +37,7 @@ class WebhookCog(commands.Cog):
             )
         files.append(file_)
 
-    async def _fetch_kemono_images(self, kemono_url: str) -> list[discord.File]:
+    async def _download_kemono_images(self, kemono_url: str) -> list[discord.File]:
         api_url = "https://kemono.su/api/v1/"
         request_url = kemono_url.replace("https://kemono.su/", api_url)
         async with self.bot.session.get(request_url) as resp:
@@ -46,16 +45,11 @@ class WebhookCog(commands.Cog):
 
         attachments: list[dict[str, str]] = data.get("attachments", [])
         files: list[discord.File] = []
-        tasks: list[asyncio.Task] = []
-        for attachment in attachments:
-            url = f"https://img.kemono.su/thumbnail/data/{attachment['path']}"
-            tasks.append(
-                asyncio.create_task(
-                    self._download_image_task(url, files, attachment["name"])
-                )
-            )
+        async with asyncio.TaskGroup() as tg:
+            for attachment in attachments:
+                url = f"https://img.kemono.su/thumbnail/data/{attachment['path']}"
+                tg.create_task(self._download_image(url, files, attachment["name"]))
 
-        await asyncio.gather(*tasks, return_exceptions=True)
         return files
 
     # auto add reactions
@@ -102,33 +96,25 @@ class WebhookCog(commands.Cog):
             media_urls = extract_media_urls(message.content, clean=False)
             if (
                 media_urls
-                or any(
-                    not attachment.is_spoiler() for attachment in message.attachments
-                )
+                or any(not a.is_spoiler() for a in message.attachments)
                 or self._match_kemono(message)
             ):
-                await message.delete()
-
                 files: List[discord.File] = []
 
                 # auto spoiler media urls
                 if media_urls:
-                    tasks: List[asyncio.Task] = []
-                    for url in media_urls:
-                        tasks.append(
-                            asyncio.create_task(
-                                self._download_image_task(
-                                    url, files, filename=clean_url(url).split("/")[-1]
-                                )
-                            )
-                        )
-                        message.content = message.content.replace(url, "")
-                    await asyncio.gather(*tasks, return_exceptions=True)
+                    async with asyncio.TaskGroup() as tg:
+                        for url in media_urls:
+                            filename = clean_url(url).split("/")[-1]
+                            tg.create_task(self._download_image(url, files, filename))
+                            message.content = message.content.replace(url, "")
 
                 # extract keomo images
                 kemono_match = self._match_kemono(message)
                 if kemono_match:
-                    files.extend(await self._fetch_kemono_images(kemono_match.group()))
+                    files.extend(
+                        await self._download_kemono_images(kemono_match.group())
+                    )
 
                 # auto spoiler attachments
                 files.extend(
@@ -157,6 +143,8 @@ class WebhookCog(commands.Cog):
                         files=split_file,
                         suppress_embeds=True,
                     )
+
+                await message.delete()
 
 
 async def setup(bot: commands.Bot) -> None:
