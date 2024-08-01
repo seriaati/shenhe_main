@@ -17,7 +17,7 @@ pydantic = "^2.5.2"
 pysaucenao = "^1.6.2"
 python = "^3.11"
 python-dotenv = "^1.0.0"
-seria-library = {git = "https://github.com/seriaati/seria-library"}
+seria-library = "^1.5.4"
 
 [tool.poetry.group.dev]
 optional = true
