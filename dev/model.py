@@ -200,7 +200,8 @@ class GamePlayer(BaseModel):
         )
 
     @field_validator("win_rate", mode="before")
-    def calc_win_rate(self, _, values):
+    @classmethod
+    def calc_win_rate(cls, _, values):
         if values["win"] == 0 and values["lose"] == 0:
             return 0
         return values["win"] / (values["win"] + values["lose"])

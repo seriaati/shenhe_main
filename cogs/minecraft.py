@@ -26,7 +26,8 @@ class Players(BaseModel):
     sample: list[Player]
 
     @field_validator("sample", mode="before")
-    def form_sample(self, v):
+    @classmethod
+    def form_sample(cls, v):
         if isinstance(v, list):
             return [Player(**p) for p in v]
         return v
@@ -50,13 +51,15 @@ class APIResponse(BaseModel):
     duration: str
 
     @field_validator("players", mode="before")
-    def form_players(self, v):
+    @classmethod
+    def form_players(cls, v):
         if isinstance(v, dict):
             return Players(**v)
         return v
 
     @field_validator("server", mode="before")
-    def form_server(self, v):
+    @classmethod
+    def form_server(cls, v):
         if isinstance(v, dict):
             return Server(**v)
         return v
@@ -66,7 +69,7 @@ class ServerStatus(BaseView):
     def __init__(self) -> None:
         super().__init__(timeout=None)
 
-        self.server_ip = "34.81.237.15"
+        self.server_ip = "60.41.92.42"
 
     async def _fetch_data(self, session: "aiohttp.ClientSession") -> APIResponse:
         url = f"https://mcapi.us/server/status?ip={self.server_ip}"
