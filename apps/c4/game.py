@@ -70,28 +70,26 @@ class ConnectFour:
         if (
             col <= 3
             and row <= 2
-            and "".join([self.board[row + i][col + i] for i in range(4)]).count(
-                player * 4
-            )
+            and "".join([self.board[row + i][col + i] for i in range(4)]).count(player * 4)
         ):
             return True
         if (
             col <= 3
             and row >= 3
-            and "".join([self.board[row - i][col + i] for i in range(4)]).count(
-                player * 4
-            )
+            and "".join([self.board[row - i][col + i] for i in range(4)]).count(player * 4)
         ):
             return True
         if (
             col >= 3
             and row <= 2
-            and "".join([self.board[row + i][col - i] for i in range(4)]).count(
-                player * 4
-            )
+            and "".join([self.board[row + i][col - i] for i in range(4)]).count(player * 4)
         ):
             return True
-        return bool(col >= 3 and row >= 3 and "".join([self.board[row - i][col - i] for i in range(4)]).count(player * 4))
+        return bool(
+            col >= 3
+            and row >= 3
+            and "".join([self.board[row - i][col - i] for i in range(4)]).count(player * 4)
+        )
 
     def check_draw(self) -> bool:
         return all(cell != "⚫ " for row in self.board for cell in row)

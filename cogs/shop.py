@@ -38,9 +38,7 @@ class ShopItemSelect(ui.Select):
     async def callback(self, i: Inter) -> typing.Any:
         if self.action is ShopAction.DELETE:
             await delete_shop_item(self.values[0], self.pool)
-            await i.response.send_message(
-                f"商品 **{self.values[0]}** 移除成功", ephemeral=True
-            )
+            await i.response.send_message(f"商品 **{self.values[0]}** 移除成功", ephemeral=True)
         elif self.action is ShopAction.BUY:
             flow = await i.client.pool.fetchval(
                 "SELECT flow FROM flow_shop WHERE name = $1", self.values[0]

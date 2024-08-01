@@ -55,9 +55,7 @@ class SauceNao(commands.Cog):
         embed.set_author(name="搜尋中...", icon_url="https://i.imgur.com/V76M9Wa.gif")
         await i.response.send_message(embed=embed, ephemeral=ephemeral)
 
-    async def _return_results(
-        self, i: discord.Interaction, embeds: list[discord.Embed]
-    ) -> None:
+    async def _return_results(self, i: discord.Interaction, embeds: list[discord.Embed]) -> None:
         paginator = GeneralPaginator(i, embeds)
         await paginator.start(edit=True)
 
@@ -67,11 +65,7 @@ class SauceNao(commands.Cog):
         urls.extend([a.url for a in message.attachments])
 
         # filter out non-image urls
-        urls = [
-            url
-            for url in urls
-            if url.endswith((".jpg", ".png", ".gif", ".webp", ".jpeg"))
-        ]
+        urls = [url for url in urls if url.endswith((".jpg", ".png", ".gif", ".webp", ".jpeg"))]
         if not urls:
             embed = ErrorEmbed("找不到圖片連結", "請確認訊息內是否有圖片連結")
             return await i.followup.send(embed=embed)
@@ -96,9 +90,7 @@ class SauceNao(commands.Cog):
             app_commands.Choice(name="否", value=0),
         ]
     )
-    async def slash_search_sauce_url(
-        self, i: discord.Interaction, url: str, ephemeral: int = 0
-    ):
+    async def slash_search_sauce_url(self, i: discord.Interaction, url: str, ephemeral: int = 0):
         await self._make_search_response(i, bool(ephemeral))
         resp = await self._search(url)
         embeds = self._make_embeds(resp)

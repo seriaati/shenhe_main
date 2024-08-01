@@ -77,9 +77,7 @@ class NoScam(commands.Cog):
                     title="Spam detected",
                     description=f"Message: {content}\nChannels:\n{urls}",
                 )
-                embed.set_author(
-                    name=member.display_name, icon_url=member.display_avatar.url
-                )
+                embed.set_author(name=member.display_name, icon_url=member.display_avatar.url)
                 embed.set_footer(text=f"ID: {member.id}")
                 await self.owner.send(embed=embed)
 
@@ -88,11 +86,7 @@ class NoScam(commands.Cog):
 
     @commands.Cog.listener("on_message")
     async def track_message(self, message: discord.Message) -> None:
-        if (
-            message.author.bot
-            or message.guild is None
-            or not message.content
-        ):
+        if message.author.bot or message.guild is None or not message.content:
             return
 
         user_id = message.author.id

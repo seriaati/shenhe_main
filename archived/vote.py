@@ -12,7 +12,7 @@ class VoteCog(commands.Cog):
         def __init__(self) -> None:
             super().__init__(timeout=None)
             for i in range(5):
-                self.add_item(VoteCog.VoteButton(f"{i + 1}\N{combining enclosing keycap}"))
+                self.add_item(VoteCog.VoteButton(f"{i + 1}\N{COMBINING ENCLOSING KEYCAP}"))
 
             self.voted = []
 
@@ -46,7 +46,7 @@ class VoteCog(commands.Cog):
 
         message = await ctx.send("正在翻閱歷史訊息...")
         async for message in ctx.channel.history(limit=100):
-            if '✅' in [str(reaction.emoji) for reaction in message.reactions]:
+            if "✅" in [str(reaction.emoji) for reaction in message.reactions]:
                 vote_dict[message.id] = message.reactions[0].count - 1
 
         top_5 = sorted(vote_dict.items(), key=lambda x: x[1], reverse=True)[:5]

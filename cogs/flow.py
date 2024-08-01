@@ -77,25 +77,19 @@ class BaoCog(commands.GroupCog, name="bao"):
         if any(keyword in content for keyword in morning_keywords):
             start = time(0, 0, 0)
             end = time(11, 59, 59)
-            gave = await flow_app.free_flow(
-                user_id, start, end, TimeType.MORNING, self.bot.pool
-            )
+            gave = await flow_app.free_flow(user_id, start, end, TimeType.MORNING, self.bot.pool)
             if gave:
                 await message.add_reaction("<:morning:982608491426508810>")
         elif any(keyword in content for keyword in noon_keywords):
             start = time(12, 0, 0)
             end = time(16, 59, 59)
-            gave = await flow_app.free_flow(
-                user_id, start, end, TimeType.NOON, self.bot.pool
-            )
+            gave = await flow_app.free_flow(user_id, start, end, TimeType.NOON, self.bot.pool)
             if gave:
                 await message.add_reaction("<:noon:982608493313929246>")
         elif any(keyword in content for keyword in night_keywords):
             start = time(17, 0, 0)
             end = time(23, 59, 59)
-            gave = await flow_app.free_flow(
-                user_id, start, end, TimeType.NIGHT, self.bot.pool
-            )
+            gave = await flow_app.free_flow(user_id, start, end, TimeType.NIGHT, self.bot.pool)
             if gave:
                 await message.add_reaction("<:night:982608497290125366>")
 
@@ -178,9 +172,7 @@ class BaoCog(commands.GroupCog, name="bao"):
     @app_commands.command(name="acc", description="查看暴幣帳號")
     @app_commands.rename(member="使用者")
     @app_commands.describe(member="查看其他使用者的暴幣帳號")
-    async def acc(
-        self, i: discord.Interaction, member: discord.Member | None = None
-    ) -> None:
+    async def acc(self, i: discord.Interaction, member: discord.Member | None = None) -> None:
         assert isinstance(i.user, discord.Member)
         member = member or i.user
 
@@ -260,9 +252,7 @@ class BaoCog(commands.GroupCog, name="bao"):
         ephemeral = private == 1
         await i.response.send_message(embed=embed, ephemeral=ephemeral)
 
-    @app_commands.command(
-        name="total", description="查看目前群組帳號及銀行暴幣分配情況"
-    )
+    @app_commands.command(name="total", description="查看目前群組帳號及銀行暴幣分配情況")
     async def total(self, i: discord.Interaction) -> None:
         bank = await flow_app.get_bank(self.bot.pool)
         acc_count = await self.bot.pool.fetchval("SELECT COUNT(*) FROM flow_accounts")

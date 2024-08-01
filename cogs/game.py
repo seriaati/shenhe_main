@@ -59,9 +59,7 @@ class GameCog(commands.GroupCog, name="game"):
                 await sticky.delete()
 
             description = f"[點我回到遊戲]({match.board_link})"
-            sticky = await message.channel.send(
-                embed=model.DefaultEmbed(description=description)
-            )
+            sticky = await message.channel.send(embed=model.DefaultEmbed(description=description))
             await self.bot.pool.execute(
                 "UPDATE connect_four SET sticky_id = $1 WHERE channel_id = $2",
                 sticky.id,
@@ -82,16 +80,9 @@ class GameCog(commands.GroupCog, name="game"):
             match = model.GuessNumMatch.from_row(row)
 
             if match.p2_guess + 1 > match.p1_guess and message.author.id != match.p1:
-                return await message.reply(
-                    embed=model.ErrorEmbed("現在是輪到玩家一猜測")
-                )
-            if (
-                match.p1_guess + 1 > match.p2_guess + 1
-                and message.author.id != match.p2
-            ):
-                return await message.reply(
-                    embed=model.ErrorEmbed("現在是輪到玩家二猜測")
-                )
+                return await message.reply(embed=model.ErrorEmbed("現在是輪到玩家一猜測"))
+            if match.p1_guess + 1 > match.p2_guess + 1 and message.author.id != match.p2:
+                return await message.reply(embed=model.ErrorEmbed("現在是輪到玩家二猜測"))
 
             answer = None
             is_p1 = False
@@ -111,9 +102,7 @@ class GameCog(commands.GroupCog, name="game"):
                     message.channel.id,
                 )
                 a, b = return_a_b(answer, message.content)
-                await message.reply(
-                    embed=model.DefaultEmbed(f"{a}A{b}B", f"第{guess}次猜測")
-                )
+                await message.reply(embed=model.DefaultEmbed(f"{a}A{b}B", f"第{guess}次猜測"))
 
                 if a == 4:
                     embed = model.DefaultEmbed(
@@ -193,9 +182,7 @@ class GameCog(commands.GroupCog, name="game"):
         user_flow = await get_balance(i.user.id, self.bot.pool)
         if flow and flow > user_flow:
             return await i.response.send_message(
-                embed=model.ErrorEmbed(
-                    "你擁有的暴幣不足以承擔這個賭注", f"所需暴幣: {flow}"
-                ),
+                embed=model.ErrorEmbed("你擁有的暴幣不足以承擔這個賭注", f"所需暴幣: {flow}"),
                 ephemeral=True,
             )
 
@@ -215,12 +202,8 @@ class GameCog(commands.GroupCog, name="game"):
                 "點按按鈕即可設定數字,玩家二需等待玩家一設定完畢才可設定數字",
             )
             embed.set_footer(text="設定完後請在討論串中猜測數字")
-            embed.add_field(
-                name="玩家一", value=f"{i.user.mention} - *設定中...*", inline=False
-            )
-            embed.add_field(
-                name="玩家二", value=f"{opponent.mention} - *設定中...*", inline=False
-            )
+            embed.add_field(name="玩家一", value=f"{i.user.mention} - *設定中...*", inline=False)
+            embed.add_field(name="玩家二", value=f"{opponent.mention} - *設定中...*", inline=False)
             if flow:
                 embed.add_field(name="賭注", value=f"{flow} 暴幣", inline=False)
 
@@ -237,9 +220,7 @@ class GameCog(commands.GroupCog, name="game"):
             embed = model.DefaultEmbed(
                 f"{i.user.display_name} 邀請 {opponent.display_name} 來玩屏風式四子棋"
             )
-            embed.add_field(
-                name="玩家一", value=f"{i.user.mention} - *正在選擇顏色*", inline=False
-            )
+            embed.add_field(name="玩家一", value=f"{i.user.mention} - *正在選擇顏色*", inline=False)
             embed.add_field(
                 name="玩家二",
                 value=f"{opponent.mention} - *正在選擇顏色*",
@@ -309,12 +290,8 @@ class GameCog(commands.GroupCog, name="game"):
         i: model.Inter = inter  # type: ignore
         await i.response.defer()
 
-        rows = await i.client.pool.fetch(
-            "SELECT * FROM game_win_lose WHERE game = $1", game.value
-        )
-        all_players: list[model.GamePlayer] = [
-            model.GamePlayer.from_row(row) for row in rows
-        ]
+        rows = await i.client.pool.fetch("SELECT * FROM game_win_lose WHERE game = $1", game.value)
+        all_players: list[model.GamePlayer] = [model.GamePlayer.from_row(row) for row in rows]
         all_players = [p for p in all_players if p.win + p.lose >= 10]
 
         # sort by win_rate attribute, desc
@@ -373,9 +350,7 @@ class GameCog(commands.GroupCog, name="game"):
             member.id,
             game.value,
         )
-        histories: list[model.GameHistory] = [
-            model.GameHistory.from_row(row) for row in rows
-        ]
+        histories: list[model.GameHistory] = [model.GameHistory.from_row(row) for row in rows]
         div_histories = split_list_to_chunks(histories, 10)
 
         embeds: list[discord.Embed] = []
@@ -385,26 +360,14 @@ class GameCog(commands.GroupCog, name="game"):
                 name=f"📜 {member.display_name} 的 {game_name.get(game, '未知遊戲')}對戰紀錄"
             )
             for history in histories:
-                p1 = i.guild.get_member(history.p1) or await i.guild.fetch_member(
-                    history.p1
-                )
-                p2 = i.guild.get_member(history.p2) or await i.guild.fetch_member(
-                    history.p2
-                )
+                p1 = i.guild.get_member(history.p1) or await i.guild.fetch_member(history.p1)
+                p2 = i.guild.get_member(history.p2) or await i.guild.fetch_member(history.p2)
                 if history.p1_win is None:
                     p1_name = f"{p1.display_name} (平)"
                     p2_name = f"{p2.display_name} (平)"
                 else:
-                    p1_name = (
-                        f"{p1.display_name} (勝)"
-                        if history.p1_win
-                        else p1.display_name
-                    )
-                    p2_name = (
-                        f"{p2.display_name} (勝)"
-                        if not history.p1_win
-                        else p2.display_name
-                    )
+                    p1_name = f"{p1.display_name} (勝)" if history.p1_win else p1.display_name
+                    p2_name = f"{p2.display_name} (勝)" if not history.p1_win else p2.display_name
                 flow = f"賭注: **{history.flow}暴幣**" if history.flow else ""
                 embed.add_field(
                     name=f"{p1_name} vs {p2_name}",

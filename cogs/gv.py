@@ -102,9 +102,7 @@ class GiveAwayView(ui.View):
         embed.add_field(name="得獎者", value="\n".join(f"<@{w}>" for w in winners))
 
         self.join_gv.disabled = True
-        await i.response.edit_message(
-            embed=embed, view=self, content="**🎊 抽獎結束! 🎊**"
-        )
+        await i.response.edit_message(embed=embed, view=self, content="**🎊 抽獎結束! 🎊**")
 
         winner_mentions = ", ".join(f"<@{w}>" for w in winners)
         winner_embed = DefaultEmbed(
@@ -118,9 +116,7 @@ class GiveAwayView(ui.View):
             content=f"恭喜 {winner_mentions} 🎉",
         )
 
-    @ui.button(
-        style=discord.ButtonStyle.blurple, custom_id="join_gv", emoji="🎉", label="0"
-    )
+    @ui.button(style=discord.ButtonStyle.blurple, custom_id="join_gv", emoji="🎉", label="0")
     async def join_gv(self, inter: discord.Interaction, button: ui.Button):
         i: Inter = inter  # type: ignore
 
@@ -173,9 +169,7 @@ class GiveAwayView(ui.View):
     @ui.button(label="結束抽獎", style=discord.ButtonStyle.red, custom_id="end_gv")
     async def end_gv(self, i: discord.Interaction, button: ui.Button) -> None:
         if i.user.id != self.gv.author:
-            embed = ErrorEmbed(
-                "你不是主辦人,無法結束抽獎", f"主辦人: <@{self.gv.author}>"
-            )
+            embed = ErrorEmbed("你不是主辦人,無法結束抽獎", f"主辦人: <@{self.gv.author}>")
             await i.response.send_message(embed=embed, ephemeral=True)
         elif not self.gv.participants:
             embed = ErrorEmbed("沒有參加者", "當前沒有任何人參加抽獎,無法結束抽獎")
@@ -199,9 +193,7 @@ class RerollWinners(ui.Button):
 
     async def callback(self, i: discord.Interaction) -> typing.Any:
         if i.user.id != self.view.gv.author:
-            embed = ErrorEmbed(
-                "你不是主辦人,無法重新抽獎", f"主辦人: <@{self.view.gv.author}>"
-            )
+            embed = ErrorEmbed("你不是主辦人,無法重新抽獎", f"主辦人: <@{self.view.gv.author}>")
             await i.response.send_message(embed=embed, ephemeral=True)
         else:
             await self.view.announce_winners(i)
@@ -217,9 +209,7 @@ class GiveAwayCog(commands.Cog):
             gv = Giveaway(**row)
             self.bot.add_view(GiveAwayView(gv), message_id=gv.message_id)
 
-    @app_commands.rename(
-        prize="獎品名稱", prize_num="獎品數量", extra_info="其他資訊", bao="暴幣"
-    )
+    @app_commands.rename(prize="獎品名稱", prize_num="獎品數量", extra_info="其他資訊", bao="暴幣")
     @app_commands.describe(
         prize="要抽獎的獎品名稱",
         prize_num="要抽獎的獎品數量",

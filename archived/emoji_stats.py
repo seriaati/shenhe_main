@@ -42,11 +42,7 @@ class EmojiStatsCog(commands.GroupCog, name="emoji"):
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message) -> None:
-        if (
-            message.guild is None
-            or message.guild.id != self.bot.guild_id
-            or message.author.bot
-        ):
+        if message.guild is None or message.guild.id != self.bot.guild_id or message.author.bot:
             return
 
         # extract ALL emoji IDs from message content with regex
@@ -78,9 +74,7 @@ class EmojiStatsCog(commands.GroupCog, name="emoji"):
     async def emoji_stats(self, i: discord.Interaction, order: str = "DESC"):
         assert i.guild and i.guild.icon
 
-        rows = await self.bot.pool.fetch(
-            f"SELECT * FROM emoji_stats ORDER BY count {order}"
-        )
+        rows = await self.bot.pool.fetch(f"SELECT * FROM emoji_stats ORDER BY count {order}")
         if not rows:
             return await i.response.send_message(
                 embed=ErrorEmbed("錯誤", "目前沒有任何表情符號數據"), ephemeral=True
@@ -96,14 +90,10 @@ class EmojiStatsCog(commands.GroupCog, name="emoji"):
             embed = DefaultEmbed("表情符號統計")
             embed.description = ""
             embed.set_author(name=i.guild.name, icon_url=i.guild.icon.url)
-            embed.set_footer(
-                text=f"統計時間: {get_dt_now().strftime('%Y-%m-%d %H:%M:%S')}"
-            )
+            embed.set_footer(text=f"統計時間: {get_dt_now().strftime('%Y-%m-%d %H:%M:%S')}")
             for emoji in emojis:
                 if emoji.id in guild_emojis:
-                    emoji_string = (
-                        f"<{'a' if emoji.animated else ''}:{emoji.name}:{emoji.id}>"
-                    )
+                    emoji_string = f"<{'a' if emoji.animated else ''}:{emoji.name}:{emoji.id}>"
                     embed.description += f"{emoji_string} | {emoji.count}\n\n"
             embeds.append(embed)
 

@@ -29,9 +29,7 @@ class AdminCog(commands.Cog):
     @commands.command(name="cleanup")
     async def cleanup(self, ctx: commands.Context, amount: int) -> None:
         assert isinstance(ctx.channel, discord.TextChannel)
-        await ctx.channel.purge(
-            limit=amount + 1, check=lambda m: m.author == self.bot.user
-        )
+        await ctx.channel.purge(limit=amount + 1, check=lambda m: m.author == self.bot.user)
 
     @commands.is_owner()
     @commands.command(name="reload")
@@ -40,9 +38,7 @@ class AdminCog(commands.Cog):
         for module in modules:
             if module is None:
                 continue
-            if module.__name__.startswith(
-                ("apps.", "data.", "dev.", "ui.", "utility.")
-            ):
+            if module.__name__.startswith(("apps.", "data.", "dev.", "ui.", "utility.")):
                 try:
                     importlib.reload(module)
                 except Exception as e:

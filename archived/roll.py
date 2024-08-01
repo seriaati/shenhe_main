@@ -21,9 +21,7 @@ class RollCog(commands.Cog):
         self.debug = self.bot.debug
 
     class RollView(BaseView):
-        def __init__(
-            self, author: Member, db: "aiosqlite.Connection", public: TextChannel
-        ) -> None:
+        def __init__(self, author: Member, db: "aiosqlite.Connection", public: TextChannel) -> None:
             super().__init__(timeout=None)
             self.db = db
             self.roll_app = RollApp(self.db)
@@ -69,9 +67,7 @@ class RollCog(commands.Cog):
 
         async def callback(self, i: Interaction):
             c: aiosqlite.Cursor = await self.view.db.cursor()
-            await c.execute(
-                "SELECT prize, count FROM roll_history WHERE user_id = ?", (i.user.id,)
-            )
+            await c.execute("SELECT prize, count FROM roll_history WHERE user_id = ?", (i.user.id,))
             roll_history = await c.fetchall()
             if len(roll_history) == 0:
                 return await i.response.send_message(
@@ -97,9 +93,7 @@ class RollCog(commands.Cog):
 
     class RollOnce(Button):
         def __init__(self, disabled: bool) -> None:
-            super().__init__(
-                label="祈願 x1", style=ButtonStyle.blurple, disabled=disabled
-            )
+            super().__init__(label="祈願 x1", style=ButtonStyle.blurple, disabled=disabled)
 
         async def callback(self, i: Interaction):
             user_flow = await get_balance(i.user.id, i.client.db)
@@ -117,9 +111,7 @@ class RollCog(commands.Cog):
 
     class RollTen(Button):
         def __init__(self, disabled: bool = False) -> None:
-            super().__init__(
-                label="祈願 x10", style=ButtonStyle.blurple, disabled=disabled
-            )
+            super().__init__(label="祈願 x10", style=ButtonStyle.blurple, disabled=disabled)
 
         async def callback(self, i: Interaction):
             user_flow = await get_balance(i.user.id, i.client.db)
@@ -142,13 +134,9 @@ class RollCog(commands.Cog):
 
         async def callback(self, i: Interaction) -> Any:
             if not self.is_ten_pull:
-                await flow_transaction(
-                    i.user.id, -banner["one_pull_price"], i.client.db
-                )
+                await flow_transaction(i.user.id, -banner["one_pull_price"], i.client.db)
             else:
-                await flow_transaction(
-                    i.user.id, -10 * banner["one_pull_price"], i.client.db
-                )
+                await flow_transaction(i.user.id, -10 * banner["one_pull_price"], i.client.db)
             prizes = await self.view.roll_app.gu_system(i.user.id, self.is_ten_pull)
             await self.view.roll_app.give_money(i.user.id, prizes)
             if await self.view.roll_app.check_big_prize(i.user.id, prizes):

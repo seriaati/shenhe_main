@@ -18,9 +18,7 @@ async def draw_ship_image(
         avatar_one = Image.open(io.BytesIO(await resp.read())).convert("RGBA")
     async with session.get(avatar_two_url) as resp:
         avatar_two = Image.open(io.BytesIO(await resp.read())).convert("RGBA")
-    fp = await asyncio.to_thread(
-        pil_draw_ship_image, avatar_one, avatar_two, percentage
-    )
+    fp = await asyncio.to_thread(pil_draw_ship_image, avatar_one, avatar_two, percentage)
     return fp
 
 

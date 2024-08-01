@@ -43,18 +43,14 @@ class Welcome(BaseView):
         self.member = member
         self.pressed: list[int] = []
 
-    @ui.button(
-        label="歡迎~", style=discord.ButtonStyle.blurple, custom_id="welcome_button"
-    )
+    @ui.button(label="歡迎~", style=discord.ButtonStyle.blurple, custom_id="welcome_button")
     async def welcome(self, i: discord.Interaction, _: ui.Button) -> None:
         if i.user.id in self.pressed:
             return await i.response.defer()
         self.pressed.append(i.user.id)
 
         image_url = random.choice(image_urls)
-        embed = DefaultEmbed(
-            f"{self.member.name} 歡迎歡迎~", "<:Penguin_hug:1062081072449466498>"
-        )
+        embed = DefaultEmbed(f"{self.member.name} 歡迎歡迎~", "<:Penguin_hug:1062081072449466498>")
         embed.set_thumbnail(url=image_url)
         embed.set_author(name=i.user.name, icon_url=i.user.display_avatar.url)
         await i.response.send_message(embed=embed)

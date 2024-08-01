@@ -166,7 +166,10 @@ class AddSong(ui.Button):
 
 class AddSongModal(BaseModal):
     query = ui.TextInput(
-        label="歌曲連結或關鍵字", placeholder="請輸入歌曲連結或關鍵字", min_length=1, max_length=2000
+        label="歌曲連結或關鍵字",
+        placeholder="請輸入歌曲連結或關鍵字",
+        min_length=1,
+        max_length=2000,
     )
 
     def __init__(self, music_view: MusicView) -> None:
@@ -250,9 +253,7 @@ class AddSongModal(BaseModal):
                 else:
                     if pos := re.search("&t=", query):
                         query = query[: pos.start()]
-                    youtube_track_ = await wavelink.YouTubeTrack.search(
-                        query, return_first=True
-                    )
+                    youtube_track_ = await wavelink.YouTubeTrack.search(query, return_first=True)
                     youtube_track: wavelink.YouTubeTrack = youtube_track_  # type: ignore
                     if not player.is_playing():
                         await player.play(youtube_track)
@@ -359,9 +360,7 @@ def get_queue_embed(queue: wavelink.BaseQueue) -> discord.Embed:
 
 def get_player_status_embed(player: wavelink.Player) -> discord.Embed:
     embed = DefaultEmbed()
-    embed.add_field(
-        name="循環模式", value="開啟" if player.queue.loop else "關閉", inline=False
-    )
+    embed.add_field(name="循環模式", value="開啟" if player.queue.loop else "關閉", inline=False)
     embed.add_field(name="自動播放", value="開啟" if player.autoplay else "關閉", inline=False)
     return embed
 
@@ -400,12 +399,8 @@ class MusicCog(commands.Cog, name="music"):
         assert password and client_id and client_secret
 
         node = wavelink.Node(uri="localhost:7009", password=password)
-        spotify_client = spotify.SpotifyClient(
-            client_id=client_id, client_secret=client_secret
-        )
-        await wavelink.NodePool.connect(
-            client=self.bot, nodes=[node], spotify=spotify_client
-        )
+        spotify_client = spotify.SpotifyClient(client_id=client_id, client_secret=client_secret)
+        await wavelink.NodePool.connect(client=self.bot, nodes=[node], spotify=spotify_client)
 
     @commands.Cog.listener()
     async def on_wavelink_track_end(self, payload: wavelink.TrackEventPayload) -> None:
@@ -447,7 +442,8 @@ class MusicCog(commands.Cog, name="music"):
             if player.is_playing():
                 return await i.followup.send(
                     embed=ErrorEmbed(
-                        "錯誤", "你跟目前申鶴所在的語音台不同,且申鶴目前正在為那邊的使用者播歌\n請等待至對方播放完畢"
+                        "錯誤",
+                        "你跟目前申鶴所在的語音台不同,且申鶴目前正在為那邊的使用者播歌\n請等待至對方播放完畢",
                     ),
                     ephemeral=True,
                 )

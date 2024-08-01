@@ -1,4 +1,3 @@
-
 import discord
 from discord import app_commands, ui
 from discord.ext import commands
@@ -49,9 +48,7 @@ class PollView(BaseView):
 
 class OptionButton(ui.Button):
     def __init__(self, label: str) -> None:
-        super().__init__(
-            label=label, style=discord.ButtonStyle.blurple, custom_id=f"vote_{label}"
-        )
+        super().__init__(label=label, style=discord.ButtonStyle.blurple, custom_id=f"vote_{label}")
         self.view: PollView
 
     async def callback(self, i: discord.Interaction):
@@ -84,8 +81,7 @@ class OptionEditView(BaseView):
         if self.options:
             embed.add_field(name="選項", value="\n".join(self.options), inline=False)
             self.option_select.options = [
-                discord.SelectOption(label=option, value=option)
-                for option in self.options
+                discord.SelectOption(label=option, value=option) for option in self.options
             ]
         self.option_select.disabled = not self.options
         self.start_poll.disabled = not self.options
@@ -97,9 +93,7 @@ class OptionEditView(BaseView):
         else:
             self.message = await i.original_response()
 
-    @ui.button(
-        label="新增選項", style=discord.ButtonStyle.green, custom_id="add_option", row=0
-    )
+    @ui.button(label="新增選項", style=discord.ButtonStyle.green, custom_id="add_option", row=0)
     async def add_option(self, i: discord.Interaction, _: ui.Button) -> None:
         modal = NewOptionModal()
         await i.response.send_modal(modal)

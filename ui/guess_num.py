@@ -83,10 +83,12 @@ class GuessNumModal(ui.Modal):
             )
 
         p1_button: ui.Button = discord.utils.get(
-            self.gn_view.children, custom_id="player_one"  # type: ignore
+            self.gn_view.children,
+            custom_id="player_one",  # type: ignore
         )
         p2_button: ui.Button = discord.utils.get(
-            self.gn_view.children, custom_id="player_two"  # type: ignore
+            self.gn_view.children,
+            custom_id="player_two",  # type: ignore
         )
         assert p1_button and p2_button
         if self.is_p1:
@@ -143,5 +145,8 @@ class GuessNumModal(ui.Modal):
 
             await thread.send(
                 content=f"{p1.mention} {p2.mention}",
-                embed=DefaultEmbed("遊戲開始", "玩家一和玩家二都已設定數字\n直接在此頻道輸入任何四位數字即可開始猜測"),
+                embed=DefaultEmbed(
+                    "遊戲開始",
+                    "玩家一和玩家二都已設定數字\n直接在此頻道輸入任何四位數字即可開始猜測",
+                ),
             )
