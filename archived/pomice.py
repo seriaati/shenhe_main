@@ -1,13 +1,14 @@
-import logging
+import contextlib
 import math
 import os
-from typing import Any, List, Optional, Set
+from typing import Any
 
 import discord
 import pomice
 from discord import app_commands, ui
 from discord.ext import commands
 from dotenv import load_dotenv
+from loguru import logger
 
 load_dotenv()
 
@@ -15,11 +16,11 @@ load_dotenv()
 class Player(pomice.Player):
     """Custom pomice Player class."""
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.queue = pomice.Queue()
 
-    async def do_next(self) -> Optional[pomice.Track]:
+    async def do_next(self) -> pomice.Track | None:
         # Queue up the next track, else destroy the player
         try:
             track: pomice.Track = self.queue.get()
@@ -41,9 +42,7 @@ class PlayerView(ui.View):
         if not in_vc:
             return False
 
-        assert (
-            isinstance(i.user, discord.Member) and i.user.voice and i.user.voice.channel
-        )
+        assert isinstance(i.user, discord.Member) and i.user.voice and i.user.voice.channel
         if not self.check_player(i):
             await i.user.voice.channel.connect(cls=Player)
         self.player = i.guild.voice_client  # type: ignore
@@ -114,7 +113,7 @@ class PlayerView(ui.View):
 
     @staticmethod
     async def on_error(i: discord.Interaction, e: Exception, _) -> None:
-        logging.error("Error in music player", exc_info=e)
+        logger.error("Error in music player", exc_info=e)
         try:
             await i.response.send_message(f"錯誤: {e}", ephemeral=True)
         except discord.InteractionResponded:
@@ -126,7 +125,8 @@ class PlayerView(ui.View):
         player: Player = i.guild.voice_client  # type: ignore
         channel = i.client.get_channel(int(player.channel.id))
         if not isinstance(channel, discord.VoiceChannel):
-            raise RuntimeError("Channel not found")
+            msg = "Channel not found"
+            raise TypeError(msg)
         required = math.ceil((len(channel.members) - 1) / 2.5)
 
         if is_stop and len(channel.members) == 3:
@@ -143,13 +143,14 @@ class PlayerView(ui.View):
     def is_privileged(i: discord.Interaction) -> bool:
         """Check whether the user is an Admin or DJ."""
         if not isinstance(i.user, discord.Member):
-            raise RuntimeError("Member not found")
+            msg = "Member not found"
+            raise RuntimeError(msg)
         return i.user.guild_permissions.kick_members
 
 
 class VoteView(ui.View):
     def __init__(self, required: int, action: str) -> None:
-        self.vote_set: Set[int] = set()
+        self.vote_set: set[int] = set()
         self.required = required
         self.action = action
         super().__init__()
@@ -265,7 +266,7 @@ class SearchModal(ui.Modal):
 
 
 class SongSelector(ui.Select):
-    def __init__(self, tracks: List[pomice.Track]) -> None:
+    def __init__(self, tracks: list[pomice.Track]) -> None:
         self.tracks = tracks
         options = [
             discord.SelectOption(label=track.title, value=str(i))
@@ -282,11 +283,11 @@ class SongSelector(ui.Select):
 
 
 class SongSelectView(ui.View):
-    def __init__(self, author_id: int, tracks: List[pomice.Track]) -> None:
+    def __init__(self, author_id: int, tracks: list[pomice.Track]) -> None:
         super().__init__()
         self.author_id = author_id
         self.add_item(SongSelector(tracks))
-        self.track: Optional[pomice.Track] = None
+        self.track: pomice.Track | None = None
 
     async def interection_check(self, i: discord.Interaction) -> bool:
         return i.user.id == self.author_id
@@ -318,9 +319,7 @@ class AddSong(ui.Button):
                 track = results[0]
             else:
                 view = SongSelectView(i.user.id, results)
-                await i.followup.send(
-                    f"{i.user.mention} 請選擇歌曲", view=view, ephemeral=True
-                )
+                await i.followup.send(f"{i.user.mention} 請選擇歌曲", view=view, ephemeral=True)
                 await view.wait()
                 track = view.track
             if track:
@@ -339,13 +338,13 @@ class PomiceCog(commands.Cog):
         self.pomice = pomice.NodePool()
         bot.loop.create_task(self.start_nodes())
 
-    async def start_nodes(self):
+    async def start_nodes(self) -> None:
         # Waiting for the bot to get ready before connecting to nodes.
         await self.bot.wait_until_ready()
 
         # You can pass in Spotify credentials to enable Spotify querying.
         # If you do not pass in valid Spotify credentials, Spotify querying will not work
-        try:
+        with contextlib.suppress(pomice.NodeCreationError):
             await self.pomice.create_node(
                 bot=self.bot,
                 host="127.0.0.1",
@@ -353,19 +352,17 @@ class PomiceCog(commands.Cog):
                 password=os.getenv("LAVALINK_PASSWORD"),  # type: ignore
                 identifier="MAIN",
             )
-        except pomice.NodeCreationError:
-            pass
 
     @commands.Cog.listener()
-    async def on_pomice_track_end(self, player: Player, _, __):
+    async def on_pomice_track_end(self, player: Player, _, __) -> None:
         await player.do_next()
 
     @commands.Cog.listener()
-    async def on_pomice_track_stuck(self, player: Player, _, __):
+    async def on_pomice_track_stuck(self, player: Player, _, __) -> None:
         await player.do_next()
 
     @commands.Cog.listener()
-    async def on_pomice_track_exception(self, player: Player, _, __):
+    async def on_pomice_track_exception(self, player: Player, _, __) -> None:
         await player.do_next()
 
     @app_commands.command(name="music", description="音樂")
@@ -380,5 +377,5 @@ class PomiceCog(commands.Cog):
         )
 
 
-async def setup(bot: commands.Bot):
+async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(PomiceCog(bot))

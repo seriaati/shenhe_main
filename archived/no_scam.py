@@ -1,6 +1,5 @@
 from collections import defaultdict
 from datetime import timedelta
-from typing import DefaultDict
 
 import discord
 from discord.ext import commands
@@ -9,7 +8,7 @@ from discord.ext import commands
 class NoScam(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot: commands.Bot = bot
-        self.user_messages: DefaultDict[int, DefaultDict[str, set[int]]] = defaultdict(
+        self.user_messages: defaultdict[int, defaultdict[str, set[int]]] = defaultdict(
             lambda: defaultdict(set)
         )
         # [user_id][message_content] = [channel_id1, channel_id2, ...]
@@ -33,12 +32,14 @@ class NoScam(commands.Cog):
         await self.bot.wait_until_ready()
         guild = self.bot.get_guild(self.guild_id)
         if guild is None:
-            raise ValueError("Guild not found")
+            msg = "Guild not found"
+            raise ValueError(msg)
         self.guild = guild
 
         owner = self.bot.get_user(self.owner_id)
         if owner is None:
-            raise ValueError("Owner not found")
+            msg = "Owner not found"
+            raise ValueError(msg)
         self.owner = owner
 
     async def check_messages(self, user_id: int) -> None:
@@ -93,7 +94,7 @@ class NoScam(commands.Cog):
             or not message.content
         ):
             return
-        
+
         user_id = message.author.id
         channel_id = message.channel.id
         messages = self.user_messages[user_id]
@@ -102,7 +103,7 @@ class NoScam(commands.Cog):
 
         # Remove the message from the list if it's too old
         if len(messages) > self.max_messages:
-            messages.pop(list(messages.keys())[0])
+            messages.pop(next(iter(messages.keys())))
 
         await self.check_messages(user_id)
 
