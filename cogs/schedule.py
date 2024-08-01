@@ -80,7 +80,7 @@ class Schedule(commands.Cog):
                     "🎭 Imaginarium theater resets tomorrow, go do it if you haven't!",
                 ),
             )
-        elif now.day == 1:
+        elif now.day == 1 and now.hour == 4:
             await notif_channel.send(
                 content="<@&1075027124454440992>",
                 embed=default_embed("🎉 今天是月初,記得去兌換粉球哦!"),
