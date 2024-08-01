@@ -4,7 +4,7 @@ import discord
 from attr import define
 from discord import app_commands, ui
 from discord.ext import commands
-from pydantic import BaseModel, validator
+from pydantic import BaseModel, field_validator
 from seria.utils import split_list_to_chunks
 
 from dev.model import BaseModal, BaseView, BotModel, DefaultEmbed, Inter
@@ -25,7 +25,7 @@ class Players(BaseModel):
     now: int
     sample: list[Player]
 
-    @validator("sample", pre=True, allow_reuse=True)
+    @field_validator("sample", mode="before")
     def form_sample(self, v):
         if isinstance(v, list):
             return [Player(**p) for p in v]
@@ -49,13 +49,13 @@ class APIResponse(BaseModel):
     last_updated: str
     duration: str
 
-    @validator("players", pre=True, allow_reuse=True)
+    @field_validator("players", mode="before")
     def form_players(self, v):
         if isinstance(v, dict):
             return Players(**v)
         return v
 
-    @validator("server", pre=True, allow_reuse=True)
+    @field_validator("server", mode="before")
     def form_server(self, v):
         if isinstance(v, dict):
             return Server(**v)
@@ -79,9 +79,7 @@ class ServerStatus(BaseView):
         )
         embed.add_field(name="IP", value=self.server_ip)
         embed.add_field(name="版本", value=response.server.name or "未知")
-        embed.add_field(
-            name="人數", value=f"{response.players.now}/{response.players.max}"
-        )
+        embed.add_field(name="人數", value=f"{response.players.now}/{response.players.max}")
         if response.players.sample:
             embed.add_field(
                 name="玩家",
@@ -108,9 +106,7 @@ class Coord:
 
 
 class AddCoord(BaseModal):
-    name = ui.TextInput(
-        label="座標名稱", placeholder="輸入座標名稱", min_length=1, max_length=50
-    )
+    name = ui.TextInput(label="座標名稱", placeholder="輸入座標名稱", min_length=1, max_length=50)
     x = ui.TextInput(label="X", placeholder="輸入X座標", min_length=1, max_length=50)
     y = ui.TextInput(label="Y", placeholder="輸入Y座標", min_length=1, max_length=50)
     z = ui.TextInput(label="Z", placeholder="輸入Z座標", min_length=1, max_length=50)
@@ -134,9 +130,7 @@ class AddCoord(BaseModal):
 
 
 class RemoveCord(BaseModal):
-    coord_id = ui.TextInput(
-        label="座標ID", placeholder="輸入座標ID", min_length=1, max_length=50
-    )
+    coord_id = ui.TextInput(label="座標ID", placeholder="輸入座標ID", min_length=1, max_length=50)
 
     def __init__(self) -> None:
         super().__init__(title="移除座標", custom_id="remove_coord")
@@ -192,18 +186,14 @@ class CoordsSystem(BaseView):
         paginator = GeneralPaginator(i, embeds, self.children)  # type: ignore
         await paginator.start(edit=True)
 
-    @ui.button(
-        label="新增座標", style=discord.ButtonStyle.green, custom_id="add_coord_btn"
-    )
+    @ui.button(label="新增座標", style=discord.ButtonStyle.green, custom_id="add_coord_btn")
     async def add_coord(self, i: discord.Interaction, _) -> None:
         modal = AddCoord()
         await i.response.send_modal(modal)
         await modal.wait()
         await self._update_interaction(i)
 
-    @ui.button(
-        label="刪除座標", style=discord.ButtonStyle.red, custom_id="remove_coord_btn"
-    )
+    @ui.button(label="刪除座標", style=discord.ButtonStyle.red, custom_id="remove_coord_btn")
     async def remove_coord(self, i: discord.Interaction, _) -> None:
         modal = RemoveCord()
         await i.response.send_modal(modal)
@@ -220,9 +210,7 @@ class Minecraft(commands.Cog):
     async def mc(self, ctx: commands.Context) -> None:
         await ctx.message.delete()
         view = ServerStatus()
-        await ctx.send(
-            embed=view.create_embed(await view._fetch_data(self.bot.session)), view=view
-        )
+        await ctx.send(embed=view.create_embed(await view._fetch_data(self.bot.session)), view=view)
         self.bot.add_view(view)
 
     @app_commands.command(name="mc", description="查看麥塊伺服器狀態")

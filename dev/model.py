@@ -4,7 +4,7 @@ import typing
 import discord
 from discord.ext import commands
 from loguru import logger
-from pydantic import BaseModel, validator
+from pydantic import BaseModel, field_validator
 
 if typing.TYPE_CHECKING:
     import datetime
@@ -119,9 +119,7 @@ class BaseView(discord.ui.View):
 
 
 class BaseModal(discord.ui.Modal):
-    async def on_error(
-        self, interaction: discord.Interaction, error: Exception, /
-    ) -> None:
+    async def on_error(self, interaction: discord.Interaction, error: Exception, /) -> None:
         logger.error(
             f"An error occurred while handling {self.__class__.__name__}: {error}",
             exc_info=error,
@@ -201,7 +199,7 @@ class GamePlayer(BaseModel):
             win_rate=0,
         )
 
-    @validator("win_rate", pre=True, always=True, allow_reuse=True)
+    @field_validator("win_rate", mode="before")
     def calc_win_rate(self, _, values):
         if values["win"] == 0 and values["lose"] == 0:
             return 0
