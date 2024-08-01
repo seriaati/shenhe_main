@@ -1,14 +1,17 @@
-import logging
 from datetime import datetime, time, timedelta
-from typing import Optional
+from typing import TYPE_CHECKING
 
-import asyncpg
+from loguru import logger
 
-from dev.enum import TimeType
 from utility.utils import get_dt_now, time_in_range
 
+if TYPE_CHECKING:
+    import asyncpg
 
-async def register_account(user_id: int, pool: asyncpg.Pool) -> None:
+    from dev.enum import TimeType
+
+
+async def register_account(user_id: int, pool: "asyncpg.Pool") -> None:
     """Register a user's flow account.
 
     Args:
@@ -24,10 +27,10 @@ async def register_account(user_id: int, pool: asyncpg.Pool) -> None:
         default,
     )
     if result == "INSERT 0 1":
-        logging.info(f"Registered flow account for {user_id}")
+        logger.info(f"Registered flow account for {user_id}")
 
 
-async def flow_transaction(user_id: int, amount: int, pool: asyncpg.Pool) -> None:
+async def flow_transaction(user_id: int, amount: int, pool: "asyncpg.Pool") -> None:
     """Transfer flow from the bank to a user's flow account.
 
     Args:
@@ -35,7 +38,7 @@ async def flow_transaction(user_id: int, amount: int, pool: asyncpg.Pool) -> Non
         amount (int): The amount of flow to transfer.
         pool (asyncpg.Pool): The database pool.
     """
-    logging.info(f"Transferring {amount} flow to {user_id}")
+    logger.info(f"Transferring {amount} flow to {user_id}")
     await register_account(user_id, pool)
     await pool.execute(
         "UPDATE flow_accounts SET flow = flow + $1 WHERE user_id = $2", amount, user_id
@@ -43,20 +46,20 @@ async def flow_transaction(user_id: int, amount: int, pool: asyncpg.Pool) -> Non
     await pool.execute("UPDATE bank SET flow = flow - $1", amount)
 
 
-async def remove_account(user_id: int, pool: asyncpg.Pool) -> None:
+async def remove_account(user_id: int, pool: "asyncpg.Pool") -> None:
     """Remove a user's flow account.
 
     Args:
         user_id (int): The user's ID.
         pool (asyncpg.Pool): The database pool.
     """
-    logging.info(f"Removing flow account for {user_id}")
+    logger.info(f"Removing flow account for {user_id}")
     flow = await get_balance(user_id, pool)
     await flow_transaction(user_id, flow, pool)
     await pool.execute("DELETE FROM flow_accounts WHERE user_id = $1", user_id)
 
 
-async def get_balance(user_id: int, pool: asyncpg.Pool) -> int:
+async def get_balance(user_id: int, pool: "asyncpg.Pool") -> int:
     """Get a user's flow balance.
 
     Args:
@@ -67,12 +70,10 @@ async def get_balance(user_id: int, pool: asyncpg.Pool) -> int:
         int: The user's flow balance.
     """
     await register_account(user_id, pool)
-    return await pool.fetchval(
-        "SELECT flow FROM flow_accounts WHERE user_id = $1", user_id
-    )
+    return await pool.fetchval("SELECT flow FROM flow_accounts WHERE user_id = $1", user_id)
 
 
-async def get_bank(pool: asyncpg.Pool) -> int:
+async def get_bank(pool: "asyncpg.Pool") -> int:
     """Get the amount of flow in the bank.
 
     Args:
@@ -85,7 +86,7 @@ async def get_bank(pool: asyncpg.Pool) -> int:
 
 
 async def free_flow(
-    user_id: int, start: time, end: time, time_type: TimeType, pool: asyncpg.Pool
+    user_id: int, start: time, end: time, time_type: "TimeType", pool: "asyncpg.Pool"
 ) -> bool:
     """Give a user free flow if the current time is in the range [start, end], and the last time they got free flow was not today. Returns True if the user got free flow, False otherwise.
 
@@ -102,13 +103,11 @@ async def free_flow(
     await register_account(user_id, pool)
     now = get_dt_now()
     if time_in_range(start, end, now.time()):
-        last_give: Optional[datetime] = await pool.fetchval(
+        last_give: datetime | None = await pool.fetchval(
             f"SELECT {time_type.value} FROM flow_accounts WHERE user_id = $1", user_id
         )
         if last_give is not None and last_give.day != now.day:
-            logging.info(
-                f"Free flow for {user_id}, last_give is {last_give} ({time_type.value})"
-            )
+            logger.info(f"Free flow for {user_id}, last_give is {last_give} ({time_type.value})")
             await flow_transaction(user_id, 1, pool)
             await pool.execute(
                 f"UPDATE flow_accounts SET {time_type.value} = $1 WHERE user_id = $2",

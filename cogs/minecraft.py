@@ -1,7 +1,5 @@
-from typing import Dict, List, Optional
+from typing import TYPE_CHECKING
 
-import aiohttp
-import asyncpg
 import discord
 from attr import define
 from discord import app_commands, ui
@@ -12,6 +10,10 @@ from seria.utils import split_list_to_chunks
 from dev.model import BaseModal, BaseView, BotModel, DefaultEmbed, Inter
 from utility.paginator import GeneralPaginator
 
+if TYPE_CHECKING:
+    import aiohttp
+    import asyncpg
+
 
 class Player(BaseModel):
     name: str
@@ -21,17 +23,17 @@ class Player(BaseModel):
 class Players(BaseModel):
     max: int
     now: int
-    sample: List[Player]
+    sample: list[Player]
 
     @validator("sample", pre=True, allow_reuse=True)
-    def form_sample(cls, v):
+    def form_sample(self, v):
         if isinstance(v, list):
             return [Player(**p) for p in v]
         return v
 
 
 class Server(BaseModel):
-    name: Optional[str]
+    name: str | None
     protocol: int
 
 
@@ -39,34 +41,34 @@ class APIResponse(BaseModel):
     status: str
     online: bool
     motd: str
-    motd_json: Optional[Dict[str, str]]
-    favicon: Optional[str]
-    error: Optional[str]
+    motd_json: dict[str, str] | None
+    favicon: str | None
+    error: str | None
     players: Players
     server: Server
     last_updated: str
     duration: str
 
     @validator("players", pre=True, allow_reuse=True)
-    def form_players(cls, v):
+    def form_players(self, v):
         if isinstance(v, dict):
             return Players(**v)
         return v
 
     @validator("server", pre=True, allow_reuse=True)
-    def form_server(cls, v):
+    def form_server(self, v):
         if isinstance(v, dict):
             return Server(**v)
         return v
 
 
 class ServerStatus(BaseView):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(timeout=None)
 
         self.server_ip = "34.81.237.15"
 
-    async def _fetch_data(self, session: aiohttp.ClientSession) -> APIResponse:
+    async def _fetch_data(self, session: "aiohttp.ClientSession") -> APIResponse:
         url = f"https://mcapi.us/server/status?ip={self.server_ip}"
         async with session.get(url) as resp:
             return APIResponse(**await resp.json())
@@ -88,7 +90,7 @@ class ServerStatus(BaseView):
         return embed
 
     @ui.button(label="重整", style=discord.ButtonStyle.blurple)
-    async def refresh(self, inter: discord.Interaction, _):
+    async def refresh(self, inter: discord.Interaction, _) -> None:
         i: Inter = inter  # type: ignore
         await i.response.defer()
         resp = await self._fetch_data(i.client.session)
@@ -113,10 +115,10 @@ class AddCoord(BaseModal):
     y = ui.TextInput(label="Y", placeholder="輸入Y座標", min_length=1, max_length=50)
     z = ui.TextInput(label="Z", placeholder="輸入Z座標", min_length=1, max_length=50)
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(title="新增座標", custom_id="add_coord")
 
-    async def on_submit(self, inter: discord.Interaction):
+    async def on_submit(self, inter: discord.Interaction) -> None:
         i: Inter = inter  # type: ignore
         await i.response.defer()
         await i.client.pool.execute(
@@ -136,10 +138,10 @@ class RemoveCord(BaseModal):
         label="座標ID", placeholder="輸入座標ID", min_length=1, max_length=50
     )
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(title="移除座標", custom_id="remove_coord")
 
-    async def on_submit(self, inter: discord.Interaction):
+    async def on_submit(self, inter: discord.Interaction) -> None:
         i: Inter = inter  # type: ignore
         await i.response.defer()
         await i.client.pool.execute(
@@ -152,7 +154,7 @@ class RemoveCord(BaseModal):
 
 
 class CoordsSystem(BaseView):
-    def __init__(self, pool: asyncpg.Pool):
+    def __init__(self, pool: "asyncpg.Pool") -> None:
         super().__init__()
         self.pool = pool
 
@@ -167,14 +169,14 @@ class CoordsSystem(BaseView):
             )"""
         )
 
-    async def _make_coords_embeds(self) -> List[DefaultEmbed]:
+    async def _make_coords_embeds(self) -> list[DefaultEmbed]:
         coords = await self.pool.fetch("""SELECT * FROM coords""")
         coords = [Coord(**coord) for coord in coords]
         if not coords:
             return [DefaultEmbed("座標系統", "目前沒有座標")]
 
         div_coords = split_list_to_chunks(coords, 9)
-        embeds: List[DefaultEmbed] = []
+        embeds: list[DefaultEmbed] = []
         for div in div_coords:
             embed = DefaultEmbed("座標系統")
             for coord in div:
@@ -193,7 +195,7 @@ class CoordsSystem(BaseView):
     @ui.button(
         label="新增座標", style=discord.ButtonStyle.green, custom_id="add_coord_btn"
     )
-    async def add_coord(self, i: discord.Interaction, _):
+    async def add_coord(self, i: discord.Interaction, _) -> None:
         modal = AddCoord()
         await i.response.send_modal(modal)
         await modal.wait()
@@ -202,7 +204,7 @@ class CoordsSystem(BaseView):
     @ui.button(
         label="刪除座標", style=discord.ButtonStyle.red, custom_id="remove_coord_btn"
     )
-    async def remove_coord(self, i: discord.Interaction, _):
+    async def remove_coord(self, i: discord.Interaction, _) -> None:
         modal = RemoveCord()
         await i.response.send_modal(modal)
         await modal.wait()
@@ -210,12 +212,12 @@ class CoordsSystem(BaseView):
 
 
 class Minecraft(commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot) -> None:
         self.bot: BotModel = bot
 
     @commands.is_owner()
     @commands.command(name="mc")
-    async def mc(self, ctx: commands.Context):
+    async def mc(self, ctx: commands.Context) -> None:
         await ctx.message.delete()
         view = ServerStatus()
         await ctx.send(
@@ -224,19 +226,19 @@ class Minecraft(commands.Cog):
         self.bot.add_view(view)
 
     @app_commands.command(name="mc", description="查看麥塊伺服器狀態")
-    async def mc_slash(self, i: discord.Interaction):
+    async def mc_slash(self, i: discord.Interaction) -> None:
         view = ServerStatus()
         await i.response.send_message(
             embed=view.create_embed(await view._fetch_data(self.bot.session))
         )
 
     @app_commands.command(name="coords", description="座標系統")
-    async def coords_slash(self, i: discord.Interaction):
+    async def coords_slash(self, i: discord.Interaction) -> None:
         await i.response.defer()
         view = CoordsSystem(self.bot.pool)
         await view.create_table_in_db()
         await view._update_interaction(i)
 
 
-async def setup(bot: commands.Bot):
+async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(Minecraft(bot))

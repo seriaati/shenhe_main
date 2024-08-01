@@ -1,32 +1,35 @@
-import logging
 import random
+from typing import TYPE_CHECKING
 
 import discord
 from discord.ext import commands
+from loguru import logger
 
-import dev.model as model
 from apps.flow import register_account, remove_account
 from data.constants import welcome_strs
 from ui.welcome import AcceptRules, Welcome
 from utility.utils import default_embed
 
+if TYPE_CHECKING:
+    from dev import model
+
 
 class WelcomeCog(commands.Cog):
-    def __init__(self, bot: model.BotModel) -> None:
+    def __init__(self, bot: "model.BotModel") -> None:
         self.bot = bot
         self.accept_view = AcceptRules()
         self.bot.add_view(self.accept_view)
 
     @commands.Cog.listener()
-    async def on_member_remove(self, member: discord.Member):
+    async def on_member_remove(self, member: discord.Member) -> None:
         if member.guild.id != self.bot.guild_id:
             return
 
-        logging.info(f"discord.Member {member} left the server")
+        logger.info(f"discord.Member {member} left the server")
         await remove_account(member.id, self.bot.pool)
 
     @commands.Cog.listener()
-    async def on_member_update(self, before: discord.Member, after: discord.Member):
+    async def on_member_update(self, before: discord.Member, after: discord.Member) -> None:
         if before.guild.id != self.bot.guild_id or self.bot.debug:
             return
 
@@ -38,7 +41,8 @@ class WelcomeCog(commands.Cog):
             view = Welcome(after)
             welcome_str = random.choice(welcome_strs)
             embed = default_embed(
-                f"歡迎 {after.name} !", f"歡迎來到往生堂專業團隊(๑•̀ω•́)ノ\n {welcome_str}"
+                f"歡迎 {after.name} !",
+                f"歡迎來到往生堂專業團隊(๑•̀ω•́)ノ\n {welcome_str}",  # noqa: RUF001
             )
             embed.set_thumbnail(url=after.avatar)
             await public.send(content=after.mention, embed=embed, view=view)

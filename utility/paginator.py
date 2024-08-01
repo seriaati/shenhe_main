@@ -9,19 +9,19 @@ from dev.model import BaseView
 class GeneralPaginatorView(BaseView):
     def __init__(
         self,
-        embeds: typing.List[discord.Embed],
-    ):
+        embeds: list[discord.Embed],
+    ) -> None:
         super().__init__()
 
         self.embeds = embeds
         self.current_page = 0
 
-    async def update_children(self, i: discord.Interaction):
+    async def update_children(self, i: discord.Interaction) -> None:
         """Called when a button is pressed"""
         self.update_components()
         await self.make_response(i)
 
-    def update_components(self):
+    def update_components(self) -> None:
         """Update the buttons and the page label"""
         self.first.disabled = self.current_page == 0
         self.next.disabled = self.current_page + 1 == len(self.embeds)
@@ -30,7 +30,7 @@ class GeneralPaginatorView(BaseView):
 
         self.page.label = f"第{self.current_page + 1}/{len(self.embeds)}頁"
 
-    async def make_response(self, i):
+    async def make_response(self, i: discord.Interaction) -> None:
         """Make the response for the interaction"""
         await i.response.edit_message(embed=self.embeds[self.current_page], view=self)
 
@@ -40,7 +40,7 @@ class GeneralPaginatorView(BaseView):
         row=1,
         custom_id="paginator_double_left",
     )
-    async def first(self, i: discord.Interaction, _: ui.Button):
+    async def first(self, i: discord.Interaction, _: ui.Button) -> None:
         self.current_page = 0
 
         await self.update_children(i)
@@ -51,7 +51,7 @@ class GeneralPaginatorView(BaseView):
         row=1,
         custom_id="paginator_left",
     )
-    async def previous(self, i: discord.Interaction, _: ui.Button):
+    async def previous(self, i: discord.Interaction, _: ui.Button) -> None:
         self.current_page -= 1
 
         await self.update_children(i)
@@ -62,7 +62,7 @@ class GeneralPaginatorView(BaseView):
         disabled=True,
         row=1,
     )
-    async def page(self, _: discord.Interaction, _button: ui.Button):
+    async def page(self, _: discord.Interaction, _button: ui.Button) -> None:
         """This button is just a label"""
 
     @ui.button(
@@ -71,7 +71,7 @@ class GeneralPaginatorView(BaseView):
         row=1,
         custom_id="paginator_right",
     )
-    async def next(self, i: discord.Interaction, _: ui.Button):
+    async def next(self, i: discord.Interaction, _: ui.Button) -> None:
         self.current_page += 1
 
         await self.update_children(i)
@@ -82,7 +82,7 @@ class GeneralPaginatorView(BaseView):
         row=1,
         custom_id="paginator_double_right",
     )
-    async def last(self, i: discord.Interaction, _: ui.Button):
+    async def last(self, i: discord.Interaction, _: ui.Button) -> None:
         self.current_page = len(self.embeds) - 1
 
         await self.update_children(i)
@@ -92,11 +92,9 @@ class GeneralPaginator:
     def __init__(
         self,
         i: discord.Interaction,
-        embeds: typing.List[discord.Embed],
-        custom_children: typing.Optional[
-            typing.List[typing.Union[ui.Button, ui.Select]]
-        ] = None,
-    ):
+        embeds: list[discord.Embed],
+        custom_children: list[ui.Button | ui.Select] | None = None,
+    ) -> None:
         if custom_children is None:
             custom_children = []
         self.i = i
@@ -110,7 +108,8 @@ class GeneralPaginator:
         ephemeral: bool = False,
     ) -> None:
         if not self.embeds:
-            raise ValueError("Missing embeds")
+            msg = "Missing embeds"
+            raise ValueError(msg)
 
         view = self.setup_view()
         view.author = self.i.user
@@ -128,7 +127,8 @@ class GeneralPaginator:
             kwargs["ephemeral"] = ephemeral
 
         if edit and ephemeral:
-            raise ValueError("Cannot edit the ephemeral status of a message")
+            msg = "Cannot edit the ephemeral status of a message"
+            raise ValueError(msg)
 
         if edit:
             await self.i.edit_original_response(**kwargs)
@@ -140,8 +140,8 @@ class GeneralPaginator:
         view.message = await self.i.original_response()
         await view.wait()
 
-    def setup_kwargs(self, view: GeneralPaginatorView) -> typing.Dict[str, typing.Any]:
-        kwargs: typing.Dict[str, typing.Any] = {"embed": self.embeds[0], "view": view}
+    def setup_kwargs(self, view: GeneralPaginatorView) -> dict[str, typing.Any]:
+        kwargs: dict[str, typing.Any] = {"embed": self.embeds[0], "view": view}
         return kwargs
 
     def setup_view(self) -> GeneralPaginatorView:

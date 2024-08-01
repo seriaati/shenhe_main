@@ -1,13 +1,16 @@
 import random
+from typing import TYPE_CHECKING
 
-import aiosqlite
 from apps.flow import flow_transaction
 from data.roll.banner import banner
 from data.roll.cutscenes import cutscenes
 
+if TYPE_CHECKING:
+    import aiosqlite
+
 
 class RollApp:
-    def __init__(self, db: aiosqlite.Connection) -> None:
+    def __init__(self, db: 'aiosqlite.Connection') -> None:
         self.db = db
 
     def choose_animation(self, prizes: list[str]):
@@ -34,25 +37,23 @@ class RollApp:
         for value in item_dict.values():
             total_weight += value
         pulls = []
-        for i in range(times):
+        for _i in range(times):
             pulls.append(self.populate_prize_pool(item_dict, total_weight))
         return pulls
 
     def pull_card(self, is_ten_pull: bool, state: int):
         prize_pool = {}
         big_prize = banner['big_prize']['name']
-        prize_pool[big_prize] = banner['big_prize']['chance']*100
+        prize_pool[big_prize] = banner['big_prize']['chance'] * 100
         for other_prize, probability in banner['other_prizes'].items():
-            prize_pool[other_prize] = probability*100
+            prize_pool[other_prize] = probability * 100
         times = 10 if is_ten_pull else 1
-        if state == 1:
-            prize_pool[big_prize] = banner['big_prize_guarantee'][0]['new_chance']*100
-        elif state == 2:
-            prize_pool[big_prize] = banner['big_prize_guarantee'][0]['new_chance']*100
-        prize_pool['再接再厲!'] = 10000-len(prize_pool)
+        if state in {1, 2}:
+            prize_pool[big_prize] = banner['big_prize_guarantee'][0]['new_chance'] * 100
+        prize_pool['再接再厲!'] = 10000 - len(prize_pool)
         return self.pull(prize_pool, times)
 
-    async def give_money(self, user_id: int, prizes: list[str]):
+    async def give_money(self, user_id: int, prizes: list[str]) -> None:
         for prize in prizes:
             if prize == '10 暴幣':
                 await flow_transaction(user_id, 10, self.db)
@@ -74,7 +75,7 @@ class RollApp:
             prizes[0] = banner['big_prize']['name']
         return prizes
 
-    async def check_big_prize(self, user_id: int, prizes: list[str]):
+    async def check_big_prize(self, user_id: int, prizes: list[str]) -> bool:
         if banner['big_prize']['name'] in prizes:
             c = await self.db.cursor()
             await c.execute('UPDATE roll_guarantee SET count = 0 WHERE user_id = ?', (user_id,))

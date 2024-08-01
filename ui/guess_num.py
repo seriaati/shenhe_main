@@ -1,4 +1,3 @@
-import typing
 import uuid
 
 import discord
@@ -11,16 +10,16 @@ class GuessNumView(BaseView):
     def __init__(
         self,
         embed: discord.Embed,
-        authors: typing.Tuple[discord.Member, discord.Member],
-        flow: typing.Optional[int] = None,
-    ):
+        authors: tuple[discord.Member, discord.Member],
+        flow: int | None = None,
+    ) -> None:
         super().__init__(timeout=600.0)
         self.embed = embed
-        self.authors: typing.Tuple[discord.Member, discord.Member] = authors
+        self.authors: tuple[discord.Member, discord.Member] = authors
         self.flow = flow
 
-        self.p1_num: typing.Optional[str] = None
-        self.p2_num: typing.Optional[str] = None
+        self.p1_num: str | None = None
+        self.p2_num: str | None = None
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         if interaction.user in self.authors:
@@ -32,7 +31,7 @@ class GuessNumView(BaseView):
             return False
 
     @ui.button(label="玩家一", style=discord.ButtonStyle.primary, custom_id="player_one")
-    async def player_one(self, i: discord.Interaction, _: ui.Button):
+    async def player_one(self, i: discord.Interaction, _: ui.Button) -> None:
         modal = GuessNumModal(True, self)
         await i.response.send_modal(modal)
 
@@ -42,7 +41,7 @@ class GuessNumView(BaseView):
         custom_id="player_two",
         disabled=True,
     )
-    async def player_two(self, i: discord.Interaction, _: ui.Button):
+    async def player_two(self, i: discord.Interaction, _: ui.Button) -> None:
         modal = GuessNumModal(False, self)
         await i.response.send_modal(modal)
 
@@ -52,7 +51,7 @@ class GuessNumModal(ui.Modal):
         placeholder="數字之間不可重複", min_length=4, max_length=4, label="輸入數字"
     )
 
-    def __init__(self, is_p1: bool, gn_view: GuessNumView):
+    def __init__(self, is_p1: bool, gn_view: GuessNumView) -> None:
         super().__init__(title="輸入自己的數字", timeout=60.0)
 
         self.is_p1 = is_p1
@@ -65,7 +64,7 @@ class GuessNumModal(ui.Modal):
             )
         if len(set(self.number.value)) != 4:
             return await i.response.send_message(
-                embed=ErrorEmbed("數字之間不可重複", "如：1122, 3344"), ephemeral=True
+                embed=ErrorEmbed("數字之間不可重複", "如:1122, 3344"), ephemeral=True
             )
 
         await i.response.defer(ephemeral=True)
@@ -74,7 +73,7 @@ class GuessNumModal(ui.Modal):
         p2 = self.gn_view.authors[1]
         if self.is_p1 and i.user.id != self.gn_view.authors[0].id:
             return await i.followup.send(
-                embed=ErrorEmbed("你不是玩家一", f"{p1.mention} 是玩家一（遊戲發起者）"),
+                embed=ErrorEmbed("你不是玩家一", f"{p1.mention} 是玩家一(遊戲發起者)"),
                 ephemeral=True,
             )
         elif not self.is_p1 and i.user.id != self.gn_view.authors[1].id:

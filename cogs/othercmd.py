@@ -1,17 +1,17 @@
-import logging
 import random
 
 import discord
 from discord import app_commands
 from discord.ext import commands
 from discord.ui import Button
+from loguru import logger
 
-import utility.draw as draw
 from dev.model import BaseView, BotModel, DefaultEmbed, ErrorEmbed
+from utility import draw
 
 
 class OtherCMDCog(commands.Cog, name="other"):
-    def __init__(self, bot):
+    def __init__(self, bot) -> None:
         self.bot: BotModel = bot
         self.quote_ctx_menu = app_commands.ContextMenu(
             name="語錄", callback=self.quote_context_menu
@@ -27,22 +27,12 @@ class OtherCMDCog(commands.Cog, name="other"):
         self.bot.tree.add_command(self.mark_fbi_ctx_menu)
 
     async def cog_unload(self) -> None:
-        self.bot.tree.remove_command(
-            self.quote_ctx_menu.name, type=self.quote_ctx_menu.type
-        )
-        self.bot.tree.remove_command(
-            self.hao_se_o_ctx_menu.name, type=self.hao_se_o_ctx_menu.type
-        )
-        self.bot.tree.remove_command(
-            self.mark_fbi_ctx_menu.name, type=self.mark_fbi_ctx_menu.type
-        )
+        self.bot.tree.remove_command(self.quote_ctx_menu.name, type=self.quote_ctx_menu.type)
+        self.bot.tree.remove_command(self.hao_se_o_ctx_menu.name, type=self.hao_se_o_ctx_menu.type)
+        self.bot.tree.remove_command(self.mark_fbi_ctx_menu.name, type=self.mark_fbi_ctx_menu.type)
 
-    async def quote_context_menu(
-        self, i: discord.Interaction, message: discord.Message
-    ) -> None:
-        logging.info(
-            f"Quoting {message.author.id} in {message.channel.id} by {i.user.id}"
-        )
+    async def quote_context_menu(self, i: discord.Interaction, message: discord.Message) -> None:
+        logger.info(f"Quoting {message.author.id} in {message.channel.id} by {i.user.id}")
         await i.response.send_message(
             embed=DefaultEmbed("語錄擷取成功"),
             ephemeral=True,
@@ -50,9 +40,7 @@ class OtherCMDCog(commands.Cog, name="other"):
         assert isinstance(message.author, discord.Member)
         await self.send_quote_embed(message.author, message)
 
-    async def hao_se_o_context_menu(
-        self, i: discord.Interaction, message: discord.Message
-    ):
+    async def hao_se_o_context_menu(self, i: discord.Interaction, message: discord.Message) -> None:
         await i.response.send_message("已新增", ephemeral=True)
         emojis = [
             "<:1_:1062180387922645082>",
@@ -62,11 +50,11 @@ class OtherCMDCog(commands.Cog, name="other"):
         for e in emojis:
             await message.add_reaction(e)
 
-    async def mark_fbi_message(self, i: discord.Interaction, message: discord.Message):
+    async def mark_fbi_message(self, i: discord.Interaction, message: discord.Message) -> None:
         await i.response.send_message("標記成功", ephemeral=True)
-        await message.reply(f"⚠️ {i.user.mention} 已將此訊息標記為危險訊息，將自動通報至 FBI")
+        await message.reply(f"⚠️ {i.user.mention} 已將此訊息標記為危險訊息,將自動通報至 FBI")
 
-    async def send_quote_embed(self, member: discord.Member, msg: discord.Message):
+    async def send_quote_embed(self, member: discord.Member, msg: discord.Message) -> None:
         embed = DefaultEmbed(
             description=msg.content,
         )
@@ -79,16 +67,14 @@ class OtherCMDCog(commands.Cog, name="other"):
 
         if msg.reference and msg.reference.message_id:
             ref = await msg.channel.fetch_message(msg.reference.message_id)
-            embed.add_field(
-                name="回覆給...", value=f"[{ref.author}]({ref.jump_url})", inline=False
-            )
+            embed.add_field(name="回覆給...", value=f"[{ref.author}]({ref.jump_url})", inline=False)
 
         channel = self.bot.get_channel(1061883645591310427)
         assert isinstance(channel, discord.TextChannel)
         await channel.send(embed=embed)
 
     @commands.Cog.listener()
-    async def on_message(self, message: discord.Message):
+    async def on_message(self, message: discord.Message) -> None:
         if message.author == self.bot.user:
             return
         if "機率" in message.content:
@@ -104,27 +90,23 @@ class OtherCMDCog(commands.Cog, name="other"):
                 await message.add_reaction(e)
 
     @app_commands.command(name="ping", description="查看機器人目前延遲")
-    async def ping(self, interaction: discord.Interaction):
-        await interaction.response.send_message(
-            "🏓 Pong! {0}s".format(round(self.bot.latency, 1))
-        )
+    async def ping(self, interaction: discord.Interaction) -> None:
+        await interaction.response.send_message(f"🏓 Pong! {round(self.bot.latency, 1)}s")
 
     @app_commands.command(name="cute", description="讓申鶴說某個人很可愛")
     @app_commands.rename(person="某個人")
-    async def cute(self, interaction: discord.Interaction, person: str):
+    async def cute(self, interaction: discord.Interaction, person: str) -> None:
         await interaction.response.send_message(f"{person}真可愛~❤")
 
     @app_commands.command(name="flash", description="防放閃機制")
-    async def flash(self, interaction: discord.Interaction):
+    async def flash(self, interaction: discord.Interaction) -> None:
         await interaction.response.send_message(
             "https://media.discordapp.net/attachments/823440627127287839/960177992942891038/IMG_9555.jpg"
         )
 
     @app_commands.command(name="randomnumber", description="讓申鶴從兩個數字間挑一個隨機的給你")
     @app_commands.rename(num_one="數字一", num_two="數字二")
-    async def number(
-        self, interaction: discord.Interaction, num_one: int, num_two: int
-    ):
+    async def number(self, interaction: discord.Interaction, num_one: int, num_two: int) -> None:
         value = random.randint(int(num_one), int(num_two))
         await interaction.response.send_message(str(value))
 
@@ -132,7 +114,7 @@ class OtherCMDCog(commands.Cog, name="other"):
     @app_commands.rename(person_one="攻", person_two="受")
     async def marry(
         self, interaction: discord.Interaction, person_one: str, person_two: str
-    ):
+    ) -> None:
         await interaction.response.send_message(f"{person_one} ❤ {person_two}")
 
     @app_commands.command(name="pickrandom", description="從指令使用者所在的語音台中隨機挑選一個人")
@@ -147,7 +129,7 @@ class OtherCMDCog(commands.Cog, name="other"):
 
     @app_commands.guild_only()
     @app_commands.command(name="total-members", description="查看目前群組總人數")
-    async def members(self, i: discord.Interaction):
+    async def members(self, i: discord.Interaction) -> None:
         assert i.guild
         await i.response.send_message(
             embed=DefaultEmbed("群組總人數", f"目前共 {len(i.guild.members)} 人")
@@ -156,7 +138,7 @@ class OtherCMDCog(commands.Cog, name="other"):
     @app_commands.command(name="rolemembers", description="查看一個身份組內的所有成員")
     @app_commands.rename(role="身份組")
     @app_commands.describe(role="請選擇要查看的身份組")
-    async def role_members(self, i: discord.Interaction, role: discord.Role):
+    async def role_members(self, i: discord.Interaction, role: discord.Role) -> None:
         member_str = ""
         count = 1
         for member in role.members:
@@ -168,7 +150,7 @@ class OtherCMDCog(commands.Cog, name="other"):
 
     @app_commands.command(name="avatar", description="查看一個用戶的頭像(並且偷偷下載)")
     @app_commands.rename(member="使用者")
-    async def avatar(self, i: discord.Interaction, member: discord.Member):
+    async def avatar(self, i: discord.Interaction, member: discord.Member) -> None:
         embed = DefaultEmbed(member.display_name)
         view = BaseView()
         view.add_item(Button(label="下載頭像", url=member.display_avatar.url))
@@ -203,7 +185,7 @@ class OtherCMDCog(commands.Cog, name="other"):
         person_one: discord.Member,
         person_two: discord.Member,
         random_type: str,
-    ):
+    ) -> None:
         await i.response.defer()
 
         if random_type == "seed":
@@ -220,7 +202,7 @@ class OtherCMDCog(commands.Cog, name="other"):
         )
         fp.seek(0)
 
-        cp_name = f"{person_one.display_name[:len(person_one.display_name)//2]}{person_two.display_name[len(person_two.display_name)//2:]}"
+        cp_name = f"{person_one.display_name[:len(person_one.display_name) // 2]}{person_two.display_name[len(person_two.display_name) // 2:]}"
         embed = DefaultEmbed(
             cp_name, f"{'天命既定' if random_type == 'seed' else '隨機'}契合度: {num}%"
         )

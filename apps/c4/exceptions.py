@@ -1,19 +1,19 @@
-class InvalidColumn(Exception):
+class InvalidColumnError(Exception):
     pass
 
 
-class ColumnFull(Exception):
+class ColumnFullError(Exception):
     pass
 
 
-class GameOver(Exception):
-    def __init__(self, winner: str):
+class GameOverError(Exception):
+    def __init__(self, winner: str) -> None:
         self.winner = winner
 
 
-class Draw(Exception):
+class DrawError(Exception):
     pass
 
 
-class NotYourTurn(Exception):
+class NotYourTurnError(Exception):
     pass

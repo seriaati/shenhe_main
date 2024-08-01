@@ -1,6 +1,5 @@
 import asyncio
-import datetime
-from typing import Any, List, Optional, Union
+from typing import TYPE_CHECKING, Any, Optional
 
 import discord
 from discord import app_commands
@@ -11,9 +10,12 @@ from dev.model import BaseView, BotModel, DefaultEmbed, ErrorEmbed, Inter
 from utility.paginator import GeneralPaginator
 from utility.utils import get_dt_now
 
+if TYPE_CHECKING:
+    import datetime
+
 
 class LevelSetting(BaseView):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(timeout=600.0)
 
     async def start(self, i: Inter) -> Any:
@@ -35,7 +37,7 @@ class LevelSetting(BaseView):
 
 
 class EnableNotif(discord.ui.Button):
-    def __init__(self, notif: bool):
+    def __init__(self, notif: bool) -> None:
         super().__init__(
             label="開啟",
             style=discord.ButtonStyle.blurple if notif else discord.ButtonStyle.gray,
@@ -43,7 +45,7 @@ class EnableNotif(discord.ui.Button):
 
         self.view: LevelSetting
 
-    async def callback(self, i: Inter):
+    async def callback(self, i: Inter) -> None:
         assert i.guild is not None
 
         await i.client.pool.execute(
@@ -56,16 +58,14 @@ class EnableNotif(discord.ui.Button):
 
 
 class DisableNotif(discord.ui.Button):
-    def __init__(self, notif: bool):
+    def __init__(self, notif: bool) -> None:
         super().__init__(
             label="關閉",
-            style=discord.ButtonStyle.blurple
-            if not notif
-            else discord.ButtonStyle.gray,
+            style=discord.ButtonStyle.blurple if not notif else discord.ButtonStyle.gray,
         )
         self.view: LevelSetting
 
-    async def callback(self, i: Inter):
+    async def callback(self, i: Inter) -> None:
         assert i.guild is not None
 
         await i.client.pool.execute(
@@ -77,19 +77,19 @@ class DisableNotif(discord.ui.Button):
         await self.view.start(i)
 
 
-class LevelCog(commands.GroupCog, name="level"):
-    def __init__(self, bot):
+class LevelCog(commands.GroupCog, name="level"):  # noqa: PLR0904
+    def __init__(self, bot) -> None:
         self.bot: BotModel = bot
 
-    async def cog_load(self):
+    async def cog_load(self) -> None:
         self.clear_today_earn.start()
 
-    async def cog_unload(self):
+    async def cog_unload(self) -> None:
         self.clear_today_earn.cancel()
 
     # clear today_earn every day
     @tasks.loop(hours=1)
-    async def clear_today_earn(self):
+    async def clear_today_earn(self) -> None:
         if get_dt_now().hour == 0:
             await self.bot.pool.execute(
                 """
@@ -105,7 +105,7 @@ class LevelCog(commands.GroupCog, name="level"):
         member: discord.Member,
         before: discord.VoiceState,
         after: discord.VoiceState,
-    ):
+    ) -> None:
         if member.bot or not member.guild or before.channel == after.channel:
             return
 
@@ -133,7 +133,7 @@ class LevelCog(commands.GroupCog, name="level"):
 
     # text xp level system
     @commands.Cog.listener()
-    async def on_message(self, message: discord.Message):
+    async def on_message(self, message: discord.Message) -> None:
         if (
             message.author.bot
             or not message.guild
@@ -160,7 +160,7 @@ class LevelCog(commands.GroupCog, name="level"):
     @app_commands.command(name="check", description="查看等級")
     @app_commands.rename(m="用戶")
     @app_commands.describe(m="要查看等級的用戶")
-    async def level(self, i: discord.Interaction, m: Optional[discord.Member] = None):
+    async def level(self, i: discord.Interaction, m: discord.Member | None = None):
         await i.response.defer()
         member = m or i.user
         assert isinstance(member, discord.Member)
@@ -204,12 +204,10 @@ class LevelCog(commands.GroupCog, name="level"):
         )
         embed.add_field(
             name="粗估數據",
-            value=f"在群組中聊了 {round(chat_xp/2/60, 2)} 小時\n在語音台中聊了 {round(voice_xp/12, 2)} 小時",
+            value=f"在群組中聊了 {round(chat_xp / 2 / 60, 2)} 小時\n在語音台中聊了 {round(voice_xp / 12, 2)} 小時",
             inline=False,
         )
-        embed.add_field(
-            name="等級計算起始日", value=discord.utils.format_dt(start_date, style="R")
-        )
+        embed.add_field(name="等級計算起始日", value=discord.utils.format_dt(start_date, style="R"))
         if member.joined_at:
             embed.add_field(
                 name="加入群組日期",
@@ -245,7 +243,7 @@ class LevelCog(commands.GroupCog, name="level"):
         query = "chat_xp" if order_by_chat else "voice_xp"
         stats.sort(key=lambda x: x[query], reverse=True)
 
-        embeds: List[discord.Embed] = []
+        embeds: list[discord.Embed] = []
         div_stats = split_list_to_chunks(stats, 10)
         word = "聊天" if order_by_chat else "語音"
         rank = 1
@@ -279,7 +277,7 @@ class LevelCog(commands.GroupCog, name="level"):
         await GeneralPaginator(i, embeds).start(followup=True)
 
     @app_commands.command(name="rules", description="查看等級系統規則")
-    async def rules(self, i: discord.Interaction):
+    async def rules(self, i: discord.Interaction) -> None:
         embed = DefaultEmbed()
         embed.set_author(name="📕 等級系統規則")
         embed.description = (
@@ -294,7 +292,7 @@ class LevelCog(commands.GroupCog, name="level"):
 
     @app_commands.guild_only()
     @app_commands.command(name="settings", description="查看等級系統設定")
-    async def settings(self, inter: discord.Interaction):
+    async def settings(self, inter: discord.Interaction) -> None:
         i: Inter = inter  # type: ignore
         view = LevelSetting()
         await view.start(i)
@@ -303,7 +301,7 @@ class LevelCog(commands.GroupCog, name="level"):
     @commands.command(name="pause_level")
     async def pause_level(
         self, ctx: commands.Context, member: discord.Member, minutes: int
-    ):
+    ) -> None:
         await self.bot.pool.execute(
             "UPDATE levels SET paused = $1 WHERE user_id = $2 AND guild_id = $3",
             True,
@@ -319,7 +317,7 @@ class LevelCog(commands.GroupCog, name="level"):
             member.guild.id,
         )
 
-    async def create_voice_user(self, member: discord.Member):
+    async def create_voice_user(self, member: discord.Member) -> None:
         await self.bot.pool.execute(
             """
             INSERT INTO voice_xp (user_id, guild_id)
@@ -330,7 +328,7 @@ class LevelCog(commands.GroupCog, name="level"):
             member.guild.id,
         )
 
-    async def get_joined_at(self, member) -> Optional[datetime.datetime]:
+    async def get_joined_at(self, member) -> Optional["datetime.datetime"]:
         joined_at = await self.bot.pool.fetchval(
             """
             SELECT joined_at
@@ -347,8 +345,8 @@ class LevelCog(commands.GroupCog, name="level"):
     async def set_joined_at(
         self,
         member: discord.Member,
-        channel: Union[discord.VoiceChannel, discord.StageChannel],
-    ):
+        channel: discord.VoiceChannel | discord.StageChannel,
+    ) -> None:
         await self.bot.pool.execute(
             """
             UPDATE voice_xp
@@ -362,7 +360,7 @@ class LevelCog(commands.GroupCog, name="level"):
             member.guild.id,
         )
 
-    async def give_voice_xp(self, member: discord.Member, joined_at: datetime.datetime):
+    async def give_voice_xp(self, member: discord.Member, joined_at: "datetime.datetime") -> None:
         # calculate xp
         second = int((get_dt_now() - joined_at).total_seconds())
         xp = second // 300
@@ -376,15 +374,13 @@ class LevelCog(commands.GroupCog, name="level"):
                 embed = self.get_level_up_embed(member, future, is_voice=True)
                 await chat.send(content=member.mention, embed=embed)
 
-    def get_level_up_embed(
-        self, member: discord.Member, future: int, *, is_voice=False
-    ):
+    def get_level_up_embed(self, member: discord.Member, future: int, *, is_voice=False):
         word = "語音" if is_voice else "聊天"
         embed = DefaultEmbed(
             f"恭喜 {member.display_name} 的{word}等級升級到了 {future} 等",
-            f"升級到 {future+1} 等需要 {self.get_xp_required(future+1)} 點{word}經驗",
+            f"升級到 {future + 1} 等需要 {self.get_xp_required(future + 1)} 點{word}經驗",
         )
-        embed.set_author(name="🎉 升級啦！！", icon_url=member.display_avatar.url)
+        embed.set_author(name="🎉 升級啦!!", icon_url=member.display_avatar.url)
         embed.set_thumbnail(
             url="https://media.discordapp.net/attachments/684365249960345643/1030361702379827200/fefb3731391c05bc777bf780fac5d85b16fba702_raw.gif?width=300&height=300"
         )
@@ -405,7 +401,7 @@ class LevelCog(commands.GroupCog, name="level"):
 
         return today_earn
 
-    async def get_last_get(self, member: discord.Member) -> datetime.datetime:
+    async def get_last_get(self, member: discord.Member) -> "datetime.datetime":
         last_get = await self.bot.pool.fetchval(
             """
             SELECT last_get
@@ -419,7 +415,7 @@ class LevelCog(commands.GroupCog, name="level"):
 
         return last_get
 
-    async def create_level_user(self, member: discord.Member):
+    async def create_level_user(self, member: discord.Member) -> None:
         await self.bot.pool.execute(
             """
             INSERT INTO levels (user_id, guild_id, start_date, last_get)
@@ -484,5 +480,5 @@ class LevelCog(commands.GroupCog, name="level"):
         )
 
 
-async def setup(bot: commands.Bot):
+async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(LevelCog(bot))

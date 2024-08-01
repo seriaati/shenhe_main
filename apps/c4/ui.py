@@ -1,22 +1,24 @@
 import asyncio
-import logging
 import typing
 from uuid import uuid4
 
-import asyncpg
 import discord
 from discord import ui
+from loguru import logger
 
 from apps.flow import flow_transaction
 from dev.model import BaseView, DefaultEmbed, ErrorEmbed, Inter
 from utility.utils import get_dt_now
 
-from .exceptions import *
+from .exceptions import ColumnFullError, DrawError, GameOverError, NotYourTurnError
 from .game import ConnectFour
+
+if typing.TYPE_CHECKING:
+    import asyncpg
 
 
 class ConnectFourView(BaseView):
-    def __init__(self, game: ConnectFour, flow: typing.Optional[int] = None):
+    def __init__(self, game: ConnectFour, flow: int | None = None) -> None:
         super().__init__(timeout=None)
         self.game = game
         self.flow = flow
@@ -38,14 +40,9 @@ class ConnectFourView(BaseView):
         assert isinstance(i.channel, discord.Thread)
         await i.channel.delete()
 
-    async def add_history(
-        self, pool: asyncpg.Pool, winner: typing.Optional[str] = None
-    ) -> None:
+    async def add_history(self, pool: "asyncpg.Pool", winner: str | None = None) -> None:
         game = self.game
-        if winner is None:
-            p1_win = None
-        else:
-            p1_win = winner == game.p1_color
+        p1_win = None if winner is None else winner == game.p1_color
         await pool.execute(
             """
             INSERT INTO game_history
@@ -60,7 +57,7 @@ class ConnectFourView(BaseView):
             self.flow,
         )
 
-    async def add_win_lose(self, pool: asyncpg.Pool, winner: str) -> None:
+    async def add_win_lose(self, pool: "asyncpg.Pool", winner: str) -> None:
         game = self.game
         p1_win = winner == game.p1_color
         await pool.execute(
@@ -98,13 +95,13 @@ class ConnectFourView(BaseView):
         /,
     ) -> None:
         i: Inter = inter  # type: ignore
-        if isinstance(error, ColumnFull):
+        if isinstance(error, ColumnFullError):
             await i.response.send_message(embed=ErrorEmbed("這一列已經滿了"), ephemeral=True)
-        elif isinstance(error, GameOver):
+        elif isinstance(error, GameOverError):
             await i.response.edit_message(embed=self.game.get_board(), view=None)
 
             winner = self.game.players[error.winner]
-            loser = [p for p in self.game.players.values() if p != winner][0]
+            loser = next(p for p in self.game.players.values() if p != winner)
             embed = DefaultEmbed(
                 "遊戲結束",
                 f"獲勝者: {error.winner} {winner.mention}",
@@ -119,7 +116,7 @@ class ConnectFourView(BaseView):
             await self.add_history(i.client.pool, error.winner)
             await self.add_win_lose(i.client.pool, error.winner)
             await self.delete_thread(i)
-        elif isinstance(error, Draw):
+        elif isinstance(error, DrawError):
             await i.response.edit_message(embed=self.game.get_board(), view=None)
 
             embed = DefaultEmbed("平手")
@@ -128,13 +125,13 @@ class ConnectFourView(BaseView):
 
             await self.add_history(i.client.pool)
             await self.delete_thread(i)
-        elif isinstance(error, NotYourTurn):
+        elif isinstance(error, NotYourTurnError):
             await i.response.send_message(
                 embed=ErrorEmbed("現在不是你的回合", f"現在是 {self.game.current_player} 的回合"),
                 ephemeral=True,
             )
         else:
-            logging.error(
+            logger.error(
                 f"An error occurred while handling {item.__class__.__name__}: {error}",
                 exc_info=error,
             )
@@ -149,17 +146,17 @@ class ColumnButton(ui.Button):
         column: int,
         row: int,
         style: discord.ButtonStyle = discord.ButtonStyle.blurple,
-    ):
+    ) -> None:
         super().__init__(style=style, label=str(column), row=row)
         self.column = column
         self.view: ConnectFourView
 
-    async def callback(self, i: discord.Interaction):
+    async def callback(self, i: discord.Interaction) -> None:
         game = self.view.game
 
         color = ""
         player = None
-        for color, player in game.players.items():
+        for player in game.players.values():
             if i.user == player:
                 break
         game.play(self.column - 1, color)
@@ -167,7 +164,7 @@ class ColumnButton(ui.Button):
         self.view.clear_items()
         style = (
             discord.ButtonStyle.blurple
-            if player != list(game.players.values())[0]
+            if player != next(iter(game.players.values()))
             else discord.ButtonStyle.green
         )
         for column in range(1, 8):
@@ -181,13 +178,13 @@ class ColorSelectView(BaseView):
         p1: discord.Member,
         p2: discord.Member,
         embed: discord.Embed,
-        flow: typing.Optional[int] = None,
-    ):
+        flow: int | None = None,
+    ) -> None:
         super().__init__(timeout=600.0)
         self.p1 = p1
         self.p2 = p2
-        self.p1_color: typing.Optional[str] = None
-        self.p2_color: typing.Optional[str] = None
+        self.p1_color: str | None = None
+        self.p2_color: str | None = None
 
         self.embed = embed
         self.flow = flow
@@ -195,7 +192,7 @@ class ColorSelectView(BaseView):
         self.add_item(ColorSelect())
 
     async def interaction_check(self, i: discord.Interaction) -> bool:
-        if i.user in (self.p1, self.p2):
+        if i.user in {self.p1, self.p2}:
             return True
         else:
             await i.response.send_message(
@@ -205,7 +202,7 @@ class ColorSelectView(BaseView):
 
 
 class ColorSelect(ui.Select):
-    def __init__(self, selected: typing.Optional[str] = None):
+    def __init__(self, selected: str | None = None) -> None:
         options = [
             discord.SelectOption(label="紅色", value="🔴", emoji="🔴"),
             discord.SelectOption(label="黃色", value="🟡", emoji="🟡"),
@@ -230,11 +227,7 @@ class ColorSelect(ui.Select):
             return await i.response.send_message(
                 embed=ErrorEmbed("錯誤", "請等待玩家一選擇顏色"), ephemeral=True
             )
-        if (
-            view.p1_color is not None
-            and view.p2_color is None
-            and i.user.id != view.p2.id
-        ):
+        if view.p1_color is not None and view.p2_color is None and i.user.id != view.p2.id:
             return await i.response.send_message(
                 embed=ErrorEmbed("錯誤", "現在已經輪到玩家二選擇顏色"), ephemeral=True
             )

@@ -6,15 +6,15 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-def default_embed(title: str = "", message: str = ""):
+def default_embed(title: str = "", message: str = "") -> discord.Embed:
     return discord.Embed(title=title, description=message, color=0xA68BD3)
 
 
-def ayaaka_embed(title: str = "", message: str = ""):
+def ayaaka_embed(title: str = "", message: str = "") -> discord.Embed:
     return discord.Embed(title=title, description=message, color=0xADC6E5)
 
 
-def error_embed(title: str = "", message: str = ""):
+def error_embed(title: str = "", message: str = "") -> discord.Embed:
     return discord.Embed(title=title, description=message, color=0xFC5165)
 
 
@@ -27,6 +27,6 @@ def time_in_range(start: datetime.time, end: datetime.time, x: datetime.time) ->
 
 
 def get_dt_now() -> datetime.datetime:
-    return datetime.datetime.now(
-        datetime.timezone(datetime.timedelta(hours=8))
-    ).replace(tzinfo=None)
+    return datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=8))).replace(
+        tzinfo=None
+    )

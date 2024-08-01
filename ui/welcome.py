@@ -1,5 +1,4 @@
 import random
-from typing import List
 
 import discord
 from discord import ui
@@ -9,13 +8,13 @@ from dev.model import BaseView, DefaultEmbed
 
 
 class AcceptRules(BaseView):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(timeout=None)
 
     @ui.button(
         label="同意以上規則", style=discord.ButtonStyle.green, custom_id="accept_rule_button"
     )
-    async def accept_rules(self, i: discord.Interaction, _: ui.Button):
+    async def accept_rules(self, i: discord.Interaction, _: ui.Button) -> None:
         assert i.guild
 
         traveler = i.guild.get_role(1061880147952812052)
@@ -33,20 +32,21 @@ class AcceptRules(BaseView):
         )
         unlock_uid = i.guild.get_role(1093484835349221397)
         if unlock_uid is None:
-            raise ValueError("Unlock UID Role not found")
+            msg = "Unlock UID Role not found"
+            raise ValueError(msg)
         await i.user.add_roles(unlock_uid)
 
 
 class Welcome(BaseView):
-    def __init__(self, member: discord.Member):
+    def __init__(self, member: discord.Member) -> None:
         super().__init__()
         self.member = member
-        self.pressed: List[int] = []
+        self.pressed: list[int] = []
 
     @ui.button(
         label="歡迎~", style=discord.ButtonStyle.blurple, custom_id="welcome_button"
     )
-    async def welcome(self, i: discord.Interaction, _: ui.Button):
+    async def welcome(self, i: discord.Interaction, _: ui.Button) -> None:
         if i.user.id in self.pressed:
             return await i.response.defer()
         self.pressed.append(i.user.id)

@@ -1,30 +1,33 @@
+from typing import TYPE_CHECKING
+
 import discord
 from discord.ext import commands
 
-from dev.model import BotModel
+if TYPE_CHECKING:
+    from dev.model import BotModel
 
 
 class ZZZStatusCog(commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot) -> None:
         self.bot: BotModel = bot
         self.channel_id = 1232100232255373403
         self.user_ids = {410036441129943050, 546588835018964994}
         self.play_status: dict[int, bool] = {}
 
-    async def _send_start_playing_msg(self, user: discord.Member):
+    async def _send_start_playing_msg(self, user: discord.Member) -> None:
         channel = self.bot.get_channel(self.channel_id)
         if not isinstance(channel, discord.TextChannel):
             return
         await channel.send(f"{user.mention} started playing ZZZ")
 
-    async def _send_stop_playing_msg(self, user: discord.Member):
+    async def _send_stop_playing_msg(self, user: discord.Member) -> None:
         channel = self.bot.get_channel(self.channel_id)
         if not isinstance(channel, discord.TextChannel):
             return
         await channel.send(f"{user.mention} stopped playing ZZZ")
 
     @commands.Cog.listener()
-    async def on_presence_update(self, before: discord.Member, after: discord.Member):
+    async def on_presence_update(self, before: discord.Member, after: discord.Member) -> None:
         if before.id not in self.user_ids:
             return
 

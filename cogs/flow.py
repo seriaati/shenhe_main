@@ -1,6 +1,5 @@
 from datetime import time
 from random import randint
-from typing import List, Optional
 
 import discord
 from discord import app_commands
@@ -60,7 +59,7 @@ class BaoCog(commands.GroupCog, name="bao"):
         self.debug = self.bot.debug
 
     @commands.Cog.listener()
-    async def on_message(self, message: discord.Message):
+    async def on_message(self, message: discord.Message) -> None:
         user_id = message.author.id
         if message.author.bot:
             return
@@ -106,8 +105,8 @@ class BaoCog(commands.GroupCog, name="bao"):
     @app_commands.command(name="poke", description="戳戳")
     @app_commands.rename(member="使用者")
     @app_commands.describe(member="被戳的使用者")
-    async def poke(self, i: discord.Interaction, member: discord.Member):
-        success = True if randint(1, 2) == 1 else False
+    async def poke(self, i: discord.Interaction, member: discord.Member) -> None:
+        success = randint(1, 2) == 1
         flow_num = randint(1, 3)
 
         await flow_app.flow_transaction(
@@ -122,14 +121,14 @@ class BaoCog(commands.GroupCog, name="bao"):
         if success:
             message = f"""
             {i.user.mention} 戳到了 {member.mention}
-            
+
             {i.user.mention} | **{flow_user}** (+{flow_num})
             {member.mention} | **{flow_member}** (-{flow_num})
             """
         else:
             message = f"""
             {i.user.mention} 想戳 {member.mention} 但是戳到了自己
-            
+
             {i.user.mention} | **{flow_user}** (-{flow_num})
             {member.mention} | **{flow_member}** (+{flow_num})
             """
@@ -168,7 +167,7 @@ class BaoCog(commands.GroupCog, name="bao"):
 
         message = f"""
         {i.user.mention} 給了 {member.mention} {amount} 暴幣
-        
+
         {i.user.mention} | **{flow_user}** (-{amount})
         {member.mention} | **{flow_member}** (+{amount})
         """
@@ -180,8 +179,8 @@ class BaoCog(commands.GroupCog, name="bao"):
     @app_commands.rename(member="使用者")
     @app_commands.describe(member="查看其他使用者的暴幣帳號")
     async def acc(
-        self, i: discord.Interaction, member: Optional[discord.Member] = None
-    ):
+        self, i: discord.Interaction, member: discord.Member | None = None
+    ) -> None:
         assert isinstance(i.user, discord.Member)
         member = member or i.user
 
@@ -223,7 +222,7 @@ class BaoCog(commands.GroupCog, name="bao"):
         member: discord.Member,
         flow: int,
         private: int = 0,
-    ):
+    ) -> None:
         await flow_app.register_account(member.id, self.bot.pool)
         await flow_app.flow_transaction(member.id, -flow, self.bot.pool)
 
@@ -231,7 +230,7 @@ class BaoCog(commands.GroupCog, name="bao"):
             "已成功施展「反」摩拉克斯的力量",
             f"{i.user.mention} 從 {member.mention} 的帳戶裡拿走了 {flow} 枚暴幣",
         )
-        ephemeral = True if private == 1 else False
+        ephemeral = private == 1
         await i.response.send_message(embed=embed, ephemeral=ephemeral)
 
     @app_commands.command(name="make", description="從銀行轉出暴幣給某位使用者")
@@ -250,7 +249,7 @@ class BaoCog(commands.GroupCog, name="bao"):
         member: discord.Member,
         flow: int,
         private: int = 0,
-    ):
+    ) -> None:
         await flow_app.register_account(member.id, self.bot.pool)
         await flow_app.flow_transaction(member.id, flow, self.bot.pool)
 
@@ -258,36 +257,36 @@ class BaoCog(commands.GroupCog, name="bao"):
             "已成功施展摩拉克斯的力量",
             f"{i.user.mention} 給了 {member.mention} {flow} 枚 暴幣",
         )
-        ephemeral = True if private == 1 else False
+        ephemeral = private == 1
         await i.response.send_message(embed=embed, ephemeral=ephemeral)
 
     @app_commands.command(
         name="total", description="查看目前群組帳號及銀行暴幣分配情況"
     )
-    async def total(self, i: discord.Interaction):
+    async def total(self, i: discord.Interaction) -> None:
         bank = await flow_app.get_bank(self.bot.pool)
         acc_count = await self.bot.pool.fetchval("SELECT COUNT(*) FROM flow_accounts")
         flow_sum = await self.bot.pool.fetchval("SELECT SUM(flow) FROM flow_accounts")
         embed = DefaultEmbed(
             f"目前共 {acc_count} 個 暴幣帳號",
-            f"用戶 {flow_sum} + 銀行 {bank} = {flow_sum+bank} 枚暴幣",
+            f"用戶 {flow_sum} + 銀行 {bank} = {flow_sum + bank} 枚暴幣",
         )
         await i.response.send_message(embed=embed)
 
     @app_commands.guild_only()
     @app_commands.command(name="leaderboard", description="查看暴幣排行榜")
-    async def flow_leaderboard(self, inter: discord.Interaction):
+    async def flow_leaderboard(self, inter: discord.Interaction) -> None:
         i: Inter = inter  # type: ignore
         assert i.guild is not None
         rows = await i.client.pool.fetch(
             "SELECT user_id, flow FROM flow_accounts ORDER BY flow DESC"
         )
-        embeds: List[discord.Embed] = []
+        embeds: list[discord.Embed] = []
         div_rows = split_list_to_chunks(rows, 10)
 
         rank = 1
         for page_number, page in enumerate(div_rows):
-            embed = DefaultEmbed(f"暴幣排行榜 (第 {page_number+1} 頁)")
+            embed = DefaultEmbed(f"暴幣排行榜 (第 {page_number + 1} 頁)")
             embed.description = ""
             for row in page:
                 discord_user = i.guild.get_member(row["user_id"])

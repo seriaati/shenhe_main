@@ -1,28 +1,30 @@
-from typing import List, Optional, Sequence, Union
+from typing import TYPE_CHECKING
 
 import discord
 from discord import ui
 from discord.ext import commands
 
-from dev.model import BotModel
 from utility.utils import default_embed
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+
+    from dev.model import BotModel
 
 
 class ReactionRole(ui.View):
     def __init__(
         self,
-        roles: List[Optional[discord.Role]],
-        emojis: Optional[Sequence[Union[str, Optional[discord.Emoji]]]] = None,
+        roles: list[discord.Role | None],
+        emojis: "Sequence[str | discord.Emoji | None] | None" = None,
         style: discord.ButtonStyle = discord.ButtonStyle.blurple,
-    ):
+    ) -> None:
         super().__init__(timeout=None)
 
         for index, role in enumerate(roles):
             if role is None:
                 continue
-            self.add_item(
-                RoleButton(role, index // 3, style, emojis[index] if emojis else None)
-            )
+            self.add_item(RoleButton(role, index // 3, style, emojis[index] if emojis else None))
 
 
 class RoleButton(ui.Button[ReactionRole]):
@@ -31,8 +33,8 @@ class RoleButton(ui.Button[ReactionRole]):
         role: discord.Role,
         row: int,
         style: discord.ButtonStyle,
-        emoji: Optional[Union[discord.Emoji, str]] = None,
-    ):
+        emoji: discord.Emoji | str | None = None,
+    ) -> None:
         self.role = role
         super().__init__(
             label=f"{role.name} ({len(role.members)})",
@@ -61,13 +63,13 @@ class RoleButton(ui.Button[ReactionRole]):
 
 
 class ReactionRoles(commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot) -> None:
         self.bot: BotModel = bot
 
-    async def cog_load(self):
+    async def cog_load(self) -> None:
         self.bot.loop.create_task(self.add_view_task())
 
-    async def add_view_task(self):
+    async def add_view_task(self) -> None:
         await self.bot.wait_until_ready()
         guild = self.bot.get_guild(self.bot.guild_id)
         assert guild
@@ -79,9 +81,7 @@ class ReactionRoles(commands.Cog):
             1075027095786365009,
             1075027124454440992,
         )
-        self.notif_view = ReactionRole(
-            [guild.get_role(id) for id in self.notif_role_ids]
-        )
+        self.notif_view = ReactionRole([guild.get_role(id_) for id_ in self.notif_role_ids])
         self.bot.add_view(self.notif_view)
 
         self.game_role_ids = (
@@ -107,8 +107,8 @@ class ReactionRoles(commands.Cog):
             1112765155055517737,
         )
         self.game_view = ReactionRole(
-            [guild.get_role(id) for id in self.game_role_ids],
-            [self.bot.get_emoji(id) for id in self.game_role_emojis],
+            [guild.get_role(id_) for id_ in self.game_role_ids],
+            [self.bot.get_emoji(id_) for id_ in self.game_role_emojis],
             style=discord.ButtonStyle.gray,
         )
         self.bot.add_view(self.game_view)
@@ -132,8 +132,8 @@ class ReactionRoles(commands.Cog):
             1063524358070468628,
         )
         self.element_view = ReactionRole(
-            [guild.get_role(id) for id in self.element_ids],
-            [self.bot.get_emoji(id) for id in self.element_emojis],
+            [guild.get_role(id_) for id_ in self.element_ids],
+            [self.bot.get_emoji(id_) for id_ in self.element_emojis],
             style=discord.ButtonStyle.gray,
         )
         self.bot.add_view(self.element_view)
@@ -141,7 +141,7 @@ class ReactionRoles(commands.Cog):
         self.ping_ids = (1091650330267234306, 1096438021856968835, 1096438068338245632)
         self.ping_emojis = ("🎉", "📜", "📢")
         self.ping_view = ReactionRole(
-            [guild.get_role(id) for id in self.ping_ids],
+            [guild.get_role(id_) for id_ in self.ping_ids],
             self.ping_emojis,
             style=discord.ButtonStyle.gray,
         )
@@ -150,7 +150,7 @@ class ReactionRoles(commands.Cog):
         self.other_ids = (1091879436321816636,)
         self.other_emojis = ("🌾",)
         self.other_view = ReactionRole(
-            [guild.get_role(id) for id in self.other_ids],
+            [guild.get_role(id_) for id_ in self.other_ids],
             self.other_emojis,
             style=discord.ButtonStyle.gray,
         )
@@ -158,7 +158,7 @@ class ReactionRoles(commands.Cog):
 
     @commands.command(name="reacton_roles", aliases=["rr"])
     @commands.is_owner()
-    async def reacton_roles(self, ctx: commands.Context, id_type: str):
+    async def reacton_roles(self, ctx: commands.Context, id_type: str) -> None:
         await ctx.message.delete()
         view = None
         embed_title = ""

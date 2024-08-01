@@ -1,16 +1,18 @@
 import os
 import re
-from typing import List
+from typing import TYPE_CHECKING
 
 import discord
 from discord import app_commands
 from discord.ext import commands
 from dotenv import load_dotenv
 from pysaucenao import SauceNao as SauceNaoAPI
-from pysaucenao.containers import SauceNaoResults
 
 from dev.model import DefaultEmbed, ErrorEmbed
 from utility.paginator import GeneralPaginator
+
+if TYPE_CHECKING:
+    from pysaucenao.containers import SauceNaoResults
 
 url_pattern = re.compile(
     r"http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+"
@@ -33,8 +35,8 @@ class SauceNao(commands.Cog):
     async def cog_unload(self) -> None:
         self.bot.tree.remove_command(self.ctx_menu.name, type=self.ctx_menu.type)
 
-    def _make_embeds(self, results: SauceNaoResults) -> List[discord.Embed]:
-        embeds: List[discord.Embed] = []
+    def _make_embeds(self, results: "SauceNaoResults") -> list[discord.Embed]:
+        embeds: list[discord.Embed] = []
 
         for result in results.results:
             embed = DefaultEmbed(result.title, result.url)
@@ -43,25 +45,25 @@ class SauceNao(commands.Cog):
 
         return embeds
 
-    async def _search(self, url: str) -> SauceNaoResults:
+    async def _search(self, url: str) -> "SauceNaoResults":
         client = SauceNaoAPI(api_key=self.api_key)
         results = await client.from_url(url)
         return results
 
-    async def _make_search_response(self, i: discord.Interaction, ephemeral: bool):
+    async def _make_search_response(self, i: discord.Interaction, ephemeral: bool) -> None:
         embed = DefaultEmbed()
         embed.set_author(name="搜尋中...", icon_url="https://i.imgur.com/V76M9Wa.gif")
         await i.response.send_message(embed=embed, ephemeral=ephemeral)
 
     async def _return_results(
-        self, i: discord.Interaction, embeds: List[discord.Embed]
-    ):
+        self, i: discord.Interaction, embeds: list[discord.Embed]
+    ) -> None:
         paginator = GeneralPaginator(i, embeds)
         await paginator.start(edit=True)
 
     async def search_sauce_ctx(self, i: discord.Interaction, message: discord.Message):
         await self._make_search_response(i, False)
-        urls: List[str] = url_pattern.findall(message.content)
+        urls: list[str] = url_pattern.findall(message.content)
         urls.extend([a.url for a in message.attachments])
 
         # filter out non-image urls
@@ -74,7 +76,7 @@ class SauceNao(commands.Cog):
             embed = ErrorEmbed("找不到圖片連結", "請確認訊息內是否有圖片連結")
             return await i.followup.send(embed=embed)
 
-        embeds: List[discord.Embed] = []
+        embeds: list[discord.Embed] = []
         for url in urls:
             resp = await self._search(url)
             results = self._make_embeds(resp)
@@ -87,7 +89,7 @@ class SauceNao(commands.Cog):
 
     @sauce.command(name="url", description="透過圖片連結查找圖片來源")
     @app_commands.rename(url="連結", ephemeral="隱藏訊息")
-    @app_commands.describe(url="圖片連結", ephemeral="是否隱藏訊息（預設為否）")
+    @app_commands.describe(url="圖片連結", ephemeral="是否隱藏訊息(預設為否)")
     @app_commands.choices(
         ephemeral=[
             app_commands.Choice(name="是", value=1),
@@ -108,7 +110,7 @@ class SauceNao(commands.Cog):
 
     @sauce.command(name="image", description="透過圖片查找圖片來源")
     @app_commands.rename(image="圖片", ephemeral="隱藏訊息")
-    @app_commands.describe(image="圖片", ephemeral="是否隱藏訊息（預設為否）")
+    @app_commands.describe(image="圖片", ephemeral="是否隱藏訊息(預設為否)")
     @app_commands.choices(
         ephemeral=[
             app_commands.Choice(name="是", value=1),

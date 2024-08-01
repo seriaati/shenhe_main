@@ -1,6 +1,5 @@
 import typing
 
-import asyncpg
 import discord
 from discord import app_commands, ui
 from discord.ext import commands
@@ -10,20 +9,23 @@ from apps.shop import create_shop_item, delete_shop_item, get_item_names
 from dev.enum import ShopAction
 from dev.model import BaseView, DefaultEmbed, ErrorEmbed, Inter
 
+if typing.TYPE_CHECKING:
+    import asyncpg
+
 
 class ShopItemView(BaseView):
     def __init__(
         self,
-        item_names: typing.List,
+        item_names: list,
         action: ShopAction,
-        pool: asyncpg.Pool,
-    ):
+        pool: "asyncpg.Pool",
+    ) -> None:
         super().__init__(timeout=None)
         self.add_item(ShopItemSelect(item_names, action, pool))
 
 
 class ShopItemSelect(ui.Select):
-    def __init__(self, item_names: typing.List, action: ShopAction, pool: asyncpg.Pool):
+    def __init__(self, item_names: list, action: ShopAction, pool: "asyncpg.Pool") -> None:
         self.action = action
         self.pool = pool
         options = []
@@ -78,7 +80,7 @@ class ShopCog(commands.Cog):
         self.bot = bot
 
     @app_commands.command(name="shop", description="暴幣商店")
-    async def show(self, inter: discord.Interaction):
+    async def show(self, inter: discord.Interaction) -> None:
         i: Inter = inter  # type: ignore
         await register_account(i.user.id, i.client.pool)
         rows = await i.client.pool.fetch("SELECT name, flow FROM flow_shop")
@@ -97,7 +99,7 @@ class ShopCog(commands.Cog):
     @app_commands.command(name="add-item", description="新增商品")
     @app_commands.rename(item="商品名稱", flow="價格")
     @app_commands.checks.has_permissions(administrator=True)
-    async def additem(self, inter: discord.Interaction, item: str, flow: int):
+    async def additem(self, inter: discord.Interaction, item: str, flow: int) -> None:
         i: Inter = inter  # type: ignore
 
         await create_shop_item(item, flow, i.client.pool)
@@ -106,12 +108,12 @@ class ShopCog(commands.Cog):
 
     @app_commands.command(name="remove-item", description="刪除商品")
     @app_commands.checks.has_permissions(administrator=True)
-    async def removeitem(self, inter: discord.Interaction):
+    async def removeitem(self, inter: discord.Interaction) -> None:
         i: Inter = inter  # type: ignore
         item_names = await get_item_names(i.client.pool)
         view = ShopItemView(item_names, ShopAction.DELETE, i.client.pool)
         await i.response.send_message(view=view, ephemeral=True)
 
 
-async def setup(bot: commands.Bot):
+async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(ShopCog(bot))

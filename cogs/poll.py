@@ -1,4 +1,3 @@
-from typing import Dict, List, Union
 
 import discord
 from discord import app_commands, ui
@@ -12,14 +11,14 @@ class PollView(BaseView):
     def __init__(
         self,
         question: str,
-        options: List[str],
-        poll_starter: Union[discord.Member, discord.User],
-    ):
+        options: list[str],
+        poll_starter: discord.Member | discord.User,
+    ) -> None:
         super().__init__(timeout=None)
 
         self.question = question
         self.options = options
-        self.result: Dict[str, List[Union[discord.Member, discord.User]]] = {
+        self.result: dict[str, list[discord.Member | discord.User]] = {
             option: [] for option in options
         }
         self.poll_starter = poll_starter
@@ -27,7 +26,7 @@ class PollView(BaseView):
         for option in options:
             self.add_item(OptionButton(option))
 
-    async def start(self, i: discord.Interaction):
+    async def start(self, i: discord.Interaction) -> None:
         embed = DefaultEmbed(self.question)
         embed.set_author(name="📢 投票時間")
         embed.set_footer(text=f"開始於: {get_dt_now().strftime('%Y-%m-%d %H:%M:%S')}")
@@ -49,7 +48,7 @@ class PollView(BaseView):
 
 
 class OptionButton(ui.Button):
-    def __init__(self, label: str):
+    def __init__(self, label: str) -> None:
         super().__init__(
             label=label, style=discord.ButtonStyle.blurple, custom_id=f"vote_{label}"
         )
@@ -71,13 +70,13 @@ class OptionButton(ui.Button):
 
 
 class OptionEditView(BaseView):
-    def __init__(self, question: str):
+    def __init__(self, question: str) -> None:
         super().__init__(timeout=None)
 
         self.question = question
-        self.options: List[str] = []
+        self.options: list[str] = []
 
-    async def start(self, i: discord.Interaction):
+    async def start(self, i: discord.Interaction) -> None:
         self.author = i.user
 
         embed = DefaultEmbed("投票設定")
@@ -101,7 +100,7 @@ class OptionEditView(BaseView):
     @ui.button(
         label="新增選項", style=discord.ButtonStyle.green, custom_id="add_option", row=0
     )
-    async def add_option(self, i: discord.Interaction, _: ui.Button):
+    async def add_option(self, i: discord.Interaction, _: ui.Button) -> None:
         modal = NewOptionModal()
         await i.response.send_modal(modal)
         await modal.wait()
@@ -115,7 +114,7 @@ class OptionEditView(BaseView):
         row=0,
         disabled=True,
     )
-    async def start_poll(self, i: discord.Interaction, _: ui.Button):
+    async def start_poll(self, i: discord.Interaction, _: ui.Button) -> None:
         view = PollView(self.question, self.options, i.user)
         await view.start(i)
 
@@ -127,7 +126,7 @@ class OptionEditView(BaseView):
         disabled=True,
         options=[discord.SelectOption(label="空", value="空")],
     )
-    async def option_select(self, i: discord.Interaction, select: ui.Select):
+    async def option_select(self, i: discord.Interaction, select: ui.Select) -> None:
         self.options.remove(select.values[0])
         await self.start(i)
 
@@ -135,23 +134,23 @@ class OptionEditView(BaseView):
 class NewOptionModal(BaseModal):
     option = ui.TextInput(label="選項名稱", placeholder="輸入選項名稱")
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(title="新增選項")
 
-    async def on_submit(self, i: discord.Interaction):
+    async def on_submit(self, i: discord.Interaction) -> None:
         await i.response.defer()
         self.stop()
 
 
 class PollCog(commands.Cog):
-    def __init__(self, bot: commands.Bot):
+    def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
 
     @app_commands.guild_only()
     @app_commands.rename(question="問題")
     @app_commands.describe(question="投票的問題")
     @app_commands.command(name="poll", description="開始一個投票")
-    async def poll(self, i: discord.Interaction, question: str):
+    async def poll(self, i: discord.Interaction, question: str) -> None:
         view = OptionEditView(question)
         await view.start(i)
 

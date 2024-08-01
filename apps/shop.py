@@ -1,11 +1,12 @@
 import typing
 
-import asyncpg
+if typing.TYPE_CHECKING:
+    import asyncpg
 
 
 async def delete_shop_item(
     name: str,
-    pool: asyncpg.Pool,
+    pool: "asyncpg.Pool",
 ) -> None:
     """Delete a shop item from the database.
 
@@ -19,7 +20,7 @@ async def delete_shop_item(
 async def create_shop_item(
     name: str,
     flow: int,
-    pool: asyncpg.Pool,
+    pool: "asyncpg.Pool",
 ) -> None:
     """Create a shop item in the database.
 
@@ -31,7 +32,7 @@ async def create_shop_item(
     await pool.execute("INSERT INTO flow_shop VALUES ($1, $2)", name, flow)
 
 
-async def get_item_names(pool: asyncpg.Pool) -> typing.List[str]:
+async def get_item_names(pool: "asyncpg.Pool") -> list[str]:
     """Get all shop item names.
 
     Args:

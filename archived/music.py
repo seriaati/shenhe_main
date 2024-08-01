@@ -37,7 +37,7 @@ class MusicView(BaseView):
 
 
 class Resume(ui.Button):
-    def __init__(self, disabled: bool):
+    def __init__(self, disabled: bool) -> None:
         super().__init__(
             style=discord.ButtonStyle.blurple,
             row=1,
@@ -52,7 +52,7 @@ class Resume(ui.Button):
 
 
 class Pause(ui.Button):
-    def __init__(self, disabled: bool):
+    def __init__(self, disabled: bool) -> None:
         super().__init__(
             style=discord.ButtonStyle.blurple,
             row=1,
@@ -67,7 +67,7 @@ class Pause(ui.Button):
 
 
 class Stop(ui.Button):
-    def __init__(self, disabled: bool):
+    def __init__(self, disabled: bool) -> None:
         super().__init__(
             style=discord.ButtonStyle.red,
             row=3,
@@ -84,7 +84,7 @@ class Stop(ui.Button):
 
 
 class Next(ui.Button):
-    def __init__(self, disabled: bool):
+    def __init__(self, disabled: bool) -> None:
         super().__init__(row=1, disabled=disabled, emoji="<:right:982588993122238524>")
         self.view: MusicView
 
@@ -95,7 +95,7 @@ class Next(ui.Button):
 
 
 class Previous(ui.Button):
-    def __init__(self, disabled: bool):
+    def __init__(self, disabled: bool) -> None:
         super().__init__(row=1, disabled=disabled, emoji="<:left:982588994778972171>")
         self.view: MusicView
 
@@ -109,7 +109,7 @@ class Previous(ui.Button):
 
 
 class Loop(ui.Button):
-    def __init__(self, disabled: bool):
+    def __init__(self, disabled: bool) -> None:
         super().__init__(
             style=discord.ButtonStyle.green,
             row=2,
@@ -124,7 +124,7 @@ class Loop(ui.Button):
 
 
 class Shuffle(ui.Button):
-    def __init__(self, disabled: bool):
+    def __init__(self, disabled: bool) -> None:
         super().__init__(
             style=discord.ButtonStyle.green,
             row=2,
@@ -142,7 +142,7 @@ class Shuffle(ui.Button):
 
 
 class ClearQueue(ui.Button):
-    def __init__(self, disabled: bool):
+    def __init__(self, disabled: bool) -> None:
         super().__init__(row=2, disabled=disabled, emoji="<:clear:1021592450516647966>")
         self.view: MusicView
 
@@ -152,7 +152,7 @@ class ClearQueue(ui.Button):
 
 
 class AddSong(ui.Button):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(
             style=discord.ButtonStyle.blurple,
             row=3,
@@ -169,7 +169,7 @@ class AddSongModal(BaseModal):
         label="歌曲連結或關鍵字", placeholder="請輸入歌曲連結或關鍵字", min_length=1, max_length=2000
     )
 
-    def __init__(self, music_view: MusicView):
+    def __init__(self, music_view: MusicView) -> None:
         super().__init__(title="新增歌曲", custom_id="add_song_modal")
         self.music_view = music_view
 
@@ -194,10 +194,10 @@ class AddSongModal(BaseModal):
                 if decoded["type"] is spotify.SpotifySearchType.unusable:
                     embed = ErrorEmbed("無效的 Spotify 連結")
                     await i.followup.send(embed=embed, ephemeral=True)
-                elif decoded["type"] in (
+                elif decoded["type"] in {
                     spotify.SpotifySearchType.playlist,
                     spotify.SpotifySearchType.album,
-                ):
+                }:
                     first_track = None
                     async for spotify_track in spotify.SpotifyTrack.iterator(
                         query=decoded["id"], type=decoded["type"]
@@ -290,7 +290,7 @@ class AddSongModal(BaseModal):
 
 
 class ChooseSongSelect(ui.Select):
-    def __init__(self, options: list[discord.SelectOption]):
+    def __init__(self, options: list[discord.SelectOption]) -> None:
         super().__init__(placeholder="選擇想播放的歌曲", options=options)
         self.view: MusicView
 
@@ -313,7 +313,7 @@ class ChooseSongSelect(ui.Select):
 
 
 class AutoPlay(ui.Button):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(
             style=discord.ButtonStyle.primary,
             emoji="<:auto_play_off:1100374478283866153>",
@@ -351,7 +351,7 @@ def get_queue_embed(queue: wavelink.BaseQueue) -> discord.Embed:
     else:
         desc = ""
         for index, song in enumerate(list(queue)[:10]):
-            desc += f"{index+1}. {song.title}\n"
+            desc += f"{index + 1}. {song.title}\n"
         embed.title = "播放清單(前10首)"
         embed.description = desc
     return embed
@@ -385,14 +385,14 @@ async def return_music_inter(i: discord.Interaction, player: wavelink.Player) ->
 
 
 class MusicCog(commands.Cog, name="music"):
-    def __init__(self, bot):
+    def __init__(self, bot) -> None:
         super().__init__()
         self.bot: BotModel = bot
 
     async def cog_load(self) -> None:
         self.bot.loop.create_task(self.connect_node())
 
-    async def connect_node(self):
+    async def connect_node(self) -> None:
         await self.bot.wait_until_ready()
         password = os.getenv("lavalink")
         client_id = os.getenv("spotify_client")
@@ -408,7 +408,7 @@ class MusicCog(commands.Cog, name="music"):
         )
 
     @commands.Cog.listener()
-    async def on_wavelink_track_end(self, payload: wavelink.TrackEventPayload):
+    async def on_wavelink_track_end(self, payload: wavelink.TrackEventPayload) -> None:
         player = payload.player
 
         if not player.queue.is_empty:
@@ -447,7 +447,7 @@ class MusicCog(commands.Cog, name="music"):
             if player.is_playing():
                 return await i.followup.send(
                     embed=ErrorEmbed(
-                        "錯誤", "你跟目前申鶴所在的語音台不同，且申鶴目前正在為那邊的使用者播歌\n請等待至對方播放完畢"
+                        "錯誤", "你跟目前申鶴所在的語音台不同,且申鶴目前正在為那邊的使用者播歌\n請等待至對方播放完畢"
                     ),
                     ephemeral=True,
                 )

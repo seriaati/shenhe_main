@@ -1,15 +1,18 @@
 import asyncio
 import io
+from typing import TYPE_CHECKING
 
-import aiohttp
 from PIL import Image, ImageDraw, ImageFont
+
+if TYPE_CHECKING:
+    import aiohttp
 
 
 async def draw_ship_image(
     avatar_one_url: str,
     avatar_two_url: str,
     percentage: int,
-    session: aiohttp.ClientSession,
+    session: "aiohttp.ClientSession",
 ) -> io.BytesIO:
     async with session.get(avatar_one_url) as resp:
         avatar_one = Image.open(io.BytesIO(await resp.read())).convert("RGBA")
@@ -52,7 +55,7 @@ def circular_crop(image: Image.Image) -> Image.Image:
     """Crop an image into a circle with transparent background."""
     mask = Image.new("L", image.size, 0)
     draw = ImageDraw.Draw(mask)
-    draw.ellipse((0, 0) + image.size, fill=255)
+    draw.ellipse((0, 0, *image.size), fill=255)
     mask = mask.resize(image.size)
     result = image.copy()
     result.putalpha(mask)

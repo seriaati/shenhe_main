@@ -1,16 +1,17 @@
 import typing
 
-import discord
-
-from apps.c4.exceptions import ColumnFull, Draw, GameOver, NotYourTurn
+from apps.c4.exceptions import ColumnFullError, DrawError, GameOverError, NotYourTurnError
 from dev.model import DefaultEmbed
+
+if typing.TYPE_CHECKING:
+    import discord
 
 
 class ConnectFour:
     def __init__(
         self,
-        players: typing.Dict[str, discord.Member],
-    ):
+        players: dict[str, "discord.Member"],
+    ) -> None:
         self.board = [["⚫ " for _ in range(7)] for _ in range(6)]
         self.players = players
 
@@ -23,7 +24,7 @@ class ConnectFour:
         self.p1 = values[0]
         self.p2 = values[1]
 
-    def get_board(self) -> discord.Embed:
+    def get_board(self) -> "discord.Embed":
         embed = DefaultEmbed(f"{self.p1.display_name} vs {self.p2.display_name}")
         embed.description = ""
         for row in self.board:
@@ -35,9 +36,9 @@ class ConnectFour:
 
         return embed
 
-    def play(self, col: int, color: str):
+    def play(self, col: int, color: str) -> None:
         if color != self.current_player:
-            raise NotYourTurn
+            raise NotYourTurnError
 
         row = 5
         while row >= 0:
@@ -46,18 +47,18 @@ class ConnectFour:
                 break
             row -= 1
         else:
-            raise ColumnFull
+            raise ColumnFullError
 
         if self.check_win(row, col):
-            raise GameOver(self.current_player)
+            raise GameOverError(self.current_player)
         elif self.check_draw():
-            raise Draw
+            raise DrawError
 
         self.current_player = (
             self.p2_color if self.current_player == self.p1_color else self.p1_color
         )
 
-    def check_win(self, row, col):
+    def check_win(self, row: int, col: int) -> bool:
         player = self.board[row][col]
         # check horizontal
         if "".join(self.board[row]).count(player * 4):
@@ -90,15 +91,7 @@ class ConnectFour:
             )
         ):
             return True
-        if (
-            col >= 3
-            and row >= 3
-            and "".join([self.board[row - i][col - i] for i in range(4)]).count(
-                player * 4
-            )
-        ):
-            return True
-        return False
+        return bool(col >= 3 and row >= 3 and "".join([self.board[row - i][col - i] for i in range(4)]).count(player * 4))
 
-    def check_draw(self):
-        return all([cell != "⚫ " for row in self.board for cell in row])
+    def check_draw(self) -> bool:
+        return all(cell != "⚫ " for row in self.board for cell in row)

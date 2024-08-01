@@ -1,18 +1,18 @@
 import asyncio
 import contextlib
 import io
-import logging
 import re
-from typing import List
+from typing import TYPE_CHECKING
 
 import discord
 from discord.ext import commands
+from loguru import logger
 from seria.utils import clean_url, extract_media_urls, split_list_to_chunks
 
-from dev.model import BotModel
+if TYPE_CHECKING:
+    from dev.model import BotModel
 
 KEMONO_REGEX = r"https:\/\/kemono\.su\/(fanbox|[a-zA-Z]+)\/user\/\d+\/post\/\d+"
-LOGGER_ = logging.getLogger(__name__)
 
 
 class WebhookCog(commands.Cog):
@@ -27,14 +27,10 @@ class WebhookCog(commands.Cog):
     ) -> None:
         async with self.bot.session.get(image_url) as resp:
             if resp.status != 200:
-                LOGGER_.error(
-                    "Failed to download %s, status: %s", image_url, resp.status
-                )
+                logger.error("Failed to download %s, status: %s", image_url, resp.status)
                 return
 
-            file_ = discord.File(
-                io.BytesIO(await resp.read()), spoiler=True, filename=filename
-            )
+            file_ = discord.File(io.BytesIO(await resp.read()), spoiler=True, filename=filename)
         files.append(file_)
 
     async def _download_kemono_images(self, kemono_url: str) -> list[discord.File]:
@@ -99,7 +95,7 @@ class WebhookCog(commands.Cog):
                 or any(not a.is_spoiler() for a in message.attachments)
                 or self._match_kemono(message)
             ):
-                files: List[discord.File] = []
+                files: list[discord.File] = []
 
                 # auto spoiler media urls
                 if media_urls:
@@ -112,16 +108,11 @@ class WebhookCog(commands.Cog):
                 # extract keomo images
                 kemono_match = self._match_kemono(message)
                 if kemono_match:
-                    files.extend(
-                        await self._download_kemono_images(kemono_match.group())
-                    )
+                    files.extend(await self._download_kemono_images(kemono_match.group()))
 
                 # auto spoiler attachments
                 files.extend(
-                    [
-                        await attachment.to_file(spoiler=True)
-                        for attachment in message.attachments
-                    ]
+                    [await attachment.to_file(spoiler=True) for attachment in message.attachments]
                 )
 
                 # send the files in chunks of 10
@@ -130,15 +121,11 @@ class WebhookCog(commands.Cog):
                     webhooks = await message.channel.webhooks()
                     webhook = discord.utils.get(webhooks, name="Auto Spoiler")
                     if webhook is None:
-                        webhook = await message.channel.create_webhook(
-                            name="Auto Spoiler"
-                        )
+                        webhook = await message.channel.create_webhook(name="Auto Spoiler")
 
                     await webhook.send(
                         content=message.content,
-                        username=message.author.display_name.replace(
-                            " (Embed Fixer)", ""
-                        ),
+                        username=message.author.display_name.replace(" (Embed Fixer)", ""),
                         avatar_url=message.author.display_avatar.url,
                         files=split_file,
                         suppress_embeds=True,

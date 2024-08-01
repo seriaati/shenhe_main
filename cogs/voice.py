@@ -25,9 +25,7 @@ def check_in_vc():
 def check_owner():
     async def predicate(inter: discord.Interaction) -> bool:
         i: Inter = inter  # type: ignore
-        assert (
-            isinstance(i.user, discord.Member) and i.user.voice and i.user.voice.channel
-        )
+        assert isinstance(i.user, discord.Member) and i.user.voice and i.user.voice.channel
         owner_id = await i.client.pool.fetchval(
             "SELECT owner_id FROM voice WHERE channel_id = $1", i.user.voice.channel.id
         )
@@ -44,7 +42,7 @@ def check_owner():
 
 
 class VoiceCog(commands.GroupCog, name="vc"):
-    def __init__(self, bot):
+    def __init__(self, bot) -> None:
         self.bot: BotModel = bot
         super().__init__()
         self.bot.loop.create_task(self.get_variables())
@@ -52,7 +50,7 @@ class VoiceCog(commands.GroupCog, name="vc"):
         self.vc_role: discord.Role
         self.make_vc: discord.VoiceChannel
 
-    async def get_variables(self):
+    async def get_variables(self) -> None:
         await self.bot.wait_until_ready()
         guild = self.bot.get_guild(self.bot.guild_id)
         self.vc_role = guild.get_role(1061955528349188147)  # type: ignore
@@ -64,7 +62,7 @@ class VoiceCog(commands.GroupCog, name="vc"):
         member: discord.Member,
         before: discord.VoiceState,
         after: discord.VoiceState,
-    ):
+    ) -> None:
         if member.guild.id != self.bot.guild_id:
             return
 
@@ -110,16 +108,14 @@ class VoiceCog(commands.GroupCog, name="vc"):
                 except discord.NotFound:
                     pass
 
-                await self.bot.pool.execute(
-                    "DELETE FROM voice WHERE channel_id = $1", old.id
-                )
+                await self.bot.pool.execute("DELETE FROM voice WHERE channel_id = $1", old.id)
 
     @check_in_vc()
     @check_owner()
     @app_commands.command(name="rename", description="重新命名語音台")
     @app_commands.rename(new="新名稱")
     @app_commands.describe(new="新的語音台名稱")
-    async def vc_rename(self, i: discord.Interaction, new: str):
+    async def vc_rename(self, i: discord.Interaction, new: str) -> None:
         assert isinstance(i.user, discord.Member) and i.user.voice
         current_vc = i.user.voice.channel
         assert current_vc
@@ -132,7 +128,7 @@ class VoiceCog(commands.GroupCog, name="vc"):
     @check_in_vc()
     @check_owner()
     @app_commands.command(name="lock", description="鎖上語音台")
-    async def vc_lock(self, i: discord.Interaction):
+    async def vc_lock(self, i: discord.Interaction) -> None:
         assert isinstance(i.user, discord.Member) and i.user.voice
         current_vc = i.user.voice.channel
         assert current_vc
@@ -145,13 +141,13 @@ class VoiceCog(commands.GroupCog, name="vc"):
         await current_vc.set_permissions(traveler, connect=False, view_channel=True)
         await current_vc.edit(name=f"🔒{current_vc.name}")
         await i.response.send_message(
-            embed=DefaultEmbed("成功", "此語音台已被牢牢鎖上 (誰都別想進來！)"), ephemeral=True
+            embed=DefaultEmbed("成功", "此語音台已被牢牢鎖上 (誰都別想進來!)"), ephemeral=True
         )
 
     @check_in_vc()
     @check_owner()
     @app_commands.command(name="unlock", description="解鎖語音台")
-    async def vc_unlock(self, i: discord.Interaction):
+    async def vc_unlock(self, i: discord.Interaction) -> None:
         assert isinstance(i.user, discord.Member) and i.user.voice
         current_vc = i.user.voice.channel
         assert current_vc and i.guild
@@ -169,7 +165,7 @@ class VoiceCog(commands.GroupCog, name="vc"):
     @app_commands.command(name="transfer", description="移交房主權")
     @app_commands.rename(new="新房主")
     @app_commands.describe(new="新的房主")
-    async def vc_transfer(self, inter: discord.Interaction, new: discord.Member):
+    async def vc_transfer(self, inter: discord.Interaction, new: discord.Member) -> None:
         i: Inter = inter  # type: ignore
         assert isinstance(i.user, discord.Member) and i.user.voice
         current_vc = i.user.voice.channel

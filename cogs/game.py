@@ -1,14 +1,13 @@
 import asyncio
-import typing
 
 import discord
 from discord import app_commands, utils
 from discord.ext import commands
 from seria.utils import split_list_to_chunks
 
-import dev.model as model
 from apps.c4.ui import ColorSelectView
 from apps.flow import flow_transaction, get_balance
+from dev import model
 from dev.enum import GameType
 from ui.guess_num import GuessNumView
 from utility.paginator import GeneralPaginator
@@ -39,11 +38,11 @@ def return_a_b(answer: str, guess: str) -> tuple[int, int]:
 
 
 class GameCog(commands.GroupCog, name="game"):
-    def __init__(self, bot):
+    def __init__(self, bot) -> None:
         self.bot: model.BotModel = bot
 
     @commands.Cog.listener()
-    async def on_message(self, message: discord.Message):
+    async def on_message(self, message: discord.Message):  # noqa: PLR0912
         if message.author.bot or not isinstance(message.channel, discord.Thread):
             return
 
@@ -178,7 +177,7 @@ class GameCog(commands.GroupCog, name="game"):
     )
     @app_commands.describe(
         game="要遊玩的小遊戲",
-        opponent="小遊戲的對手（玩家二）",
+        opponent="小遊戲的對手(玩家二)",
         flow="要下賭的暴幣數量",
     )
     async def start(
@@ -186,7 +185,7 @@ class GameCog(commands.GroupCog, name="game"):
         inter: discord.Interaction,
         opponent: discord.Member,
         game: GameType,
-        flow: typing.Optional[int] = None,
+        flow: int | None = None,
     ):
         i: model.Inter = inter  # type: ignore
         assert isinstance(i.user, discord.Member)
@@ -202,7 +201,7 @@ class GameCog(commands.GroupCog, name="game"):
 
         if opponent.bot:
             return await i.response.send_message(
-                embed=model.ErrorEmbed("錯誤", "對手不能是機器人 （雖然那樣會蠻酷的）"),
+                embed=model.ErrorEmbed("錯誤", "對手不能是機器人 (雖然那樣會蠻酷的)"),
                 ephemeral=True,
             )
         if opponent == i.user:
@@ -213,7 +212,7 @@ class GameCog(commands.GroupCog, name="game"):
         if game is GameType.GUESS_NUM:
             embed = model.DefaultEmbed(
                 "請雙方設定數字",
-                "點按按鈕即可設定數字，玩家二需等待玩家一設定完畢才可設定數字",
+                "點按按鈕即可設定數字,玩家二需等待玩家一設定完畢才可設定數字",
             )
             embed.set_footer(text="設定完後請在討論串中猜測數字")
             embed.add_field(
@@ -267,29 +266,29 @@ class GameCog(commands.GroupCog, name="game"):
             app_commands.Choice(name="屏風式四子棋", value="connect_four"),
         ]
     )
-    async def rule(self, inter: discord.Interaction, game: GameType):
+    async def rule(self, inter: discord.Interaction, game: GameType) -> None:
         i: model.Inter = inter  # type: ignore
 
         if game is GameType.GUESS_NUM:
             embed = model.DefaultEmbed(
                 description="""
-                開始： `/gn start <對手>`
-                雙方各設定一個四位數字，數字之間不可重複，可包含0。
+                開始: `/gn start <對手>`
+                雙方各設定一個四位數字,數字之間不可重複,可包含0。
                 例如 1234、5678、9012、3456、7890等等。
-                
-                猜數：在討論串中進行
+
+                猜數:在討論串中進行
                 鍵入 __四個數字__ 猜數。
-                如果猜對一個數字且位置相同，則得 **1A**
-                如果猜對一個數字，但是位置不同，則得 **1B**
-                例如，如果答案是1234，而你猜4321，則得到0A4B。
+                如果猜對一個數字且位置相同,則得 **1A**
+                如果猜對一個數字,但是位置不同,則得 **1B**
+                例如,如果答案是1234,而你猜4321,則得到0A4B。
                 """
             )
         elif game is GameType.CONNECT_FOUR:
             embed = model.DefaultEmbed(
                 description="""
-                • 雙方必須輪流把一枚己棋投入開口，讓棋子因地心引力落下在底部或其他棋子上。
+                • 雙方必須輪流把一枚己棋投入開口,讓棋子因地心引力落下在底部或其他棋子上。
                 • 當己方4枚棋子以縱、橫、斜方向連成一線時獲勝。
-                • 棋盤滿棋時，無任何連成4子，則平手。
+                • 棋盤滿棋時,無任何連成4子,則平手。
                 """
             )
         embed.set_author(name="📕 規則")
@@ -313,7 +312,7 @@ class GameCog(commands.GroupCog, name="game"):
         rows = await i.client.pool.fetch(
             "SELECT * FROM game_win_lose WHERE game = $1", game.value
         )
-        all_players: typing.List[model.GamePlayer] = [
+        all_players: list[model.GamePlayer] = [
             model.GamePlayer.from_row(row) for row in rows
         ]
         all_players = [p for p in all_players if p.win + p.lose >= 10]
@@ -322,7 +321,7 @@ class GameCog(commands.GroupCog, name="game"):
         all_players = sorted(all_players, key=lambda x: x.win_rate, reverse=True)
         div_players = split_list_to_chunks(all_players, 10)
 
-        embeds: typing.List[discord.Embed] = []
+        embeds: list[discord.Embed] = []
         rank = 0
         player_rank = None
         for players in div_players:
@@ -336,7 +335,7 @@ class GameCog(commands.GroupCog, name="game"):
                     player_rank = rank
 
                 embed.description += f"{rank}. <@{player.user_id}> {player.win}勝{player.lose}敗 ({player.win / (player.win + player.lose) * 100:.2f}%)\n"
-            embed.title = f"你的排名：{player_rank}"
+            embed.title = f"你的排名:{player_rank}"
             embed.set_footer(text="只有進行十場遊戲以上的玩家才會進入排行榜")
             embeds.append(embed)
 
@@ -362,7 +361,7 @@ class GameCog(commands.GroupCog, name="game"):
         self,
         inter: discord.Interaction,
         game: GameType,
-        member: typing.Optional[discord.Member] = None,
+        member: discord.Member | None = None,
     ):
         i: model.Inter = inter  # type: ignore
         assert isinstance(i.user, discord.Member) and i.guild
@@ -374,12 +373,12 @@ class GameCog(commands.GroupCog, name="game"):
             member.id,
             game.value,
         )
-        histories: typing.List[model.GameHistory] = [
+        histories: list[model.GameHistory] = [
             model.GameHistory.from_row(row) for row in rows
         ]
         div_histories = split_list_to_chunks(histories, 10)
 
-        embeds: typing.List[discord.Embed] = []
+        embeds: list[discord.Embed] = []
         for histories in div_histories:
             embed = model.DefaultEmbed()
             embed.set_author(
@@ -393,16 +392,16 @@ class GameCog(commands.GroupCog, name="game"):
                     history.p2
                 )
                 if history.p1_win is None:
-                    p1_name = f"{p1.display_name} （平）"
-                    p2_name = f"{p2.display_name} （平）"
+                    p1_name = f"{p1.display_name} (平)"
+                    p2_name = f"{p2.display_name} (平)"
                 else:
                     p1_name = (
-                        f"{p1.display_name} （勝）"
+                        f"{p1.display_name} (勝)"
                         if history.p1_win
                         else p1.display_name
                     )
                     p2_name = (
-                        f"{p2.display_name} （勝）"
+                        f"{p2.display_name} (勝)"
                         if not history.p1_win
                         else p2.display_name
                     )

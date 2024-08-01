@@ -1,30 +1,33 @@
 import importlib
 import sys
+from typing import TYPE_CHECKING
 
 import discord
 from discord.ext import commands
 
-from dev.model import BotModel
 from utility.utils import error_embed
+
+if TYPE_CHECKING:
+    from dev.model import BotModel
 
 
 class AdminCog(commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot) -> None:
         self.bot: BotModel = bot
         self.debug: bool = self.bot.debug
 
     @commands.command(name="mark")
-    async def mark(self, ctx: commands.Context):
+    async def mark(self, ctx: commands.Context) -> None:
         if not ctx.message.reference:
             return
         else:
             await ctx.send(
-                "⚠️ 已將此訊息標記為危險訊息，將自動通報至 FBI", reference=ctx.message.reference
+                "⚠️ 已將此訊息標記為危險訊息,將自動通報至 FBI", reference=ctx.message.reference
             )
 
     @commands.is_owner()
     @commands.command(name="cleanup")
-    async def cleanup(self, ctx: commands.Context, amount: int):
+    async def cleanup(self, ctx: commands.Context, amount: int) -> None:
         assert isinstance(ctx.channel, discord.TextChannel)
         await ctx.channel.purge(
             limit=amount + 1, check=lambda m: m.author == self.bot.user
@@ -51,31 +54,31 @@ class AdminCog(commands.Cog):
 
     @commands.is_owner()
     @commands.command(name="sync")
-    async def sync(self, ctx: commands.Context):
+    async def sync(self, ctx: commands.Context) -> None:
         await ctx.send("Syncing...")
         await self.bot.tree.sync()
         await ctx.send("Synced")
-    
+
     @commands.is_owner()
     @commands.command(name="verify")
-    async def verify(self, ctx: commands.Context, member: discord.Member, name: str):
+    async def verify(self, ctx: commands.Context, member: discord.Member, name: str) -> None:
         assert ctx.guild is not None
         role = discord.utils.get(ctx.guild.roles, name=f"verified {name}")
         if role is None:
             role = await ctx.guild.create_role(name=f"verified {name}")
         await member.add_roles(role)
         await ctx.send(f"{member.mention} is now a {role.mention}")
-    
+
     @commands.is_owner()
     @commands.command(name="unverify")
-    async def unverify(self, ctx: commands.Context, member: discord.Member, name: str):
+    async def unverify(self, ctx: commands.Context, member: discord.Member, name: str) -> None:
         assert ctx.guild is not None
         role = discord.utils.get(ctx.guild.roles, name=f"verified {name}")
         if role is None:
             role = await ctx.guild.create_role(name=f"verified {name}")
         await member.remove_roles(role)
         await ctx.send(f"{member.mention} is no longer a {role.mention}")
-        
+
         if len(role.members) == 0:
             await role.delete()
 

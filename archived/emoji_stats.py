@@ -1,6 +1,5 @@
 import asyncio
 import re
-from typing import Dict, List
 
 import discord
 from discord import app_commands
@@ -21,10 +20,10 @@ class EmojiStatsModel(BaseModel):
 
 
 class EmojiStatsCog(commands.GroupCog, name="emoji"):
-    def __init__(self, bot):
+    def __init__(self, bot) -> None:
         self.bot: BotModel = bot
         self.guild: discord.Guild
-        self.guild_emojis: Dict[int, discord.Emoji] = {}
+        self.guild_emojis: dict[int, discord.Emoji] = {}
 
     async def cog_load(self) -> None:
         asyncio.create_task(self.load_guild())
@@ -42,7 +41,7 @@ class EmojiStatsCog(commands.GroupCog, name="emoji"):
         await self.bot.wait_until_ready()
 
     @commands.Cog.listener()
-    async def on_message(self, message: discord.Message):
+    async def on_message(self, message: discord.Message) -> None:
         if (
             message.guild is None
             or message.guild.id != self.bot.guild_id
@@ -53,7 +52,7 @@ class EmojiStatsCog(commands.GroupCog, name="emoji"):
         # extract ALL emoji IDs from message content with regex
         # if there are two emojis with the same ID, count it as two
         # if there are multiple emojis in the message, extract all of their IDs
-        emoji_ids: List[str] = re.findall(r"<a?:\w+:(\d+)>", message.content)
+        emoji_ids: list[str] = re.findall(r"<a?:\w+:(\d+)>", message.content)
 
         for e_id in emoji_ids:
             emoji_id = int(e_id)
@@ -89,9 +88,9 @@ class EmojiStatsCog(commands.GroupCog, name="emoji"):
         await i.response.defer()
         emojis = [EmojiStatsModel(**row) for row in rows]
 
-        embeds: List[discord.Embed] = []
+        embeds: list[discord.Embed] = []
         div_emojis = split_list_to_chunks(emojis, 10)
-        guild_emojis: List[int] = [e.id for e in i.guild.emojis]
+        guild_emojis: list[int] = [e.id for e in i.guild.emojis]
 
         for emojis in div_emojis:
             embed = DefaultEmbed("表情符號統計")
@@ -111,5 +110,5 @@ class EmojiStatsCog(commands.GroupCog, name="emoji"):
         await GeneralPaginator(i, embeds).start(followup=True)
 
 
-async def setup(bot: commands.Bot):
+async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(EmojiStatsCog(bot))

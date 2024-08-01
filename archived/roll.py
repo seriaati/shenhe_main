@@ -1,7 +1,6 @@
 import asyncio
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-import aiosqlite
 from discord import ButtonStyle, Interaction, Member, TextChannel, app_commands
 from discord.ext import commands
 from discord.ui import Button
@@ -12,6 +11,9 @@ from data.roll.banner import banner
 from dev.model import BaseView
 from utility.utils import default_embed, error_embed, log
 
+if TYPE_CHECKING:
+    import aiosqlite
+
 
 class RollCog(commands.Cog):
     def __init__(self, bot) -> None:
@@ -20,8 +22,8 @@ class RollCog(commands.Cog):
 
     class RollView(BaseView):
         def __init__(
-            self, author: Member, db: aiosqlite.Connection, public: TextChannel
-        ):
+            self, author: Member, db: "aiosqlite.Connection", public: TextChannel
+        ) -> None:
             super().__init__(timeout=None)
             self.db = db
             self.roll_app = RollApp(self.db)
@@ -43,10 +45,10 @@ class RollCog(commands.Cog):
             return i.user.id == self.author.id
 
     class RollInfo(Button):
-        def __init__(self, disabled: bool):
+        def __init__(self, disabled: bool) -> None:
             super().__init__(label="詳情", disabled=disabled)
 
-        async def callback(self, i: Interaction):
+        async def callback(self, i: Interaction) -> None:
             embed = default_embed("祈願詳情")
             value = f"70抽之前: {banner['big_prize']['chance']}%\n"
             for guarantee in banner["big_prize_guarantee"]:
@@ -62,7 +64,7 @@ class RollCog(commands.Cog):
             await i.response.send_message(embed=embed, ephemeral=True)
 
     class RollHistory(Button):
-        def __init__(self, disabled: bool):
+        def __init__(self, disabled: bool) -> None:
             super().__init__(label="歷史紀錄", disabled=disabled)
 
         async def callback(self, i: Interaction):
@@ -84,17 +86,17 @@ class RollCog(commands.Cog):
             guarantee_sum = (await c.fetchone())[0]
             message = ""
             history_sum = 0
-            for index, tuple in enumerate(roll_history):
+            for _index, tuple in enumerate(roll_history):
                 history_sum += tuple[1]
                 message += f"{tuple[0]} | {tuple[1]}次\n"
             embed = default_embed(
-                f"<:wish:982419859117838386> 祈願紀錄(目前距離保底{90-guarantee_sum}抽)",
+                f"<:wish:982419859117838386> 祈願紀錄(目前距離保底{90 - guarantee_sum}抽)",
                 f"總共{history_sum}抽\n{message}",
             )
             await i.response.send_message(embed=embed, ephemeral=True)
 
     class RollOnce(Button):
-        def __init__(self, disabled: bool):
+        def __init__(self, disabled: bool) -> None:
             super().__init__(
                 label="祈願 x1", style=ButtonStyle.blurple, disabled=disabled
             )
@@ -114,7 +116,7 @@ class RollCog(commands.Cog):
             await i.response.edit_message(view=self.view)
 
     class RollTen(Button):
-        def __init__(self, disabled: bool = False):
+        def __init__(self, disabled: bool = False) -> None:
             super().__init__(
                 label="祈願 x10", style=ButtonStyle.blurple, disabled=disabled
             )
@@ -124,7 +126,7 @@ class RollCog(commands.Cog):
             if user_flow < 10 * banner["one_pull_price"]:
                 return await i.response.send_message(
                     embed=error_embed(
-                        message=f"**祈願 x10** 需花費 **{10*banner['one_pull_price']}** 暴幣\n目前: {user_flow}"
+                        message=f"**祈願 x10** 需花費 **{10 * banner['one_pull_price']}** 暴幣\n目前: {user_flow}"
                     ).set_author(name="暴幣不足", icon_url=i.user.display_avatar.url),
                     ephemeral=True,
                 )
@@ -134,7 +136,7 @@ class RollCog(commands.Cog):
             await i.response.edit_message(view=self.view)
 
     class ConfirmRoll(Button):
-        def __init__(self, is_ten_pull: bool):
+        def __init__(self, is_ten_pull: bool) -> None:
             super().__init__(label="確認", style=ButtonStyle.green)
             self.is_ten_pull = is_ten_pull
 
@@ -176,10 +178,10 @@ class RollCog(commands.Cog):
             await i.edit_original_response(embed=embed, view=self.view)
 
     class CancelRoll(Button):
-        def __init__(self):
+        def __init__(self) -> None:
             super().__init__(label="取消")
 
-        async def callback(self, i: Interaction):
+        async def callback(self, i: Interaction) -> None:
             self.view.clear_items()
             self.view.add_item(RollCog.RollInfo(True))
             self.view.add_item(RollCog.RollHistory(True))
@@ -188,7 +190,7 @@ class RollCog(commands.Cog):
             await i.response.edit_message(view=self.view)
 
     @app_commands.command(name="roll", description="暴幣祈願系統")
-    async def roll(self, i: Interaction):
+    async def roll(self, i: Interaction) -> None:
         check = await register_account(i.user.id, i.client.db)
         if not check:
             await register_account(i.user.id, i.client.db)
