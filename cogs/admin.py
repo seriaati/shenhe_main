@@ -94,6 +94,7 @@ class AdminCog(commands.Cog):
         await webhook.send(
             content=message, username=member.display_name, avatar_url=member.display_avatar.url
         )
+        await ctx.message.delete()
 
 
 async def setup(bot: commands.Bot) -> None:
