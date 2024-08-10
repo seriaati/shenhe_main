@@ -78,6 +78,23 @@ class AdminCog(commands.Cog):
         if len(role.members) == 0:
             await role.delete()
 
+    @commands.is_owner()
+    @commands.command(name="fake")
+    async def fake(self, ctx: commands.Context, user_id: int, message: str) -> None:
+        if ctx.guild is None:
+            return
+        member = ctx.guild.get_member(user_id)
+        if member is None:
+            await ctx.send("Member not found")
+            return
+        if not isinstance(ctx.channel, discord.TextChannel):
+            return
+        webhooks = await ctx.channel.webhooks()
+        webhook = webhooks[0] if webhooks else await ctx.channel.create_webhook(name="Fake")
+        await webhook.send(
+            content=message, username=member.display_name, avatar_url=member.display_avatar.url
+        )
+
 
 async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(AdminCog(bot))
