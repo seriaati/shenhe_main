@@ -708,13 +708,13 @@ xmp = ["defusedxml"]
 
 [[package]]
 name = "pomice"
-version = "2.9.0"
+version = "2.9.1"
 description = "The modern Lavalink wrapper designed for Discord.py"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "pomice-2.9.0-py3-none-any.whl", hash = "sha256:72aab7817c7e3bedc9d90aa1cb6f59cd606e4394cfa90bf0ad3d4acc8a095b6c"},
-    {file = "pomice-2.9.0.tar.gz", hash = "sha256:93b0b41ac549507d78dff91bae7adcdda6e49599b46444e8cd378fc50cd637c1"},
+    {file = "pomice-2.9.1-py3-none-any.whl", hash = "sha256:800ecec545dfc89532a203bc095dfddfcad0bfd0a34042b8ca2733a8c904dee6"},
+    {file = "pomice-2.9.1.tar.gz", hash = "sha256:8b43d501547f6136b6fc5269c360b5b2d6b079127f5f5c72b99c2455b7a9ea65"},
 ]
 
 [package.dependencies]
