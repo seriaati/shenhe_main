@@ -1,10 +1,9 @@
 import calendar
-import datetime
 
 import discord
 from discord.ext import commands, tasks
 
-from utility.utils import default_embed
+from utility.utils import default_embed, get_dt_now
 
 
 class Schedule(commands.Cog):
@@ -21,7 +20,7 @@ class Schedule(commands.Cog):
     async def notif_task(self) -> None:
         notif_channel = self.bot.get_channel(1075025670981296211)
         assert isinstance(notif_channel, discord.TextChannel)
-        now = datetime.datetime.now()
+        now = get_dt_now()
 
         # every week's monday
         if now.weekday() == 0 and now.hour == 4:
