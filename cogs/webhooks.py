@@ -79,7 +79,7 @@ class WebhookCog(commands.Cog):
             await message.add_reaction("<:hasuhasu:1067657689846534275>")
             await message.add_reaction("<:noseBleed:1226758169846616064>")
             if embed_fixer is not None:
-                await message.remove_reaction("<:delete_message:1278557435090698345>", embed_fixer)
+                await message.remove_reaction("❌", embed_fixer)
 
     @commands.Cog.listener("on_message")
     async def auto_spoiler(self, message: discord.Message) -> None:
