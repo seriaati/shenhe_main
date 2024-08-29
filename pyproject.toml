@@ -1,35 +1,23 @@
 [project]
-name = "shenhe-main"
-requires-python = ">=3.11"
-
-[tool.poetry]
-authors = ["seriaati <seria.ati@gmail.com>"]
-description = ""
-license = "MIT"
+authors = [
+  {author = "seriaati", email = "seria.ati@gmail.com"},
+]
+dependencies = [
+  "asyncpg>=0.29.0",
+  "discord-py>=2.4.0",
+  "jishaku>=2.5.2",
+  "pillow>=10.4.0",
+  "pomice>=2.9.1",
+  "pydantic>=2.8.2",
+  "pysaucenao>=1.6.2",
+  "python-dotenv>=1.0.1",
+  "seria-library>=1.5.4",
+  "loguru>=0.7.2",
+]
+description = "Custom Discord bot for my Discord server 往生堂專業團隊"
+license = {file = "LICENSE"}
 name = "shenhe-main"
 package-mode = false
 readme = "README.md"
+requires-python = ">=3.11"
 version = "0.1.0"
-
-[tool.poetry.dependencies]
-asyncpg = "^0.29.0"
-discord-py = "^2.3.2"
-jishaku = "^2.5.2"
-pillow = "^10.2.0"
-pomice = "^2.9.0"
-pydantic = "^2.5.2"
-pysaucenao = "^1.6.2"
-python = "^3.11"
-python-dotenv = "^1.0.0"
-seria-library = "^1.5.4"
-loguru = "^0.7.2"
-
-[tool.poetry.group.dev]
-optional = true
-
-[tool.poetry.group.dev.dependencies]
-ruff = "^0.6.0"
-
-[build-system]
-build-backend = "poetry.core.masonry.api"
-requires = ["poetry-core"]
