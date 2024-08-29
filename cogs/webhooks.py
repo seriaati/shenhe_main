@@ -65,16 +65,21 @@ class WebhookCog(commands.Cog):
         # check for attachments
         content = message.content
         if message.attachments or extract_media_urls(content):
+            await asyncio.sleep(1.0)
             await self.add_reactions_to_message(message)
 
     @staticmethod
     async def add_reactions_to_message(message: discord.Message) -> None:
+        assert message.guild is not None
+        embed_fixer = message.guild.get_member(770144963735453696)
         with contextlib.suppress(discord.HTTPException):
             await message.add_reaction("👍")
             await message.add_reaction("🤔")
             await message.add_reaction("<a:ganyuLick:1154951202073739364>")
             await message.add_reaction("<:hasuhasu:1067657689846534275>")
             await message.add_reaction("<:noseBleed:1226758169846616064>")
+            if embed_fixer is not None:
+                await message.remove_reaction("<:delete_message:1278557435090698345>", embed_fixer)
 
     @commands.Cog.listener("on_message")
     async def auto_spoiler(self, message: discord.Message) -> None:
