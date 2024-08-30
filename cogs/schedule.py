@@ -98,7 +98,7 @@ class Schedule(commands.Cog):
 
         if "Honkai: Star Rail" in message.author.name:
             await message.reply("<@&1106224249703780476>")
-        elif "Genshin Impact" in message.author.name:
+        elif "原神官方伺服器" in message.author.name:
             await message.reply("<@&1085146432622821408>")
         elif "Zenless Zone Zero" in message.author.name:
             await message.reply("<@&1258224281666719825>")
