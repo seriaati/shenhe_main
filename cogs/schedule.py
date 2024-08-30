@@ -1,4 +1,5 @@
 import calendar
+from typing import Any
 
 import discord
 from discord.ext import commands, tasks
@@ -88,6 +89,19 @@ class Schedule(commands.Cog):
     @notif_task.before_loop
     async def before_notif_task(self) -> None:
         await self.bot.wait_until_ready()
+
+    @commands.Cog.listener()
+    async def on_message(self, message: discord.Message) -> Any:
+        """Auto mention role for #兌換碼 channel, I don't want to make a new cog for this so yeah."""
+        if message.channel.id != 1168910418526355536:
+            return
+
+        if "Honkai: Star Rail" in message.author.name:
+            await message.reply("<@&1106224249703780476>")
+        elif "Genshin Impact" in message.author.name:
+            await message.reply("<@&1085146432622821408>")
+        elif "Zenless Zone Zero" in message.author.name:
+            await message.reply("<@&1258224281666719825>")
 
 
 async def setup(bot: commands.Bot) -> None:
