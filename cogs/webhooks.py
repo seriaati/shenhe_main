@@ -64,9 +64,11 @@ class WebhookCog(commands.Cog):
 
         # check for attachments
         content = message.content
-        if extract_media_urls(content) or (
-            message.attachments and all(a.is_spoiler() for a in message.attachments)
-        ):
+        if message.channel.id == 1061898394446069852:
+            do_react = message.attachments and all(a.is_spoiler() for a in message.attachments)
+        else:
+            do_react = extract_media_urls(content) or message.attachments
+        if do_react:
             await asyncio.sleep(1.0)
             await self.add_reactions_to_message(message)
 
