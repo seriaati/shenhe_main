@@ -64,7 +64,7 @@ class WebhookCog(commands.Cog):
 
         # check for attachments
         content = message.content
-        if message.attachments or extract_media_urls(content):
+        if extract_media_urls(content) or all(a.is_spoiler() for a in message.attachments):
             await asyncio.sleep(1.0)
             await self.add_reactions_to_message(message)
 
