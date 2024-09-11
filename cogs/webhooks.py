@@ -2,7 +2,7 @@ import asyncio
 import contextlib
 import io
 import re
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import discord
 from discord.ext import commands
@@ -13,14 +13,63 @@ if TYPE_CHECKING:
     from dev.model import BotModel
 
 KEMONO_REGEX = r"https:\/\/kemono\.su\/(fanbox|[a-zA-Z]+)\/user\/\d+\/post\/\d+"
+IWARA_REGEX = r"https:\/\/www\.iwara\.tv\/video\/([a-zA-Z0-9]+)\/"
 
 
 class WebhookCog(commands.Cog):
     def __init__(self, bot) -> None:
         self.bot: BotModel = bot
 
-    def _match_kemono(self, message: discord.Message) -> re.Match[str] | None:
+    @staticmethod
+    def _match_kemono(message: discord.Message) -> re.Match[str] | None:
         return re.search(KEMONO_REGEX, message.content)
+
+    @staticmethod
+    def _match_iwara(message: discord.Message) -> re.Match[str] | None:
+        return re.search(IWARA_REGEX, message.content)
+
+    async def _download_video(self, file_url: str) -> tuple[bytes, int]:
+        async with self.bot.session.get(file_url) as resp:
+            bytes_ = await resp.read()
+            bytes_size = len(bytes_)
+            return bytes_, bytes_size
+
+    @staticmethod
+    def _get_iwara_file_data(data: list[dict[str, Any]], name: str) -> dict[str, Any] | None:
+        return next((d for d in data if d["name"] == name), None)
+
+    async def _download_iwara_video(self, video_id: str) -> discord.File | None:
+        api_url = f"https://api.iwara.tv/video/{video_id}"
+
+        async with self.bot.session.get(api_url) as resp:
+            data = await resp.json()
+
+        file_url = data["fileUrl"]
+
+        async with self.bot.session.get(
+            file_url,
+            headers={
+                "x-version": "cc8b2b7d31592a95c1701fb0fb32b04d78e4de32",
+            },
+        ) as resp:
+            file_data = await resp.json()
+
+        name = "source"
+        video_data = self._get_iwara_file_data(file_data, name)
+        if video_data is None:
+            name = "540"
+            video_data = self._get_iwara_file_data(file_data, name)
+            if video_data is None:
+                name = "360"
+                video_data = self._get_iwara_file_data(file_data, name)
+                if video_data is None:
+                    name = "preview"
+                    video_data = self._get_iwara_file_data(file_data, name)
+                    if video_data is None:
+                        return None
+
+        bytes_, _ = await self._download_video("https:" + video_data["src"]["download"])
+        return discord.File(io.BytesIO(bytes_), spoiler=True, filename=f"{video_id}.mp4")
 
     async def _download_image(
         self, image_url: str, files: list[discord.File], filename: str
@@ -103,6 +152,7 @@ class WebhookCog(commands.Cog):
                 media_urls
                 or any(not a.is_spoiler() for a in message.attachments)
                 or self._match_kemono(message)
+                or self._match_iwara(message)
             ):
                 files: list[discord.File] = []
 
@@ -118,6 +168,13 @@ class WebhookCog(commands.Cog):
                 kemono_match = self._match_kemono(message)
                 if kemono_match:
                     files.extend(await self._download_kemono_images(kemono_match.group()))
+
+                # extract iwara videos
+                iwara_match = self._match_iwara(message)
+                if iwara_match:
+                    file = await self._download_iwara_video(iwara_match.group(1))
+                    if file is not None:
+                        files.append(file)
 
                 # auto spoiler attachments
                 files.extend(
