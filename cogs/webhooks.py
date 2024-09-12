@@ -54,21 +54,20 @@ class WebhookCog(commands.Cog):
         ) as resp:
             file_data = await resp.json()
 
-        name = "source"
-        video_data = self._get_iwara_file_data(file_data, name)
-        if video_data is None:
-            name = "540"
-            video_data = self._get_iwara_file_data(file_data, name)
-            if video_data is None:
-                name = "360"
-                video_data = self._get_iwara_file_data(file_data, name)
-                if video_data is None:
-                    name = "preview"
-                    video_data = self._get_iwara_file_data(file_data, name)
-                    if video_data is None:
-                        return None
+        video_resolutions = ("540", "360", "preview")
+        for resolution in video_resolutions:
+            video_data = self._get_iwara_file_data(file_data, resolution)
+            if video_data is not None:
+                bytes_, bytes_size = await self._download_video(
+                    "https:" + video_data["src"]["download"]
+                )
+                if bytes_size > 1024 * 1024 * 100:  # 100MB
+                    # Download the next resolution
+                    continue
+                break
+        else:
+            return None
 
-        bytes_, _ = await self._download_video("https:" + video_data["src"]["download"])
         return discord.File(io.BytesIO(bytes_), spoiler=True, filename=f"{video_id}.mp4")
 
     async def _download_image(
