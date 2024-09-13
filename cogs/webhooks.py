@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from dev.model import BotModel
 
 KEMONO_REGEX = r"https:\/\/kemono\.su\/(fanbox|[a-zA-Z]+)\/user\/\d+\/post\/\d+"
-IWARA_REGEX = r"(?<=https://www\.iwara\.tv/video/)[^/]+"
+IWARA_REGEX = r"(?<=https://fxiwara\.seria\.moe/video/)[^/]+"
 
 
 class WebhookCog(commands.Cog):
