@@ -13,7 +13,6 @@ if TYPE_CHECKING:
     from dev.model import BotModel
 
 KEMONO_REGEX = r"https:\/\/kemono\.su\/(fanbox|[a-zA-Z]+)\/user\/\d+\/post\/\d+"
-IWARA_REGEX = r"(?<=https://fxiwara\.seria\.moe/video/)[^/]+"
 
 
 class WebhookCog(commands.Cog):
@@ -23,21 +22,6 @@ class WebhookCog(commands.Cog):
     @staticmethod
     def _match_kemono(message: discord.Message) -> re.Match[str] | None:
         return re.search(KEMONO_REGEX, message.content)
-
-    @staticmethod
-    def _match_iwara(message: discord.Message) -> re.Match[str] | None:
-        return re.search(IWARA_REGEX, message.content)
-
-    async def _download_iwara_video(self, video_id: str) -> discord.File | None:
-        api_url = f"https://fxiwara.seria.moe/dl/{video_id}/360"
-
-        async with self.bot.session.get(api_url) as resp:
-            if resp.status != 200:
-                return None
-
-            bytes_ = await resp.read()
-
-        return discord.File(io.BytesIO(bytes_), spoiler=True, filename=f"{video_id}.mp4")
 
     async def _download_image(
         self, image_url: str, files: list[discord.File], filename: str
@@ -120,7 +104,6 @@ class WebhookCog(commands.Cog):
                 media_urls
                 or any(not a.is_spoiler() for a in message.attachments)
                 or self._match_kemono(message)
-                or self._match_iwara(message)
             ):
                 files: list[discord.File] = []
 
@@ -136,13 +119,6 @@ class WebhookCog(commands.Cog):
                 kemono_match = self._match_kemono(message)
                 if kemono_match:
                     files.extend(await self._download_kemono_images(kemono_match.group()))
-
-                # extract iwara videos
-                iwara_match = self._match_iwara(message)
-                if iwara_match:
-                    file = await self._download_iwara_video(iwara_match.group(0))
-                    if file is not None:
-                        files.append(file)
 
                 # auto spoiler attachments
                 files.extend(
