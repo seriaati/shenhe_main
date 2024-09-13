@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from dev.model import BotModel
 
 KEMONO_REGEX = r"https:\/\/kemono\.su\/(fanbox|[a-zA-Z]+)\/user\/\d+\/post\/\d+"
-IWARA_REGEX = r"https:\/\/www\.iwara\.tv\/video\/([a-zA-Z0-9]+)\/"
+IWARA_REGEX = r"(?<=https://www\.iwara\.tv/video/)[^/]+"
 
 
 class WebhookCog(commands.Cog):
@@ -29,7 +29,7 @@ class WebhookCog(commands.Cog):
         return re.search(IWARA_REGEX, message.content)
 
     async def _download_iwara_video(self, video_id: str) -> discord.File | None:
-        api_url = f"fxiwara.seria.moe/dl/{video_id}/360"
+        api_url = f"https://fxiwara.seria.moe/dl/{video_id}/360"
 
         async with self.bot.session.get(api_url) as resp:
             if resp.status != 200:
