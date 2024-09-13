@@ -2,7 +2,7 @@ import asyncio
 import contextlib
 import io
 import re
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 import discord
 from discord.ext import commands
@@ -28,45 +28,14 @@ class WebhookCog(commands.Cog):
     def _match_iwara(message: discord.Message) -> re.Match[str] | None:
         return re.search(IWARA_REGEX, message.content)
 
-    async def _download_video(self, file_url: str) -> tuple[bytes, int]:
-        async with self.bot.session.get(file_url) as resp:
-            bytes_ = await resp.read()
-            bytes_size = len(bytes_)
-            return bytes_, bytes_size
-
-    @staticmethod
-    def _get_iwara_file_data(data: list[dict[str, Any]], name: str) -> dict[str, Any] | None:
-        return next((d for d in data if d["name"] == name), None)
-
     async def _download_iwara_video(self, video_id: str) -> discord.File | None:
-        api_url = f"https://api.iwara.tv/video/{video_id}"
+        api_url = f"fxiwara.seria.moe/dl/{video_id}/360"
 
         async with self.bot.session.get(api_url) as resp:
-            data = await resp.json()
+            if resp.status != 200:
+                return None
 
-        file_url = data["fileUrl"]
-
-        async with self.bot.session.get(
-            file_url,
-            headers={
-                "x-version": "cc8b2b7d31592a95c1701fb0fb32b04d78e4de32",
-            },
-        ) as resp:
-            file_data = await resp.json()
-
-        video_resolutions = ("540", "360", "preview")
-        for resolution in video_resolutions:
-            video_data = self._get_iwara_file_data(file_data, resolution)
-            if video_data is not None:
-                bytes_, bytes_size = await self._download_video(
-                    "https:" + video_data["src"]["download"]
-                )
-                if bytes_size > 1024 * 1024 * 100:  # 100MB
-                    # Download the next resolution
-                    continue
-                break
-        else:
-            return None
+            bytes_ = await resp.read()
 
         return discord.File(io.BytesIO(bytes_), spoiler=True, filename=f"{video_id}.mp4")
 
@@ -171,7 +140,7 @@ class WebhookCog(commands.Cog):
                 # extract iwara videos
                 iwara_match = self._match_iwara(message)
                 if iwara_match:
-                    file = await self._download_iwara_video(iwara_match.group(1))
+                    file = await self._download_iwara_video(iwara_match.group(0))
                     if file is not None:
                         files.append(file)
 
