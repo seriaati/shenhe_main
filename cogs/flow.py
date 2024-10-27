@@ -95,7 +95,7 @@ class BaoCog(commands.GroupCog, name="bao"):
 
     @bao_check()
     @app_commands.guild_only()
-    @app_commands.checks.cooldown(1, 900, key=lambda i: (i.guild_id, i.user.id))
+    # @app_commands.checks.cooldown(1, 900, key=lambda i: (i.guild_id, i.user.id))
     @app_commands.command(name="poke", description="戳戳")
     @app_commands.rename(member="使用者")
     @app_commands.describe(member="被戳的使用者")
