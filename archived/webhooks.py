@@ -33,21 +33,6 @@ class WebhookCog(commands.Cog):
             file_ = discord.File(io.BytesIO(await resp.read()), spoiler=True, filename=filename)
         files.append(file_)
 
-    async def _download_kemono_images(self, kemono_url: str) -> list[discord.File]:
-        api_url = "https://kemono.su/api/v1/"
-        request_url = kemono_url.replace("https://kemono.su/", api_url)
-        async with self.bot.session.get(request_url) as resp:
-            data = await resp.json()
-
-        attachments: list[dict[str, str]] = data.get("attachments", [])
-        files: list[discord.File] = []
-        async with asyncio.TaskGroup() as tg:
-            for attachment in attachments:
-                url = f"https://img.kemono.su/thumbnail/data/{attachment['path']}"
-                tg.create_task(self._download_image(url, files, attachment["name"]))
-
-        return files
-
     @commands.Cog.listener("on_message")
     async def auto_spoiler(self, message: discord.Message) -> None:
         """
@@ -76,11 +61,6 @@ class WebhookCog(commands.Cog):
                             filename = clean_url(url).split("/")[-1]
                             tg.create_task(self._download_image(url, files, filename))
                             message.content = message.content.replace(url, "")
-
-                # extract keomo images
-                kemono_match = self._match_kemono(message)
-                if kemono_match:
-                    files.extend(await self._download_kemono_images(kemono_match.group()))
 
                 # auto spoiler attachments
                 files.extend(
