@@ -1,5 +1,4 @@
 import asyncio
-import contextlib
 import io
 import re
 from typing import TYPE_CHECKING
@@ -48,43 +47,6 @@ class WebhookCog(commands.Cog):
                 tg.create_task(self._download_image(url, files, attachment["name"]))
 
         return files
-
-    # auto add reactions
-    @commands.Cog.listener("on_message")
-    async def auto_add_reactions(self, message: discord.Message) -> None:
-        """
-        Automatically add reactions to messages with medias.
-        Only works in 美圖展版 and 色即是空.
-        """
-        if (
-            message.guild is None
-            or message.guild.id != self.bot.guild_id
-            or message.channel.id not in {1061881404167815249, 1061898394446069852}
-        ):
-            return
-
-        # check for attachments
-        content = message.content
-        if message.channel.id == 1061898394446069852:
-            do_react = message.attachments and all(a.is_spoiler() for a in message.attachments)
-        else:
-            do_react = extract_media_urls(content) or message.attachments
-        if do_react:
-            await asyncio.sleep(1.0)
-            await self.add_reactions_to_message(message)
-
-    @staticmethod
-    async def add_reactions_to_message(message: discord.Message) -> None:
-        assert message.guild is not None
-        embed_fixer = message.guild.get_member(770144963735453696)
-        with contextlib.suppress(discord.HTTPException):
-            await message.add_reaction("👍")
-            await message.add_reaction("🤔")
-            await message.add_reaction("<a:ganyuLick:1154951202073739364>")
-            await message.add_reaction("<:hasuhasu:1067657689846534275>")
-            await message.add_reaction("<:noseBleed:1226758169846616064>")
-            if embed_fixer is not None:
-                await message.remove_reaction("❌", embed_fixer)
 
     @commands.Cog.listener("on_message")
     async def auto_spoiler(self, message: discord.Message) -> None:
