@@ -1,15 +1,36 @@
 import calendar
-from typing import Any
+import os
+import re
+from typing import Any, Literal
 
 import discord
 from discord.ext import commands, tasks
 
+from dev.model import BotModel  # noqa: TC001
 from utility.utils import default_embed, get_dt_now
 
 
 class Schedule(commands.Cog):
-    def __init__(self, bot: commands.Bot) -> None:
+    def __init__(self, bot: BotModel) -> None:
         self.bot = bot
+
+    @staticmethod
+    def extract_codes_from_message(message: str) -> list[str]:
+        return re.findall(r"\?code=([A-Za-z0-9]+)", message)
+
+    async def add_to_hoyo_codes(
+        self, codes: list[str], game: Literal["genshin", "nap", "hkrpg"]
+    ) -> None:
+        api_key = os.environ.get("HOYO_CODES_API_KEY")
+        if api_key is None:
+            return
+
+        url = "https://hoyo-codes.seria.moe/codes"
+        headers = {"Authorization": f"Bearer {api_key}"}
+
+        for code in codes:
+            data = {"code": code, "game": game}
+            await self.bot.session.post(url, json=data, headers=headers)
 
     async def cog_load(self) -> None:
         self.notif_task.start()
@@ -96,13 +117,18 @@ class Schedule(commands.Cog):
         if message.channel.id != 1168910418526355536:
             return
 
+        codes = self.extract_codes_from_message(message.content)
+
         if "Honkai: Star Rail" in message.author.name:
             await message.reply("<@&1106224249703780476>")
+            await self.add_to_hoyo_codes(codes, "hkrpg")
         elif "原神官方伺服器" in message.author.name:
             await message.reply("<@&1085146432622821408>")
+            await self.add_to_hoyo_codes(codes, "genshin")
         elif "Zenless Zone Zero" in message.author.name:
             await message.reply("<@&1258224281666719825>")
+            await self.add_to_hoyo_codes(codes, "nap")
 
 
-async def setup(bot: commands.Bot) -> None:
+async def setup(bot: BotModel) -> None:
     await bot.add_cog(Schedule(bot))
