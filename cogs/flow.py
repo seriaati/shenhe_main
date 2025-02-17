@@ -100,7 +100,7 @@ class BaoCog(commands.GroupCog, name="bao"):
     @app_commands.rename(member="使用者")
     @app_commands.describe(member="被戳的使用者")
     async def poke(self, i: discord.Interaction, member: discord.Member) -> None:
-        success = i.user.id == 410036441129943050 or randint(1, 2) == 1
+        success = randint(1, 2) == 1
         flow_num = randint(1, 3)
 
         await flow_app.flow_transaction(
