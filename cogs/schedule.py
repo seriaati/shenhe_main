@@ -1,3 +1,4 @@
+import asyncio
 import calendar
 import os
 import re
@@ -29,8 +30,9 @@ class Schedule(commands.Cog):
         headers = {"Authorization": f"Bearer {api_key}"}
 
         for code in codes:
-            data = {"code": code, "game": game}
+            data = {"code": code.upper(), "game": game}
             await self.bot.session.post(url, json=data, headers=headers)
+            await asyncio.sleep(0.1)
 
     async def cog_load(self) -> None:
         self.notif_task.start()
