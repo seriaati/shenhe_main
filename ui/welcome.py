@@ -39,7 +39,7 @@ class AcceptRules(BaseView):
 
 class Welcome(BaseView):
     def __init__(self, member: discord.Member) -> None:
-        super().__init__()
+        super().__init__(timeout=None)
         self.member = member
         self.pressed: list[int] = []
 
